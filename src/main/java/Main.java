@@ -8,8 +8,6 @@ public class Main {
         Logout logout = new Logout();
         int choice;
 
-        System.out.println("USER LOGIN");
-
         do{
             System.out.println("\nUser Menu:");
             System.out.println("1. Login");
