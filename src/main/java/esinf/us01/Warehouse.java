@@ -5,6 +5,7 @@ import java.util.*;
 public class Warehouse {
     private Map<Wagon, Set<Box>> wagons = new HashMap<>();
     private Map<String, Set<Bay>> warehouses = new HashMap<>();
+    private Map<String, Item> items = new HashMap<>();
 
     public Map<Wagon, Set<Box>> getWagonsMap() {
         return wagons;
@@ -12,6 +13,10 @@ public class Warehouse {
 
     public Map<String, Set<Bay>> getWarehouses() {
         return warehouses;
+    }
+
+    public Map<String, Item> getItems() {
+        return items;
     }
 
     public void getWagons(List<String> lines){
@@ -67,5 +72,25 @@ public class Warehouse {
         }
         // Save the last warehouse
         if(currentWarehouseID != null && currentBays !=null) warehouses.put(currentWarehouseID, currentBays);
+    }
+
+    public void getItems(List<String> lines){
+        String currentSKU = null;
+        Set<Item> currentItem = null;
+
+        for(int i = 0; i < lines.size(); i++) {
+            String line = lines.get(i);
+            String[] parts = line.split(",");
+
+            String sku = parts[0];
+            String name = parts[1];
+            String category = parts[2];
+            String unit = parts[3];
+            double volume = Double.parseDouble(parts[4]);
+            double unitWeight = Double.parseDouble(parts[5]);
+
+            Item item = new Item(sku, name, category, unit, volume, unitWeight);
+            items.put(sku, item);
+        }
     }
 }
