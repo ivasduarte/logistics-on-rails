@@ -4,7 +4,14 @@ import java.util.Objects;
 
 public class Order {
     private String orderID;
+    private String dueDate;
+    private int priority;
 
+    public Order(String orderID, int priority, String dueDate) {
+        this.orderID = orderID;
+        this.priority = priority;
+        this.dueDate = dueDate;
+    }
 
     public Order(String orderID) {
         this.orderID = orderID;
@@ -16,6 +23,22 @@ public class Order {
 
     public void setOrderID(String orderID) {
         this.orderID = orderID;
+    }
+
+    public String getDueDate() {
+        return dueDate;
+    }
+
+    public void setDueDate(String dueDate) {
+        this.dueDate = dueDate;
+    }
+
+    public int getPriority() {
+        return priority;
+    }
+
+    public void setPriority(int priority) {
+        this.priority = priority;
     }
 
     @Override
@@ -35,6 +58,8 @@ public class Order {
     public String toString() {
         return "Order{" +
                 "orderID='" + orderID + '\'' +
+                ", dueDate='" + dueDate + '\'' +
+                ", priority=" + priority +
                 '}';
     }
 }

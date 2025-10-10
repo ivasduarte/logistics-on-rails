@@ -7,6 +7,7 @@ public class Warehouse {
     private Map<String, Set<Bay>> warehouses = new HashMap<>();
     private Map<String, Item> items = new HashMap<>();
     private Map<Order, Set<OrderLines>> order_lines = new HashMap<>();
+    private Map<String, Order> orders = new HashMap<>();
 
     public Map<Wagon, Set<Box>> getWagonsMap() {
         return wagons;
@@ -22,6 +23,10 @@ public class Warehouse {
 
     public Map<Order, Set<OrderLines>> getOrderLines() {
         return order_lines;
+    }
+
+    public Map<String, Order> getOrders() {
+        return orders;
     }
 
     public void getWagons(List<String> lines){
@@ -99,11 +104,11 @@ public class Warehouse {
         }
     }
 
-    public void getOrderLines(List<String> lines){
+    public void getOrderLines(List<String> lines) {
         Order currentOrder = null;
         Set<OrderLines> currentLines = null;
 
-        for (int i = 1; i < lines.size(); i++) {
+        for (int i = 1; i < lines.size(); i++) { // Ignora cabeçalho
             String linha = lines.get(i);
             String[] partes = linha.split(",");
 
@@ -112,12 +117,21 @@ public class Warehouse {
             String sku = partes[2];
             int qty = Integer.parseInt(partes[3]);
 
-            // Save the previous order if we change the ID
+            // Checks if it's a new order
             if (currentOrder == null || !currentOrder.getOrderID().equals(orderId)) {
+                // Saves previous before changing
                 if (currentOrder != null && currentLines != null) {
                     order_lines.put(currentOrder, currentLines);
                 }
-                currentOrder = new Order(orderId);
+
+                // If orders with dueDate/priority have already been loaded, reuse the same object
+                if (orders.containsKey(orderId)) {
+                    currentOrder = orders.get(orderId);
+                } else {
+                    currentOrder = new Order(orderId); // fallback se não existir
+                    orders.put(orderId, currentOrder);
+                }
+
                 currentLines = new HashSet<>();
             }
 
@@ -125,9 +139,24 @@ public class Warehouse {
             currentLines.add(orderLine);
         }
 
-        // Save the last order
+        // Saves the last order
         if (currentOrder != null && currentLines != null) {
             order_lines.put(currentOrder, currentLines);
+        }
+    }
+
+
+    public void getOrders(List<String> lines) {
+        for (int i = 1; i < lines.size(); i++) {
+            String line = lines.get(i);
+            String[] parts = line.split(",");
+
+            String orderId = parts[0];
+            String dueDate = parts[1];
+            int priority = Integer.parseInt(parts[2]);
+
+            Order order = new Order(orderId, priority, dueDate);
+            orders.put(orderId, order);
         }
     }
 }
