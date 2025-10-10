@@ -4,9 +4,14 @@ import java.util.*;
 
 public class Warehouse {
     private Map<Wagon, Set<Box>> wagons = new HashMap<>();
+    private Map<String, Set<Bay>> warehouses = new HashMap<>();
 
     public Map<Wagon, Set<Box>> getWagonsMap() {
         return wagons;
+    }
+
+    public Map<String, Set<Bay>> getWarehouses() {
+        return warehouses;
     }
 
     public void getWagons(List<String> lines){
@@ -35,5 +40,32 @@ public class Warehouse {
         }
 
         if(currentWagon != null && currentBox !=null) wagons.put(currentWagon, currentBox);
+    }
+
+    public void getBays(List<String> lines){
+        String currentWarehouseID = null;
+        Set<Bay> currentBays = null;
+
+        for(int i = 0; i < lines.size(); i++){
+            String line = lines.get(i);
+            String[] parts = line.split(",");
+
+            String warehouseID = parts[0];
+            int aisle = Integer.parseInt(parts[1]);
+            int bay = Integer.parseInt(parts[2]);
+            int boxCapacity = Integer.parseInt(parts[3]);
+
+            // If we change warehouse, its interior gets saved
+            if(currentWarehouseID != null || !currentWarehouseID.equals(warehouseID)){
+                if(currentWarehouseID != null && currentBays !=null) warehouses.put(currentWarehouseID, currentBays);
+                currentWarehouseID = warehouseID;
+                currentBays = new HashSet<>();
+            }
+
+            Bay bays = new Bay(bay, aisle, boxCapacity);
+            currentBays.add(bays);
+        }
+        // Save the last warehouse
+        if(currentWarehouseID != null && currentBays !=null) warehouses.put(currentWarehouseID, currentBays);
     }
 }
