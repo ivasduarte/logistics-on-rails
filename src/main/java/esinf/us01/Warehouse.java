@@ -6,6 +6,7 @@ public class Warehouse {
     private Map<Wagon, Set<Box>> wagons = new HashMap<>();
     private Map<String, Set<Bay>> warehouses = new HashMap<>();
     private Map<String, Item> items = new HashMap<>();
+    private Map<Order, Set<OrderLines>> order_lines = new HashMap<>();
 
     public Map<Wagon, Set<Box>> getWagonsMap() {
         return wagons;
@@ -19,11 +20,15 @@ public class Warehouse {
         return items;
     }
 
+    public Map<Order, Set<OrderLines>> getOrderLines() {
+        return order_lines;
+    }
+
     public void getWagons(List<String> lines){
         Wagon currentWagon = null;
         Set<Box> currentBox = null;
 
-        for(int i = 0; i < lines.size(); i++){
+        for(int i = 1; i < lines.size(); i++){
             String line = lines.get(i);
             String[] parts = line.split(",");
 
@@ -51,7 +56,7 @@ public class Warehouse {
         String currentWarehouseID = null;
         Set<Bay> currentBays = null;
 
-        for(int i = 0; i < lines.size(); i++){
+        for(int i = 1; i < lines.size(); i++){
             String line = lines.get(i);
             String[] parts = line.split(",");
 
@@ -60,7 +65,7 @@ public class Warehouse {
             int bay = Integer.parseInt(parts[2]);
             int boxCapacity = Integer.parseInt(parts[3]);
 
-            // If we change warehouse, its interior gets saved
+            // If we change warehouse its interior gets saved
             if(currentWarehouseID != null || !currentWarehouseID.equals(warehouseID)){
                 if(currentWarehouseID != null && currentBays !=null) warehouses.put(currentWarehouseID, currentBays);
                 currentWarehouseID = warehouseID;
@@ -78,7 +83,7 @@ public class Warehouse {
         String currentSKU = null;
         Set<Item> currentItem = null;
 
-        for(int i = 0; i < lines.size(); i++) {
+        for(int i = 1; i < lines.size(); i++) {
             String line = lines.get(i);
             String[] parts = line.split(",");
 
@@ -91,6 +96,38 @@ public class Warehouse {
 
             Item item = new Item(sku, name, category, unit, volume, unitWeight);
             items.put(sku, item);
+        }
+    }
+
+    public void getOrderLines(List<String> lines){
+        Order currentOrder = null;
+        Set<OrderLines> currentLines = null;
+
+        for (int i = 1; i < lines.size(); i++) {
+            String linha = lines.get(i);
+            String[] partes = linha.split(",");
+
+            String orderId = partes[0];
+            int lineNo = Integer.parseInt(partes[1]);
+            String sku = partes[2];
+            int qty = Integer.parseInt(partes[3]);
+
+            // Save the previous order if we change the ID
+            if (currentOrder == null || !currentOrder.getOrderID().equals(orderId)) {
+                if (currentOrder != null && currentLines != null) {
+                    order_lines.put(currentOrder, currentLines);
+                }
+                currentOrder = new Order(orderId);
+                currentLines = new HashSet<>();
+            }
+
+            OrderLines orderLine = new OrderLines(lineNo, sku, qty);
+            currentLines.add(orderLine);
+        }
+
+        // Save the last order
+        if (currentOrder != null && currentLines != null) {
+            order_lines.put(currentOrder, currentLines);
         }
     }
 }
