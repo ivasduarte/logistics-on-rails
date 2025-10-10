@@ -8,6 +8,7 @@ public class Warehouse {
     private Map<String, Item> items = new HashMap<>();
     private Map<Order, Set<OrderLines>> order_lines = new HashMap<>();
     private Map<String, Order> orders = new HashMap<>();
+    private Map<String, Returns> returns = new HashMap<>();
 
     public Map<Wagon, Set<Box>> getWagonsMap() {
         return wagons;
@@ -27,6 +28,10 @@ public class Warehouse {
 
     public Map<String, Order> getOrders() {
         return orders;
+    }
+
+    public Map<String, Returns> getReturns() {
+        return returns;
     }
 
     public void getWagons(List<String> lines){
@@ -145,7 +150,6 @@ public class Warehouse {
         }
     }
 
-
     public void getOrders(List<String> lines) {
         for (int i = 1; i < lines.size(); i++) {
             String line = lines.get(i);
@@ -157,6 +161,23 @@ public class Warehouse {
 
             Order order = new Order(orderId, priority, dueDate);
             orders.put(orderId, order);
+        }
+    }
+
+    public void getReturns(List<String> lines) {
+        for (int i = 1; i < lines.size(); i++) {
+            String line = lines.get(i);
+            String[] parts = line.split(",");
+
+            String returnID = parts[0];
+            String sku = parts[1];
+            int qty = Integer.parseInt(parts[2]);
+            String reason = parts[3];
+            String timestamp = parts[4];
+            String expiryDate = parts[5];
+
+            Returns r = new Returns(returnID, sku, qty, reason, timestamp, expiryDate);
+            returns.put(returnID, r);
         }
     }
 }
