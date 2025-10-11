@@ -1,5 +1,11 @@
 package esinf.us01;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeParseException;
 import java.util.*;
 
 public class Warehouse {
@@ -10,56 +16,119 @@ public class Warehouse {
     private Map<String, Order> orders = new HashMap<>();
     private Map<String, Returns> returns = new HashMap<>();
 
-    public Map<Wagon, Set<Box>> getWagonsMap() {
-        return wagons;
+    private List<String> importErrors = new ArrayList<>();
+
+    private static String CSV_BASE_PATH = "csv-docs/";
+    public static String WAGONS_FILE = CSV_BASE_PATH + "wagons.csv";
+    public static String BAYS_FILE = CSV_BASE_PATH + "bays.csv";
+    public static String ITEMS_FILE = CSV_BASE_PATH + "items.csv";
+    public static String ORDER_LINES_FILE = CSV_BASE_PATH + "order_lines.csv";
+    public static String ORDERS_FILE = CSV_BASE_PATH + "orders.csv";
+    public static String RETURNS_FILE = CSV_BASE_PATH + "returns.csv";
+
+    public Map<Wagon, Set<Box>> getWagonsMap() { return wagons; }
+    public Map<String, Set<Bay>> getWarehouses() { return warehouses; }
+    public Map<String, Item> getItems() { return items; }
+    public Map<Order, Set<OrderLines>> getOrderLines() { return order_lines; }
+    public Map<String, Order> getOrders() { return orders; }
+    public Map<String, Returns> getReturns() { return returns; }
+    public List<String> getImportErrors() { return importErrors; }
+
+    public void loadAllData() throws IOException {
+        importErrors.clear();
+
+        getWagons(Files.readAllLines(Paths.get(WAGONS_FILE)));
+        getBays(Files.readAllLines(Paths.get(BAYS_FILE)));
+        getItems(Files.readAllLines(Paths.get(ITEMS_FILE)));
+        getOrders(Files.readAllLines(Paths.get(ORDERS_FILE)));
+        getOrderLines(Files.readAllLines(Paths.get(ORDER_LINES_FILE)));
+        getReturns(Files.readAllLines(Paths.get(RETURNS_FILE)));
+
+        // Report errors if any
+        if (!importErrors.isEmpty()) {
+            System.err.println("=== IMPORT ERRORS ===");
+            importErrors.forEach(System.err::println);
+        }
     }
 
-    public Map<String, Set<Bay>> getWarehouses() {
-        return warehouses;
+    private boolean isValidInteger(String s) {
+        try { Integer.parseInt(s); return true; }
+        catch (NumberFormatException e) { return false; }
     }
 
-    public Map<String, Item> getItems() {
-        return items;
+    private boolean isValidDouble(String s) {
+        try { Double.parseDouble(s); return true; }
+        catch (NumberFormatException e) { return false; }
     }
 
-    public Map<Order, Set<OrderLines>> getOrderLines() {
-        return order_lines;
+    private boolean isValidDate(String s) {
+        if (s == null || s.isBlank()) return true; // allow empty expiry dates
+        try { LocalDate.parse(s); return true; }
+        catch (DateTimeParseException e) { return false; }
     }
 
-    public Map<String, Order> getOrders() {
-        return orders;
-    }
-
-    public Map<String, Returns> getReturns() {
-        return returns;
+    private boolean isValidTimestamp(String s) {
+        if (s == null || s.isBlank()) return false;
+        try { LocalDateTime.parse(s); return true; }
+        catch (DateTimeParseException e) { return false; }
     }
 
     public void getWagons(List<String> lines){
         Wagon currentWagon = null;
-        Set<Box> currentBox = null;
+        Set<Box> currentBoxes = null;
 
         for(int i = 1; i < lines.size(); i++){
-            String line = lines.get(i);
-            String[] parts = line.split(",");
+            String[] parts = lines.get(i).split(",", -1);
+            if (parts.length < 6) {
+                importErrors.add("Invalid line in wagons.csv at " + (i+1) + ": wrong column count");
+                continue;
+            }
 
             String wagonID = parts[0];
             String boxID = parts[1];
             String sku = parts[2];
-            int quantity = Integer.parseInt(parts[3]);
-            String expiryDate = parts[4].isEmpty() ? null : parts[4];
+            String qtyStr = parts[3];
+            String expiryDate = parts[4];
             String receivedDate = parts[5];
 
-            if(currentWagon == null || !currentWagon.getWagonID().equals(wagonID)){
-                if(currentWagon != null && currentBox !=null) wagons.put(currentWagon, currentBox);
-                currentWagon = new Wagon(wagonID);
-                currentBox = new HashSet<>();
+            if (wagonID.isBlank() || boxID.isBlank() || sku.isBlank()) {
+                importErrors.add("Missing IDs in wagons.csv line " + (i+1));
+                continue;
+            }
+            if (!isValidInteger(qtyStr)) {
+                importErrors.add("Invalid quantity for box " + boxID + " in wagons.csv line " + (i+1));
+                continue;
+            }
+            int quantity = Integer.parseInt(qtyStr);
+            if (quantity <= 0) {
+                importErrors.add("Negative or zero quantity in wagons.csv line " + (i+1));
+                continue;
+            }
+            if (!isValidTimestamp(receivedDate)) {
+                importErrors.add("Invalid receivedAt timestamp in wagons.csv line " + (i+1));
+                continue;
+            }
+            if (!isValidDate(expiryDate)) {
+                importErrors.add("Invalid expiryDate in wagons.csv line " + (i+1));
+                continue;
+            }
+            if (!items.containsKey(sku)) {
+                importErrors.add("Unknown SKU " + sku + " in wagons.csv line " + (i+1));
+                continue;
             }
 
-            Box box = new Box(boxID, sku, quantity, expiryDate, receivedDate);
-            currentBox.add(box);
-        }
+            if(currentWagon == null || !currentWagon.getWagonID().equals(wagonID)){
+                if(currentWagon != null && currentBoxes !=null) wagons.put(currentWagon, currentBoxes);
+                currentWagon = new Wagon(wagonID);
+                currentBoxes = new HashSet<>();
+            }
 
-        if(currentWagon != null && currentBox !=null) wagons.put(currentWagon, currentBox);
+            Box box = new Box(boxID, sku, quantity,
+                    expiryDate.isBlank() ? null : expiryDate,
+                    receivedDate);
+            currentBoxes.add(box);
+        }
+        if(currentWagon != null && currentBoxes !=null) wagons.put(currentWagon, currentBoxes);
     }
 
     public void getBays(List<String> lines){
@@ -67,16 +136,27 @@ public class Warehouse {
         Set<Bay> currentBays = null;
 
         for(int i = 1; i < lines.size(); i++){
-            String line = lines.get(i);
-            String[] parts = line.split(",");
+            String[] parts = lines.get(i).split(";", -1);
+            if (parts.length < 4) {
+                importErrors.add("Invalid line in bays.csv at " + (i+1));
+                continue;
+            }
 
             String warehouseID = parts[0];
-            int aisle = Integer.parseInt(parts[1]);
-            int bay = Integer.parseInt(parts[2]);
-            int boxCapacity = Integer.parseInt(parts[3]);
+            String aisleStr = parts[1];
+            String bayStr = parts[2];
+            String capacityStr = parts[3];
 
-            // If we change warehouse its interior gets saved
-            if(currentWarehouseID != null || !currentWarehouseID.equals(warehouseID)){
+            if (!isValidInteger(aisleStr) || !isValidInteger(bayStr) || !isValidInteger(capacityStr)) {
+                importErrors.add("Invalid numeric values in bays.csv line " + (i+1));
+                continue;
+            }
+
+            int aisle = Integer.parseInt(aisleStr);
+            int bay = Integer.parseInt(bayStr);
+            int boxCapacity = Integer.parseInt(capacityStr);
+
+            if(currentWarehouseID == null || !currentWarehouseID.equals(warehouseID)){
                 if(currentWarehouseID != null && currentBays !=null) warehouses.put(currentWarehouseID, currentBays);
                 currentWarehouseID = warehouseID;
                 currentBays = new HashSet<>();
@@ -85,27 +165,64 @@ public class Warehouse {
             Bay bays = new Bay(bay, aisle, boxCapacity);
             currentBays.add(bays);
         }
-        // Save the last warehouse
+
         if(currentWarehouseID != null && currentBays !=null) warehouses.put(currentWarehouseID, currentBays);
     }
 
     public void getItems(List<String> lines){
-        String currentSKU = null;
-        Set<Item> currentItem = null;
-
         for(int i = 1; i < lines.size(); i++) {
-            String line = lines.get(i);
-            String[] parts = line.split(",");
+            String[] parts = lines.get(i).split(",", -1);
+            if (parts.length < 6) {
+                importErrors.add("Invalid line in items.csv at " + (i+1));
+                continue;
+            }
 
             String sku = parts[0];
             String name = parts[1];
             String category = parts[2];
             String unit = parts[3];
-            double volume = Double.parseDouble(parts[4]);
-            double unitWeight = Double.parseDouble(parts[5]);
+            String volumeStr = parts[4];
+            String weightStr = parts[5];
 
-            Item item = new Item(sku, name, category, unit, volume, unitWeight);
+            if (sku.isBlank() || name.isBlank()) {
+                importErrors.add("Missing SKU/name in items.csv line " + (i+1));
+                continue;
+            }
+            if (!isValidDouble(volumeStr) || !isValidDouble(weightStr)) {
+                importErrors.add("Invalid numeric fields in items.csv line " + (i+1));
+                continue;
+            }
+
+            Item item = new Item(sku, name, category, unit,
+                    Double.parseDouble(volumeStr),
+                    Double.parseDouble(weightStr));
             items.put(sku, item);
+        }
+    }
+
+    public void getOrders(List<String> lines) {
+        for (int i = 1; i < lines.size(); i++) {
+            String[] parts = lines.get(i).split(",", -1);
+            if (parts.length < 3) {
+                importErrors.add("Invalid line in orders.csv at " + (i+1));
+                continue;
+            }
+
+            String orderId = parts[0];
+            String dueDate = parts[1];
+            String priorityStr = parts[2];
+
+            if (!isValidInteger(priorityStr)) {
+                importErrors.add("Invalid priority in orders.csv line " + (i+1));
+                continue;
+            }
+            if (!isValidDate(dueDate)) {
+                importErrors.add("Invalid dueDate in orders.csv line " + (i+1));
+                continue;
+            }
+
+            Order order = new Order(orderId, Integer.parseInt(priorityStr), dueDate);
+            orders.put(orderId, order);
         }
     }
 
@@ -113,70 +230,80 @@ public class Warehouse {
         Order currentOrder = null;
         Set<OrderLines> currentLines = null;
 
-        for (int i = 1; i < lines.size(); i++) { // Ignora cabeçalho
-            String linha = lines.get(i);
-            String[] partes = linha.split(",");
+        for (int i = 1; i < lines.size(); i++) {
+            String[] parts = lines.get(i).split(",", -1);
+            if (parts.length < 4) {
+                importErrors.add("Invalid line in order_lines.csv at " + (i+1));
+                continue;
+            }
 
-            String orderId = partes[0];
-            int lineNo = Integer.parseInt(partes[1]);
-            String sku = partes[2];
-            int qty = Integer.parseInt(partes[3]);
+            String orderId = parts[0];
+            String lineNoStr = parts[1];
+            String sku = parts[2];
+            String qtyStr = parts[3];
 
-            // Checks if it's a new order
+            if (!isValidInteger(lineNoStr) || !isValidInteger(qtyStr)) {
+                importErrors.add("Invalid numbers in order_lines.csv line " + (i+1));
+                continue;
+            }
+            if (!items.containsKey(sku)) {
+                importErrors.add("Unknown SKU " + sku + " in order_lines.csv line " + (i+1));
+                continue;
+            }
+
+            int lineNo = Integer.parseInt(lineNoStr);
+            int qty = Integer.parseInt(qtyStr);
+
             if (currentOrder == null || !currentOrder.getOrderID().equals(orderId)) {
-                // Saves previous before changing
-                if (currentOrder != null && currentLines != null) {
-                    order_lines.put(currentOrder, currentLines);
-                }
-
-                // If orders with dueDate/priority have already been loaded, reuse the same object
-                if (orders.containsKey(orderId)) {
-                    currentOrder = orders.get(orderId);
-                } else {
-                    currentOrder = new Order(orderId); // fallback se não existir
-                    orders.put(orderId, currentOrder);
-                }
-
+                if (currentOrder != null && currentLines != null) order_lines.put(currentOrder, currentLines);
+                currentOrder = orders.getOrDefault(orderId, new Order(orderId));
+                orders.put(orderId, currentOrder);
                 currentLines = new HashSet<>();
             }
 
-            OrderLines orderLine = new OrderLines(lineNo, sku, qty);
-            currentLines.add(orderLine);
+            OrderLines ol = new OrderLines(lineNo, sku, qty);
+            currentLines.add(ol);
         }
 
-        // Saves the last order
-        if (currentOrder != null && currentLines != null) {
+        if (currentOrder != null && currentLines != null)
             order_lines.put(currentOrder, currentLines);
-        }
-    }
-
-    public void getOrders(List<String> lines) {
-        for (int i = 1; i < lines.size(); i++) {
-            String line = lines.get(i);
-            String[] parts = line.split(",");
-
-            String orderId = parts[0];
-            String dueDate = parts[1];
-            int priority = Integer.parseInt(parts[2]);
-
-            Order order = new Order(orderId, priority, dueDate);
-            orders.put(orderId, order);
-        }
     }
 
     public void getReturns(List<String> lines) {
         for (int i = 1; i < lines.size(); i++) {
-            String line = lines.get(i);
-            String[] parts = line.split(",");
+            String[] parts = lines.get(i).split(",", -1);
+            if (parts.length < 6) {
+                importErrors.add("Invalid line in returns.csv at " + (i+1));
+                continue;
+            }
 
             String returnID = parts[0];
             String sku = parts[1];
-            int qty = Integer.parseInt(parts[2]);
+            String qtyStr = parts[2];
             String reason = parts[3];
             String timestamp = parts[4];
             String expiryDate = parts[5];
 
-            Returns r = new Returns(returnID, sku, qty, reason, timestamp, expiryDate);
+            if (!isValidInteger(qtyStr)) {
+                importErrors.add("Invalid qty in returns.csv line " + (i+1));
+                continue;
+            }
+            if (!isValidTimestamp(timestamp)) {
+                importErrors.add("Invalid timestamp in returns.csv line " + (i+1));
+                continue;
+            }
+            if (!isValidDate(expiryDate)) {
+                importErrors.add("Invalid expiryDate in returns.csv line " + (i+1));
+                continue;
+            }
+            if (!items.containsKey(sku)) {
+                importErrors.add("Unknown SKU " + sku + " in returns.csv line " + (i+1));
+                continue;
+            }
+
+            Returns r = new Returns(returnID, sku,
+                    Integer.parseInt(qtyStr), reason,
+                    timestamp, expiryDate);
             returns.put(returnID, r);
         }
     }
