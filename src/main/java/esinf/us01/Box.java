@@ -1,13 +1,28 @@
 package esinf.us01;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeParseException;
 import java.util.Objects;
 
-public class Box implements Comparable<Box>{
+/**
+ * Box represents a container of products with a specific SKU.
+ * Implements Comparable for FEFO/FIFO ordering:
+ * 1. By expiry date (earliest first, null last) - FEFO for perishables
+ * 2. By received date (oldest first) - FIFO for non-perishables
+ * 3. By boxID (ascending) - tie-breaker
+ */
+public class Box implements Comparable<Box> {
     private String boxID;
     private String sku;
     private int quantity;
-    private String expiryDate;
-    private String receivedAt;
+    private String expiryDate; // ISO date string or null
+    private String receivedAt; // ISO timestamp string
+
+    // Location information
+    private String warehouseId;
+    private Integer aisle;
+    private Integer bayNumber;
 
     public Box(String boxID, String sku, int quantity, String expiryDate, String receivedAt) {
         this.boxID = boxID;
@@ -17,20 +32,13 @@ public class Box implements Comparable<Box>{
         this.receivedAt = receivedAt;
     }
 
+    // Getters
     public String getBoxID() {
         return boxID;
     }
 
-    public void setBoxID(String boxID) {
-        this.boxID = boxID;
-    }
-
     public String getSku() {
         return sku;
-    }
-
-    public void setSku(String sku) {
-        this.sku = sku;
     }
 
     public int getQuantity() {
@@ -45,69 +53,61 @@ public class Box implements Comparable<Box>{
         return expiryDate;
     }
 
-    public void setExpiryDate(String expiryDate) {
-        this.expiryDate = expiryDate;
-    }
-
     public String getReceivedAt() {
         return receivedAt;
-    }
-
-    public void setReceivedAt(String receivedAt) {
-        this.receivedAt = receivedAt;
     }
 
     public boolean hasExpirationDate() {
         return expiryDate != null && !expiryDate.isBlank();
     }
 
+    public String getWarehouseId() {
+        return warehouseId;
+    }
+
+    public Integer getAisle() {
+        return aisle;
+    }
+
+    public Integer getBayNumber() {
+        return bayNumber;
+    }
+
     /**
-     * Checks whether this box is expired compared to the given current date.
-     *
-     * @param currentDate current date in ISO format "YYYY-MM-DD"
-     * @return true if the box has an expiry date and it is before the current date
+     * Sets the location of this box in the warehouse.
      */
-    public boolean isExpired(String currentDate) {
-        // If there is no expiry date, it cannot be expired
-        if (this.expiryDate == null || this.expiryDate.isBlank()) return false;
-
-        // compareTo() from String → returns < 0 if expiryDate < currentDate
-        return this.expiryDate.compareTo(currentDate) < 0;
-    }
-
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Box)) return false;
-        Box box = (Box) o;
-        return Objects.equals(boxID, box.boxID);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(boxID);
-    }
-
-    @Override
-    public String toString() {
-        return "Box{" +
-                "id='" + boxID + '\'' +
-                ", sku='" + sku + '\'' +
-                ", quantity=" + quantity +
-                ", expiryDate='" + expiryDate + '\'' +
-                ", receivedAt='" + receivedAt + '\'' +
-                '}';
+    public void setLocation(String warehouseId, int aisle, int bayNumber) {
+        this.warehouseId = warehouseId;
+        this.aisle = aisle;
+        this.bayNumber = bayNumber;
     }
 
     /**
-    * This method defines the order of the boxes, according to the FEFO/FIFO rule:
-    * 1. We compare the expiry dates of the boxes (<expiryDate>) - the closest expire first.
-    *    - If both dates are null, the expiry date isn't considered.
-    *    - If one date is null, that box is considered "bigger" (comes after).
-    * 2. If the expiry dates are equal or null, we compare the received dates (<receivedAt>)
-    * being the oldest (first received) considered "minor".
-    * 3. If the received dates are equal, we compare the box IDs (<boxID>), in ascending order.
+     * Parses a date/timestamp string into a comparable LocalDateTime.
+     * Returns null if parsing fails.
+     */
+    private LocalDateTime parseDateTime(String dateStr) {
+        if (dateStr == null || dateStr.isBlank()) {
+            return null;
+        }
+
+        try {
+            return LocalDateTime.parse(dateStr);
+        } catch (DateTimeParseException e1) {
+            try {
+                return LocalDate.parse(dateStr).atStartOfDay();
+            } catch (DateTimeParseException e2) {
+                return null;
+            }
+        }
+    }
+
+    /**
+     * Compares boxes according to FEFO/FIFO rules:
+     * 1. Boxes with expiry dates come before those without (FEFO)
+     * 2. Among boxes with expiry dates, earlier expiry comes first
+     * 3. Among boxes without expiry dates, or with same expiry, earlier receivedAt comes first (FIFO)
+     * 4. If all else equal, compare by boxID (tie-breaker)
      */
     @Override
     public int compareTo(Box o) {
@@ -117,7 +117,7 @@ public class Box implements Comparable<Box>{
             int comp = this.receivedAt.compareTo(o.receivedAt);
             // If the dates are different, return the comparison result
             if(comp != 0) return comp;
-            // If the dates are equal, return box IDs in ascending order
+                // If the dates are equal, return box IDs in ascending order
             else return this.boxID.compareTo(o.boxID);
         }
 
@@ -138,5 +138,31 @@ public class Box implements Comparable<Box>{
 
         // 5. Received dates are equal, compare box IDs in ascending order
         return this.boxID.compareTo(o.boxID);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Box box = (Box) o;
+        return Objects.equals(boxID, box.boxID);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(boxID);
+    }
+
+    @Override
+    public String toString() {
+        String location = (warehouseId != null)
+                ? String.format(" @%s[%d/%d]", warehouseId, aisle, bayNumber)
+                : " @wagon";
+
+        return String.format("Box[id=%s, sku=%s, qty=%d, expiry=%s, received=%s%s]",
+                boxID, sku, quantity,
+                expiryDate != null ? expiryDate : "none",
+                receivedAt,
+                location);
     }
 }
