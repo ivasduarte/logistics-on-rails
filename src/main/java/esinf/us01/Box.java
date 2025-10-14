@@ -57,6 +57,25 @@ public class Box implements Comparable<Box>{
         this.receivedAt = receivedAt;
     }
 
+    public boolean hasExpirationDate() {
+        return expiryDate != null && !expiryDate.isBlank();
+    }
+
+    /**
+     * Checks whether this box is expired compared to the given current date.
+     *
+     * @param currentDate current date in ISO format "YYYY-MM-DD"
+     * @return true if the box has an expiry date and it is before the current date
+     */
+    public boolean isExpired(String currentDate) {
+        // If there is no expiry date, it cannot be expired
+        if (this.expiryDate == null || this.expiryDate.isBlank()) return false;
+
+        // compareTo() from String → returns < 0 if expiryDate < currentDate
+        return this.expiryDate.compareTo(currentDate) < 0;
+    }
+
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -81,7 +100,7 @@ public class Box implements Comparable<Box>{
                 '}';
     }
 
-    /*
+    /**
     * This method defines the order of the boxes, according to the FEFO/FIFO rule:
     * 1. We compare the expiry dates of the boxes (<expiryDate>) - the closest expire first.
     *    - If both dates are null, the expiry date isn't considered.

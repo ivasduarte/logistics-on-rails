@@ -7,6 +7,8 @@ import org.junit.jupiter.api.BeforeEach;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
 
 public class WarehouseTest {
@@ -20,9 +22,10 @@ public class WarehouseTest {
     }
 
     @Test
-    void testGetWagons() {
+    void testGetWagons() throws IOException {
+        warehouse.getItems(Files.readAllLines(Paths.get(Warehouse.ITEMS_FILE)));
         testLines.add("WagonID,BoxID,SKU,Quantity,ExpiryDate,ReceivedDate");
-        testLines.add("W1,B1,SKU1,10,2024-12-31,2023-10-10");
+        testLines.add("W1,B1,SKU0001,10,2024-12-31,2023-10-10");
         warehouse.getWagons(testLines);
         assertFalse(warehouse.getWagonsMap().isEmpty());
     }
@@ -38,15 +41,16 @@ public class WarehouseTest {
     @Test
     void testGetItems() {
         testLines.add("SKU,Name,Category,Unit,Volume,UnitWeight");
-        testLines.add("SKU1,Item1,Cat1,PC,1.0,0.5");
+        testLines.add("SKU0001,Item1,Cat1,PC,1.0,0.5");
         warehouse.getItems(testLines);
         assertFalse(warehouse.getItems().isEmpty());
     }
 
     @Test
-    void testGetOrderLines() {
+    void testGetOrderLines() throws IOException {
+        warehouse.getItems(Files.readAllLines(Paths.get(Warehouse.ITEMS_FILE)));
         testLines.add("OrderID,LineNo,SKU,Quantity");
-        testLines.add("O1,1,SKU1,5");
+        testLines.add("O1,1,SKU0001,5");
         warehouse.getOrderLines(testLines);
         assertFalse(warehouse.getOrderLines().isEmpty());
     }
@@ -60,9 +64,10 @@ public class WarehouseTest {
     }
 
     @Test
-    void testGetReturns() {
+    void testGetReturns() throws IOException {
+        warehouse.getItems(Files.readAllLines(Paths.get(Warehouse.ITEMS_FILE)));
         testLines.add("ReturnID,SKU,Quantity,Reason,Timestamp,ExpiryDate");
-        testLines.add("R1,SKU1,2,Damaged,2023-10-10,2024-12-31");
+        testLines.add("R1,SKU0001,2,Damaged,2023-10-10,2024-12-31");
         warehouse.getReturns(testLines);
         assertFalse(warehouse.getReturns().isEmpty());
     }
@@ -123,10 +128,11 @@ public class WarehouseTest {
     }
 
     @Test
-    void testDuplicateData() {
+    void testDuplicateData() throws IOException {
+        warehouse.getItems(Files.readAllLines(Paths.get(Warehouse.ITEMS_FILE)));
         testLines.add("WagonID,BoxID,SKU,Quantity,ExpiryDate,ReceivedDate");
-        testLines.add("W1,B1,SKU1,10,2024-12-31,2023-10-10");
-        testLines.add("W1,B1,SKU1,10,2024-12-31,2023-10-10");
+        testLines.add("W1,B1,SKU0001,10,2024-12-31,2023-10-10");
+        testLines.add("W1,B1,SKU0001,10,2024-12-31,2023-10-10");
         warehouse.getWagons(testLines);
         assertEquals(1, warehouse.getWagonsMap().size());
     }
@@ -134,15 +140,19 @@ public class WarehouseTest {
     @Test
     void testInvalidDataFormat() {
         testLines.add("WagonID,BoxID,SKU,Quantity,ExpiryDate,ReceivedDate");
-        testLines.add("W1,B1,SKU1,invalid,2024-12-31,2023-10-10");
-        assertThrows(NumberFormatException.class, () -> warehouse.getWagons(testLines));
+        testLines.add("W1,B1,SKU0001,invalid,2024-12-31,2023-10-10");
+        warehouse.getWagons(testLines);
+        assertFalse(warehouse.getImportErrors().isEmpty());
+        assertTrue(warehouse.getImportErrors().getFirst().contains("Invalid quantity"));
     }
 
     @Test
     void testMalformedCSVData() {
         testLines.add("WagonID,BoxID,SKU,Quantity,ExpiryDate,ReceivedDate");
-        testLines.add("W1,B1,SKU1,10,2024-12-31");
-        assertThrows(ArrayIndexOutOfBoundsException.class, () -> warehouse.getWagons(testLines));
+        testLines.add("W1,B1,SKU0001,10,2024-12-31");
+        warehouse.getWagons(testLines);
+        assertFalse(warehouse.getImportErrors().isEmpty());
+        assertTrue(warehouse.getImportErrors().getFirst().contains("Invalid line"));
     }
 
     @Test
@@ -155,15 +165,18 @@ public class WarehouseTest {
     @Test
     void testInvalidItemFormat() {
         testLines.add("SKU,Name,Category,Unit,Volume,UnitWeight");
-        testLines.add("SKU1,Item1,Cat1,PC,invalid,0.5");
-        assertThrows(NumberFormatException.class, () -> warehouse.getItems(testLines));
+        testLines.add("SKU0001,Item1,Cat1,PC,invalid,0.5");
+        warehouse.getItems(testLines);
+        assertFalse(warehouse.getImportErrors().isEmpty());
+        assertTrue(warehouse.getImportErrors().getFirst().contains("Invalid numeric"));
     }
 
     @Test
-    void testDuplicateOrderLines() {
+    void testDuplicateOrderLines() throws IOException {
+        warehouse.getItems(Files.readAllLines(Paths.get(Warehouse.ITEMS_FILE)));
         testLines.add("OrderID,LineNo,SKU,Quantity");
-        testLines.add("O1,1,SKU1,5");
-        testLines.add("O1,1,SKU1,5");
+        testLines.add("O1,1,SKU0001,5");
+        testLines.add("O1,1,SKU0001,5");
         warehouse.getOrderLines(testLines);
         assertEquals(1, warehouse.getOrderLines().values().iterator().next().size());
     }
@@ -172,21 +185,25 @@ public class WarehouseTest {
     void testInvalidOrderPriority() {
         testLines.add("OrderID,DueDate,Priority");
         testLines.add("O1,2024-12-31,invalid");
-        assertThrows(NumberFormatException.class, () -> warehouse.getOrders(testLines));
+        warehouse.getOrders(testLines);
+        assertFalse(warehouse.getImportErrors().isEmpty());
+        assertTrue(warehouse.getImportErrors().getFirst().contains("Invalid priority"));
     }
 
     @Test
     void testInvalidReturnsQuantity() {
         testLines.add("ReturnID,SKU,Quantity,Reason,Timestamp,ExpiryDate");
-        testLines.add("R1,SKU1,invalid,Damaged,2023-10-10,2024-12-31");
-        assertThrows(NumberFormatException.class, () -> warehouse.getReturns(testLines));
+        testLines.add("R1,SKU0001,invalid,Damaged,2023-10-10,2024-12-31");
+        warehouse.getReturns(testLines);
+        assertFalse(warehouse.getImportErrors().isEmpty());
+        assertTrue(warehouse.getImportErrors().getFirst().contains("Invalid qty"));
     }
 
     @Test
     void testMissingRequiredFields() {
         testLines.add("WagonID,BoxID,SKU,Quantity,ExpiryDate,ReceivedDate");
-        testLines.add(",B1,SKU1,10,2024-12-31,2023-10-10");
+        testLines.add(",B1,SKU0001,10,2024-12-31,2023-10-10");
         warehouse.getWagons(testLines);
-        assertFalse(warehouse.getWagonsMap().isEmpty());
+        assertTrue(warehouse.getWagonsMap().isEmpty());
     }
 }

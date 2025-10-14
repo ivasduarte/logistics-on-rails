@@ -37,9 +37,9 @@ public class Warehouse {
     public void loadAllData() throws IOException {
         importErrors.clear();
 
+        getItems(Files.readAllLines(Paths.get(ITEMS_FILE)));
         getWagons(Files.readAllLines(Paths.get(WAGONS_FILE)));
         getBays(Files.readAllLines(Paths.get(BAYS_FILE)));
-        getItems(Files.readAllLines(Paths.get(ITEMS_FILE)));
         getOrders(Files.readAllLines(Paths.get(ORDERS_FILE)));
         getOrderLines(Files.readAllLines(Paths.get(ORDER_LINES_FILE)));
         getReturns(Files.readAllLines(Paths.get(RETURNS_FILE)));
@@ -61,16 +61,15 @@ public class Warehouse {
         catch (NumberFormatException e) { return false; }
     }
 
-    private boolean isValidDate(String s) {
+    private boolean isValidDateOrTimestamp(String s) {
         if (s == null || s.isBlank()) return true; // allow empty expiry dates
-        try { LocalDate.parse(s); return true; }
-        catch (DateTimeParseException e) { return false; }
-    }
-
-    private boolean isValidTimestamp(String s) {
-        if (s == null || s.isBlank()) return false;
         try { LocalDateTime.parse(s); return true; }
-        catch (DateTimeParseException e) { return false; }
+        catch (DateTimeParseException e1) {
+            try{
+                LocalDate.parse(s);
+                return true;
+            }catch (DateTimeParseException e2){ return false; }
+        }
     }
 
     public void getWagons(List<String> lines){
@@ -81,6 +80,7 @@ public class Warehouse {
             String[] parts = lines.get(i).split(",", -1);
             if (parts.length < 6) {
                 importErrors.add("Invalid line in wagons.csv at " + (i+1) + ": wrong column count");
+                System.out.println(importErrors);
                 continue;
             }
 
@@ -93,27 +93,33 @@ public class Warehouse {
 
             if (wagonID.isBlank() || boxID.isBlank() || sku.isBlank()) {
                 importErrors.add("Missing IDs in wagons.csv line " + (i+1));
+                System.out.println(importErrors);
                 continue;
             }
             if (!isValidInteger(qtyStr)) {
                 importErrors.add("Invalid quantity for box " + boxID + " in wagons.csv line " + (i+1));
+                System.out.println(importErrors);
                 continue;
             }
             int quantity = Integer.parseInt(qtyStr);
             if (quantity <= 0) {
                 importErrors.add("Negative or zero quantity in wagons.csv line " + (i+1));
+                System.out.println(importErrors);
                 continue;
             }
-            if (!isValidTimestamp(receivedDate)) {
+            if (!isValidDateOrTimestamp(receivedDate)) {
                 importErrors.add("Invalid receivedAt timestamp in wagons.csv line " + (i+1));
+                System.out.println(importErrors);
                 continue;
             }
-            if (!isValidDate(expiryDate)) {
+            if (!isValidDateOrTimestamp(expiryDate)) {
                 importErrors.add("Invalid expiryDate in wagons.csv line " + (i+1));
+                System.out.println(importErrors);
                 continue;
             }
             if (!items.containsKey(sku)) {
                 importErrors.add("Unknown SKU " + sku + " in wagons.csv line " + (i+1));
+                System.out.println(importErrors);
                 continue;
             }
 
@@ -204,27 +210,39 @@ public class Warehouse {
         for (int i = 1; i < lines.size(); i++) {
             String[] parts = lines.get(i).split(",", -1);
             if (parts.length < 3) {
-                importErrors.add("Invalid line in orders.csv at " + (i+1));
+                importErrors.add("Invalid line in orders.csv at " + (i + 1));
                 continue;
             }
 
             String orderId = parts[0];
-            String dueDate = parts[1];
+            String dueDateStr = parts[1];
             String priorityStr = parts[2];
 
             if (!isValidInteger(priorityStr)) {
-                importErrors.add("Invalid priority in orders.csv line " + (i+1));
-                continue;
-            }
-            if (!isValidDate(dueDate)) {
-                importErrors.add("Invalid dueDate in orders.csv line " + (i+1));
+                importErrors.add("Invalid priority in orders.csv line " + (i + 1));
                 continue;
             }
 
-            Order order = new Order(orderId, Integer.parseInt(priorityStr), dueDate);
+            LocalDate dueDate = null;
+            if (dueDateStr != null && !dueDateStr.isBlank()) {
+                try {
+                    dueDate = LocalDate.parse(dueDateStr); // yyy-MM-dd
+                } catch (DateTimeParseException e1) {
+                    try {
+                        dueDate = LocalDateTime.parse(dueDateStr).toLocalDate(); // yyyy-MM-ddTHH:mm:ss
+                    } catch (DateTimeParseException e2) {
+                        importErrors.add("Invalid dueDate in orders.csv line " + (i + 1));
+                        continue; // Order isn't created with an invalid dueDate
+                    }
+                }
+            }
+
+            Order order = new Order(orderId, Integer.parseInt(priorityStr),
+                    dueDate != null ? dueDate.toString() : null);
             orders.put(orderId, order);
         }
     }
+
 
     public void getOrderLines(List<String> lines) {
         Order currentOrder = null;
@@ -255,7 +273,7 @@ public class Warehouse {
             int qty = Integer.parseInt(qtyStr);
 
             if (currentOrder == null || !currentOrder.getOrderID().equals(orderId)) {
-                if (currentOrder != null && currentLines != null) order_lines.put(currentOrder, currentLines);
+                if (currentOrder != null) order_lines.put(currentOrder, currentLines);
                 currentOrder = orders.getOrDefault(orderId, new Order(orderId));
                 orders.put(orderId, currentOrder);
                 currentLines = new HashSet<>();
@@ -265,7 +283,7 @@ public class Warehouse {
             currentLines.add(ol);
         }
 
-        if (currentOrder != null && currentLines != null)
+        if (currentOrder != null)
             order_lines.put(currentOrder, currentLines);
     }
 
@@ -288,11 +306,11 @@ public class Warehouse {
                 importErrors.add("Invalid qty in returns.csv line " + (i+1));
                 continue;
             }
-            if (!isValidTimestamp(timestamp)) {
+            if (!isValidDateOrTimestamp(timestamp)) {
                 importErrors.add("Invalid timestamp in returns.csv line " + (i+1));
                 continue;
             }
-            if (!isValidDate(expiryDate)) {
+            if (!isValidDateOrTimestamp(expiryDate)) {
                 importErrors.add("Invalid expiryDate in returns.csv line " + (i+1));
                 continue;
             }
