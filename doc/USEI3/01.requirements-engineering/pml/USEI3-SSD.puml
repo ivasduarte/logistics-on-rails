@@ -1,0 +1,35 @@
+@startuml
+skinparam monochrome true
+skinparam packageStyle rectangle
+skinparam shadowing false
+
+autonumber
+
+actor "Planner" as Planner
+participant ":System" as System
+
+activate Planner
+
+Planner -> System : asks to create picking plans
+    activate System
+    System --> Planner : requests trolley capacity
+    deactivate System
+
+Planner -> System : types trolley capacity
+    activate System
+    System --> Planner : requests packing heuristic (FF/FFD/BFD)
+    deactivate System
+
+Planner -> System : selects packing heuristic
+    activate System
+    System --> Planner : requests split/defer strategy
+    deactivate System
+
+Planner -> System : selects strategy
+    activate System
+    System --> Planner : displays picking plan results \n(trolley count, utilization, picking details)
+    deactivate System
+
+deactivate Planner
+
+@enduml
