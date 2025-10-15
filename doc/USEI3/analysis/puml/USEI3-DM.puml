@@ -1,0 +1,72 @@
+@startuml
+skinparam monochrome true
+skinparam packageStyle rectangle
+skinparam classAttributeIconSize 0
+
+hide circle
+hide methods
+
+class PickingPlan {
+    planId
+    totalTrolleys
+    packingStrategy
+}
+
+class Trolley {
+    trolleyId
+    capacityWeight
+    usedWeight
+    utilizationPercentage
+}
+
+class Bay {
+    warehouseId
+    aisleNum
+    bayId
+    capacityBoxes
+}
+
+class Aisle {
+    warehouseId
+    aisleNum
+}
+
+class Box {
+    boxId
+    boxId
+    maxCapacity
+    productQty
+    productType
+}
+
+class Item {
+    SKU
+    name
+    category
+    unit
+    volume
+    unitWeight
+}
+
+class OrderLine {
+    orderId
+    lineNo
+    sku
+    qty
+}
+
+class Orders {
+    orderId
+    dueDate
+    priority
+}
+
+PickingPlan "1" -- "*" Trolley : contains
+Trolley "1" -- "*" OrderLine : picks
+OrderLine "1..*" -- "1" Orders : has
+OrderLine "*" -- "1" Item : references
+Box "*" -- "1" Item : has
+Bay "1" -- "0..*" Box : has
+Aisle "1" -- "1..*" Bay : has
+
+@enduml
