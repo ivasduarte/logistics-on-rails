@@ -112,8 +112,8 @@ public class WarehouseTest {
         assertFalse(warehouse.getOrders().isEmpty());
         assertFalse(warehouse.getReturns().isEmpty());
 
-        // After loadAllData, wagons should be unloaded into bays
-        // So wagons should be empty but bays should have boxes
+        // After loadAllData, wagons should be unloaded into bays,
+        // So wagons should be empty, but bays should have boxes
         for (Set<Box> boxes : warehouse.getWagonsMap().values()) {
             assertTrue(boxes.isEmpty(), "Wagons should be empty after unloading");
         }
@@ -131,12 +131,6 @@ public class WarehouseTest {
         assertTrue(foundBoxesInBays, "Bays should contain boxes after unloading");
     }
 
-    @Test
-    void testInvalidFilePath() {
-        // This test needs to be adjusted - can't modify static final constant
-        // Instead, test with actual invalid data
-        assertDoesNotThrow(() -> warehouse.loadAllData());
-    }
 
     @Test
     void testEmptyFiles() {
