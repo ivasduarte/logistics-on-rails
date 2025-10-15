@@ -1,5 +1,9 @@
 package esinf.us01;
 
+import esinf.us02.Allocation;
+import esinf.us02.OrderAllocationResult;
+import esinf.us02.OrderLineResult;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -574,5 +578,112 @@ public class Warehouse {
             else
                 System.out.printf("Box %s has no expiration date%n", box.getBoxID());
         }
+    }
+
+    public OrderAllocationResult allocateOrder(String orderId, boolean strictMode) {
+        OrderAllocationResult result = new OrderAllocationResult(orderId);
+
+        Order order = orders.get(orderId);
+        if (order == null) {
+            return result;
+        }
+
+        Set<OrderLines> lines = order_lines.get(order);
+        if (lines == null || lines.isEmpty()) {
+            return result;
+        }
+
+        List<OrderLines> sortedLines = new ArrayList<>(lines);
+        sortedLines.sort(Comparator.comparingInt(OrderLines::getLineNo));
+
+        Map<String, Integer> boxReservations = new HashMap<>();
+
+        for (OrderLines line : sortedLines) {
+            OrderLineResult lineResult = new OrderLineResult(
+                    line.getSku(),
+                    line.getLineNo(),
+                    line.getQty()
+            );
+
+            int remainingQty = line.getQty();
+
+            List<BoxLocation> availableBoxes = collectBoxesForSku(line.getSku());
+
+            for (BoxLocation boxLoc : availableBoxes) {
+                if (remainingQty <= 0) {
+                    break; // Line fully satisfied
+                }
+
+                Box box = boxLoc.box;
+                Bay bay = boxLoc.bay;
+                String warehouseId = boxLoc.warehouseId;
+
+                int reservedQty = boxReservations.getOrDefault(box.getBoxID(), 0);
+                int availableQty = box.getQuantity() - reservedQty;
+
+                if (availableQty <= 0) {
+                    continue;
+                }
+
+                int allocateQty = Math.min(remainingQty, availableQty);
+
+                Allocation allocation = new Allocation(
+                        orderId,
+                        box.getBoxID(),
+                        warehouseId,
+                        line.getSku(),
+                        line.getLineNo(),
+                        bay.getAisle(),
+                        bay.getBayNumber(),
+                        allocateQty
+                );
+
+                lineResult.addAllocation(allocation);
+                boxReservations.put(box.getBoxID(), reservedQty + allocateQty);
+                remainingQty -= allocateQty;
+            }
+
+            lineResult.computeStatus(strictMode);
+            result.addLineResult(lineResult);
+        }
+        return result;
+    }
+
+    private static class BoxLocation implements Comparable<BoxLocation> {
+        Box box;
+        Bay bay;
+        String warehouseId;
+
+        BoxLocation(Box box, Bay bay, String warehouseId) {
+            this.box = box;
+            this.bay = bay;
+            this.warehouseId = warehouseId;
+        }
+
+        @Override
+        public int compareTo(BoxLocation other) {
+            return this.box.compareTo(other.box);
+        }
+    }
+
+    private List<BoxLocation> collectBoxesForSku(String sku) {
+        List<BoxLocation> boxLocations = new ArrayList<>();
+
+        for (Map.Entry<String, Set<Bay>> warehouseEntry : warehouses.entrySet()) {
+            String warehouseId = warehouseEntry.getKey();
+            Set<Bay> bays = warehouseEntry.getValue();
+
+            for (Bay bay : bays) {
+                for (Box box : bay.getBoxes()) {
+                    if (box.getSku().equals(sku)) {
+                        boxLocations.add(new BoxLocation(box, bay, warehouseId));
+                    }
+                }
+            }
+        }
+
+        Collections.sort(boxLocations);
+
+        return boxLocations;
     }
 }
