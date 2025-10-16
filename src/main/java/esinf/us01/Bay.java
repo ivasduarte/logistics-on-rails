@@ -59,17 +59,10 @@ public class Bay {
             return false;
         }
 
-        // Find correct position using binary search for efficiency
-        int insertIndex = 0;
-        for (Box existingBox : boxes) {
-            if (box.compareTo(existingBox) > 0) {
-                insertIndex++;
-            } else {
-                break;
-            }
-        }
+        // Simply add and then sort - simpler and guaranteed correct
+        boxes.add(box);
+        Collections.sort(boxes);
 
-        boxes.add(insertIndex, box);
         return true;
     }
 
@@ -90,6 +83,59 @@ public class Bay {
 
             if (box.getSku().equals(sku)) {
                 int available = box.getQuantity();
+
+                if (available <= remaining) {
+                    // Consume entire box
+                    remaining -= available;
+                    iterator.remove();
+                } else {
+                    // Partial consumption
+                    box.setQuantity(available - remaining);
+                    remaining = 0;
+                }
+            }
+        }
+
+        return remaining;
+    }
+
+    /**
+     * Dispatches items from the front of the bay (FEFO/FIFO).
+     * Removes or reduces quantities from boxes matching the given SKU.
+     * Records movements for WMS tracking.
+     *
+     * @param sku the SKU to dispatch
+     * @param quantity the quantity needed
+     * @param movements list to record movements
+     * @param bayLocation the location string for this bay
+     * @param orderId optional order ID
+     * @return remaining quantity (0 if fully dispatched)
+     */
+    public int dispatchFromFront(String sku, int quantity, List<Movements> movements,
+                                 String bayLocation, String orderId) {
+        int remaining = quantity;
+        Iterator<Box> iterator = boxes.iterator();
+
+        while (iterator.hasNext() && remaining > 0) {
+            Box box = iterator.next();
+
+            if (box.getSku().equals(sku)) {
+                int available = box.getQuantity();
+                int consumed = Math.min(available, remaining);
+
+                // Record movement
+                Movements movement = new Movements(
+                        Movements.MovementType.DISPATCH,
+                        box.getBoxID(),
+                        sku,
+                        consumed,
+                        bayLocation,
+                        "dispatch"
+                );
+                if (orderId != null) {
+                    movement.setOrderID(orderId);
+                }
+                movements.add(movement);
 
                 if (available <= remaining) {
                     // Consume entire box

@@ -1,15 +1,20 @@
 package esinf;
 
-import esinf.us01.*;
-import org.junit.jupiter.api.Test;
+import esinf.us01.Bay;
+import esinf.us01.Box;
+import esinf.us01.Wagon;
+import esinf.us01.Warehouse;
 import org.junit.jupiter.api.BeforeEach;
-
-import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 public class WarehouseTest {
     private Warehouse warehouse;
@@ -441,4 +446,49 @@ public class WarehouseTest {
 
         assertTrue(warehouse.getImportErrors().isEmpty());
     }
+
+    @Test
+    void testPrintMovementHistory(){
+        // Setup test data
+        warehouse.getItems(List.of("SKU,Name,Category,Unit,Volume,UnitWeight",
+                "SKU0001,Item1,Cat1,PC,1.0,0.5"));
+        warehouse.getBays(List.of("WarehouseID;Aisle;Bay;BoxCapacity",
+                "WH1;1;1;100"));
+        warehouse.getWagons(List.of("wagonId,boxId,sku,qty,expiryDate,receivedAt",
+                "WGN001,BOX001,SKU0001,20,2026-01-05,2025-07-21T22:02:00"));
+
+        warehouse.unloadWagonsIntoBays();
+
+        assertDoesNotThrow(() -> warehouse.printMovementHistory());
+        assertFalse(warehouse.getMovementHistory().isEmpty()); // verify if movement exists
+    }
+
+    @Test
+    void testExportToCSV() {
+        // Setup test data
+        warehouse.getItems(List.of("SKU,Name,Category,Unit,Volume,UnitWeight",
+                "SKU0001,Item1,Cat1,PC,1.0,0.5"));
+        warehouse.getBays(List.of("WarehouseID;Aisle;Bay;BoxCapacity",
+                "WH1;1;1;100"));
+        warehouse.getWagons(List.of("wagonId,boxId,sku,qty,expiryDate,receivedAt",
+                "WGN001,BOX001,SKU0001,20,2026-01-05,2025-07-21T22:02:00"));
+
+        warehouse.unloadWagonsIntoBays();
+
+        // Print movement to simulate a process
+        warehouse.printMovementHistory();
+
+        // Export to CSV
+        String csvContent = warehouse.exportToCSV();
+        assertNotNull(csvContent);
+        String[] csvLines = csvContent.split("\n");
+
+        // Verify header
+        assertTrue(csvLines.length > 1);
+        assertEquals("MovementID,Source,Destination,BoxID,SKU,Timestamp", csvLines[0]);
+
+        // Verify at least one movement exists in the CSV content
+        assertTrue(csvLines.length > 1);
+    }
+
 }

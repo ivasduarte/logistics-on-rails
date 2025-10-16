@@ -27,6 +27,8 @@ public class Warehouse {
     private List<String> importErrors = new ArrayList<>();
     private Set<String> allBoxIds = new HashSet<>(); // Track unique boxIds
 
+    private List<Movements> movementHistory = new ArrayList<>();
+
     private static final String CSV_BASE_PATH = "csv-docs/";
     public static String WAGONS_FILE = CSV_BASE_PATH + "wagons.csv";
     public static final String BAYS_FILE = CSV_BASE_PATH + "bays.csv";
@@ -43,6 +45,7 @@ public class Warehouse {
     public Map<String, Order> getOrders() { return orders; }
     public Map<String, Returns> getReturns() { return returns; }
     public List<String> getImportErrors() { return importErrors; }
+    public List<Movements> getMovementHistory() { return movementHistory; }
 
     /**
      * Loads all CSV data into memory with validation.
@@ -416,6 +419,16 @@ public class Warehouse {
                         if (bay.hasCapacity()) {
                             bay.addBoxInFEFOOrder(box);
                             box.setLocation(warehouseId, bay.getAisle(), bay.getBayNumber());
+                            // Register movement of UNLOAD (from wagon to bay location)
+                            Movements movement = new Movements(
+                                    Movements.MovementType.UNLOAD,
+                                    box.getBoxID(),
+                                    box.getSku(),
+                                    box.getQuantity(),
+                                    "wagon:" + entry.getKey().getWagonID(),
+                                    warehouseId + ":" + bay.getAisle() + "/" + bay.getBayNumber()
+                            );
+                            movementHistory.add(movement);
                             placed = true;
                             break;
                         }
@@ -484,7 +497,8 @@ public class Warehouse {
                     .thenComparingInt(Bay::getBayNumber));
 
             for (Bay bay : sortedBays) {
-                remaining = bay.dispatchFromFront(sku, remaining);
+                String bayLocation = whId + ":" + bay.getAisle() + "/" + bay.getBayNumber();
+                remaining = bay.dispatchFromFront(sku, remaining, movementHistory, bayLocation, null);
 
                 if (remaining == 0) {
                     return true; // Fully dispatched
@@ -561,9 +575,22 @@ public class Warehouse {
             return false;
         }
 
-        // Insert into new bay in FEFO order
+        // Insert into a new bay in FEFO order
         targetBay.addBoxInFEFOOrder(boxToRelocate);
         boxToRelocate.setLocation(newWarehouseId, newAisle, newBayNumber);
+
+        // Register movement of RELOCATE
+        String fromLoc = currentWarehouseId + ":" + currentBay.getAisle() + "/" + currentBay.getBayNumber();
+        String toLoc = newWarehouseId + ":" + newAisle + "/" + newBayNumber;
+        Movements movement = new Movements(
+                Movements.MovementType.RELOCATE,
+                boxToRelocate.getBoxID(),
+                boxToRelocate.getSku(),
+                boxToRelocate.getQuantity(),
+                fromLoc,
+                toLoc
+        );
+        movementHistory.add(movement);
 
         return true;
     }
@@ -578,6 +605,45 @@ public class Warehouse {
             else
                 System.out.printf("Box %s has no expiration date%n", box.getBoxID());
         }
+    }
+
+    /**
+     * Prints the complete movement history to console.
+     */
+    public void printMovementHistory(){
+        System.out.println("\nWAREHOUSE MOVEMENT HISTORY");
+        System.out.println("Total number of movements: " + movementHistory.size());
+        System.out.println();
+
+        for (Movements movement : movementHistory) {
+            System.out.println(movement);
+        }
+    }
+
+    /**
+     * Exports movement history to CSV format.
+     *
+     * @return CSV-formatted string containing movement history.
+     */
+    public String exportToCSV(){
+        StringBuilder csv = new StringBuilder();
+        // The tests expect a specific header
+        csv.append("MovementID,Source,Destination,BoxID,SKU,Timestamp").append("\n");
+
+        int movementId = 1;
+        for(Movements movement : movementHistory){
+            String source = movement.getFromLocation();
+            String destination = movement.getToLocation();
+            String line = movementId + "," +
+                    (source == null ? "" : source) + "," +
+                    (destination == null ? "" : destination) + "," +
+                    movement.getBoxID() + "," +
+                    movement.getSku() + "," +
+                    movement.getTimestamp();
+            csv.append(line).append("\n");
+            movementId++;
+        }
+        return csv.toString();
     }
 
     public OrderAllocationResult allocateOrder(String orderId, boolean strictMode) {
