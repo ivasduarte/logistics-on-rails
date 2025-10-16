@@ -1,0 +1,126 @@
+@startuml
+' Class Diagram: USEI01 - Core domain for Wagons Unloading
+
+class Warehouse {
+    - wagons: Map<Wagon, Set<Box>>
+    - warehouses: Map<String, Set<Bay>>
+    - items: Map<String, Item>
+    - order_lines: Map<Order, Set<OrderLines>>
+    - orders: Map<String, Order>
+    - returns: Map<String, Returns>
+    - importErrors: List<String>
+    - movementHistory: List<Movements>
+    + loadAllData(): void
+    + getItems(lines: List<String>): void
+    + getWagons(lines: List<String>): void
+    + getBays(lines: List<String>): void
+    + getOrders(lines: List<String>): void
+    + getOrderLines(lines: List<String>): void
+    + getReturns(lines: List<String>): void
+    + unloadWagonsIntoBays(): void
+    + dispatch(sku: String, qty: int, warehouseId: String): boolean
+    + relocate(boxId: String, warehouseId: String, aisle: int, bay: int): boolean
+    + printMovementHistory(): void
+    + exportToCSV(): String
+}
+
+class Bay {
+    - bayNumber: int
+    - aisle: int
+    - boxCapacity: int
+    - boxes: LinkedList<Box>
+    + hasCapacity(): boolean
+    + addBoxInFEFOOrder(box: Box): boolean
+    + dispatchFromFront(sku: String, qty: int): int
+    + dispatchFromFront(sku: String, qty: int, movements: List<Movements>, bayLocation: String, orderId: String): int
+    + removeBox(boxId: String): Box
+    + findBox(boxId: String): Box
+    + getSkuQuantity(sku: String): int
+}
+
+class Box {
+    - boxID: String
+    - sku: String
+    - quantity: int
+    - expiryDate: String
+    - receivedAt: String
+    - warehouseId: String
+    - aisle: Integer
+    - bayNumber: Integer
+    + setLocation(warehouseId: String, aisle: int, bay: int): void
+    + compareTo(o: Box): int
+}
+
+interface Comparable <<interface>>{
+    +compareTo(Box o): void
+}
+
+class Item {
+    - sku: String
+    - name: String
+    - category: String
+    - unit: String
+    - volume: double
+    - weight: double
+}
+
+class Wagon {
+    - wagonID: String
+}
+
+class Order {
+    - orderID: String
+    - priority: int
+    - dueDate: String
+}
+
+class OrderLines {
+    - lineNo: int
+    - sku: String
+    - qty: int
+}
+
+class Returns {
+    - returnID: String
+    - sku: String
+    - qty: int
+    - reason: String
+    - timestamp: String
+    - expiryDate: String
+}
+
+class Movements {
+    - timestamp: String
+    - type: MovementType
+    - boxID: String
+    - sku: String
+    - qty: int
+    - fromLocation: String
+    - toLocation: String
+    - orderID: String
+    - notes: String
+}
+
+enum MovementType {
+    UNLOAD
+    DISPATCH
+    RELOCATE
+    RETURN
+}
+
+Box ..|> Comparable
+Movements ..> MovementType
+
+Warehouse "1" -- "*" Movements : records
+Warehouse "1" -- "*" Bay : manages
+Warehouse "1" -- "*" Wagon : imports
+Warehouse "1" -- "*" Box : imports
+Warehouse "1" -- "*" Item : imports
+Warehouse "1" -- "*" Order : imports
+Warehouse "1" -- "*" OrderLines : imports
+Warehouse "1" -- "*" Returns : imports
+
+Bay "1" -- "*" Box : contains (ordered FEFO/FIFO)
+Box "*" --> "1" Item
+
+@enduml

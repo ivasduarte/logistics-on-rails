@@ -1,0 +1,185 @@
+@startuml
+
+!define ACTOR_COLOR #FFB6C1
+
+' Classes that contain the business logic and coordinate the workflow between Boundaries and Entities.
+!define CONTROL_COLOR #90EE90
+
+' Classes that represent **domain concepts** and store system data/state.
+!define ENTITY_COLOR #FFD700
+
+skinparam backgroundColor #FFFFFF
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+
+actor "Terminal\nOperator" as Operator ACTOR_COLOR
+participant ":Warehouse" as WH CONTROL_COLOR
+participant ":Bay" as Bay ENTITY_COLOR
+participant ":Box" as Box ENTITY_COLOR
+
+autonumber
+
+== 1. Load and Validate Data ==
+
+Operator -> WH : loadAllData()
+activate WH
+
+loop for each CSV file (items, wagons, bays, orders, order_lines, returns)
+    WH -> WH : validate CSV
+
+    alt validation errors found
+        WH -> WH : importErrors.add(errorMessage)
+    else data valid
+        WH -> WH : store in memory structures
+    end
+end
+
+alt errors exist
+    WH -> Operator : display import errors
+end
+
+WH --> Operator : data loaded
+
+deactivate WH
+
+|||
+
+== 2. Unload Wagons Into Bays ==
+
+Operator -> WH : unloadWagonsIntoBays()
+activate WH
+
+loop for each wagon
+    WH -> WH : get boxes from wagon
+
+    loop for each box
+        WH -> WH : find available bay (sorted by aisle, bayNumber)
+
+        WH -> Bay : hasCapacity()
+        activate Bay
+        Bay --> WH : true/false
+        deactivate Bay
+
+        alt bay has capacity
+            WH -> Bay : addBoxInFEFOOrder(box)
+            activate Bay
+
+            Bay -> Bay : findInsertPosition(box)
+            Bay --> WH : box added
+            deactivate Bay
+
+            WH -> Box : setLocation(warehouseId, aisle, bayNumber)
+            activate Box
+            Box --> WH : location set
+            deactivate Box
+
+            WH -> WH : log movement (UNLOAD)
+
+        else no capacity
+            WH -> WH : importErrors.add("No capacity for box")
+        end
+    end
+
+    WH -> WH : clear wagon boxes
+end
+
+WH --> Operator : unloading complete
+deactivate WH
+
+|||
+
+== 3. Dispatch (FEFO/FIFO Consumption) ==
+
+Operator -> WH : dispatch(sku, quantity, warehouseId)
+activate WH
+
+WH -> WH : get bays (sorted by aisle, bayNumber)
+
+loop for each bay while remaining > 0
+    WH -> Bay : dispatchFromFront(sku, remaining)
+    activate Bay
+
+    loop while remaining > 0 AND boxes with sku exist
+        Bay -> Bay : get first box with matching sku
+        Bay -> Box : getQuantity()
+        activate Box
+        Box --> Bay : qty
+        deactivate Box
+
+        alt box.qty >= remaining
+            Bay -> Box : setQuantity()
+            activate Box
+            Box --> Bay : quantity reduced
+            deactivate Box
+
+            Bay -> Bay : log movement (DISPATCH)
+            Bay -> Bay : remaining
+
+        else box.qty < remaining
+            Bay -> Bay : log movement (DISPATCH, box.qty)
+        end
+    end
+
+    Bay --> WH : remaining
+    deactivate Bay
+end
+
+alt remaining > 0
+    WH --> Operator : false (insufficient stock)
+else remaining == 0
+    WH --> Operator : true (success)
+end
+
+deactivate WH
+
+|||
+
+== 4. Relocate Box ==
+
+Operator -> WH : relocate(boxId, newWarehouseId, newAisle, newBayNumber)
+activate WH
+
+WH -> WH : search box in all bays
+
+loop for each bay
+    WH -> Bay : removeBox(boxId)
+    activate Bay
+
+    alt box found
+        Bay -> Bay : remove(box)
+        Bay --> WH : box
+    else not found
+        Bay --> WH : null
+    end
+    deactivate Bay
+end
+
+alt box not found
+    WH --> Operator : false (box not found)
+else box found
+    WH -> WH : validate target (warehouse, bay exists, has capacity)
+
+    alt validation fails
+        WH -> Bay : addBoxInFEFOOrder(box)
+        WH --> Operator : false (validation error)
+    else validation ok
+        WH -> Bay : addBoxInFEFOOrder(box)
+        activate Bay
+        Bay -> Bay : findInsertPosition(box)
+        Bay -> Bay : add(position, box)
+        Bay --> WH : box relocated
+        deactivate Bay
+
+        WH -> Box : setLocation(newWarehouseId, newAisle, newBayNumber)
+        activate Box
+        Box --> WH : location updated
+        deactivate Box
+
+        WH -> WH : log movement (RELOCATE)
+        WH --> Operator : true (success)
+    end
+end
+
+deactivate WH
+
+@enduml
