@@ -14,6 +14,19 @@ public class Allocation {
     private int bayNumber;
     private int quantityAllocated;
 
+    /**
+     * Class constructor.
+     * This method is used to create a new allocation record.
+     *
+     * @param orderID the order to be fulfilled
+     * @param boxID the box from which the items are allocated
+     * @param warehouseId the warehouse location
+     * @param sku the SKU being allocated
+     * @param lineNo the line number within the order
+     * @param aisle the aisle number
+     * @param bayNumber the bay number
+     * @param quantityAllocated the quantity allocated from the box
+     */
     public Allocation(String orderID, String boxID, String warehouseId, String sku,
                       int lineNo, int aisle, int bayNumber, int quantityAllocated) {
 
@@ -79,12 +92,20 @@ public class Allocation {
         this.quantityAllocated = quantityAllocated;
     }
 
+    /**
+     * Returns a formatted string of the allocation made.
+     * Format: 'orderID'_'lineNo': 'boxID' at Warehouse: 'warehouseId', Aisle: 'aisle', Bay: 'bayNumber' -> Allocated: 'quantityAllocated' units of 'sku'
+     */
     @Override
     public String toString() {
-        return String.format("%s.%d -> %s @ %s[%d/%d]: %d units of %s",
-                orderID, lineNo, boxID, warehouseId, aisle, bayNumber, quantityAllocated, sku); // Alterar posteriormente
+        return String.format("%s_%d: %s at Warehouse: %s, Aisle: %d, Bay: %d -> Allocated: %d units of %s",
+                orderID, lineNo, boxID, warehouseId, aisle, bayNumber, quantityAllocated, sku);
     }
 
+    /**
+     * Verifies if two allocations are the same.
+     * Allocations are equal if they represent the same order line and box.
+     */
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
