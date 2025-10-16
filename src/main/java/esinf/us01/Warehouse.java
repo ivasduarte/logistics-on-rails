@@ -421,7 +421,7 @@ public class Warehouse {
                             box.setLocation(warehouseId, bay.getAisle(), bay.getBayNumber());
                             // Register movement of UNLOAD (from wagon to bay location)
                             Movements movement = new Movements(
-                                    Movements.MovementType.UNLOAD,
+                                    MovementType.UNLOAD,
                                     box.getBoxID(),
                                     box.getSku(),
                                     box.getQuantity(),
@@ -583,7 +583,7 @@ public class Warehouse {
         String fromLoc = currentWarehouseId + ":" + currentBay.getAisle() + "/" + currentBay.getBayNumber();
         String toLoc = newWarehouseId + ":" + newAisle + "/" + newBayNumber;
         Movements movement = new Movements(
-                Movements.MovementType.RELOCATE,
+                MovementType.RELOCATE,
                 boxToRelocate.getBoxID(),
                 boxToRelocate.getSku(),
                 boxToRelocate.getQuantity(),

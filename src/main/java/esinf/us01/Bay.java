@@ -125,7 +125,7 @@ public class Bay {
 
                 // Record movement
                 Movements movement = new Movements(
-                        Movements.MovementType.DISPATCH,
+                        MovementType.DISPATCH,
                         box.getBoxID(),
                         sku,
                         consumed,

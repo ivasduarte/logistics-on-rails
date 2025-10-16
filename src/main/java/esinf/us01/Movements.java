@@ -11,22 +11,6 @@ public class Movements {
     private String orderID;
     private String notes;
 
-    public enum MovementType{
-        UNLOAD("Unload from wagon"),
-        DISPATCH("Dispatch to order"),
-        RELOCATE("Relocate between bays"),
-        RETURN("Return to warehouse");
-
-        private final String description;
-
-        MovementType(String description) {
-            this.description = description;
-        }
-
-        public String getDescription() {
-            return description;
-        }
-    }
 
     public Movements(MovementType type, String boxID, String sku, int qty, String fromLocation, String toLocation) {
         this.type = type;
