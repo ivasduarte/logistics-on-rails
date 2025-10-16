@@ -1,0 +1,109 @@
+@startuml
+skinparam monochrome true
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+
+hide circle
+hide methods
+
+class Warehouse {
+    - warehouseId: String
+}
+
+class Wagon {
+    - wagonID: String
+}
+
+class Bay {
+    - bayNumber: int
+    - aisle: int
+    - boxCapacity: int
+    - boxes: LinkedList<Box>
+}
+
+class Box {
+    - boxID: String
+    - sku: String
+    - quantity: int
+    - expiryDate: String
+    - receivedAt: String
+    - warehouseId: String
+    - aisle: Integer
+    - bayNumber: Integer
+}
+
+class Item {
+    - sku: String
+    - itemName: String
+    - itemCategory: String
+    - unit: String
+    - weight: double
+    - unitWeight: double
+}
+
+class Order {
+    - orderID: String
+    - dueDate: String
+    - priority: int
+}
+
+class OrderLines {
+    - lineNo: int
+    - sku: String
+    - qty: int
+}
+
+class Returns {
+    - returnID: String
+    - sku: String
+    - qty: int
+    - reason: String
+    - timestamp: String
+    - expiryDate: String
+}
+
+class Movements {
+    - timestamp: String
+    - type: MovementType
+    - boxID: String
+    - sku: String
+    - qty: int
+    - fromLocation: String
+    - toLocation: String
+    - orderID: String
+    - notes: String
+}
+
+enum MovementType {
+    UNLOAD
+    DISPATCH
+    RELOCATE
+    RETURN
+}
+
+
+' Relationships
+Warehouse "1" -- "*" Wagon : manages
+Warehouse "1" -- "*" Bay : contains
+Warehouse "1" -- "*" Item : stores
+Warehouse "1" -- "*" Order : processes
+Warehouse "1" -- "*" Returns : handles
+Warehouse "1" -- "*" Movements : tracks
+
+Wagon "1" -- "*" Box : carries
+
+Bay "1" -- "*" Box : stores
+
+Box "1" -- "1" Item : contains
+
+Order "1" -- "*" OrderLines : contains
+
+OrderLines "1" -- "1" Item : references
+
+Returns "1" -- "1" Item : references
+
+Movements "1" -- "1" MovementType : has type
+Movements "1" -- "1" Box : involves
+
+@enduml
