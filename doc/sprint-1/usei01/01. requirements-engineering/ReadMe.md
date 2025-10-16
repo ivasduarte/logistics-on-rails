@@ -19,7 +19,8 @@ This ensures that goods closest to expiration are dispatched first, minimizing s
 rotation of stocks and prevents inventory stagnation. Each item with a unique SKU is stored in boxes, each with a
 unique location code (Aisle/Bay) to facilitate picking and restocking. Every movement of goods (whether unloading,
 relocation between bays, transfer to another aisle or bay, or final dispatch) is meticulously recorded in a warehouse
-management system (WAS). This ensures: 1. Accurate stock tracking by SKU and storage location; 2. Full traceability of all cargo throughout the cargos lifecycle in the terminal.
+management system (WAS). This ensures: 1. Accurate stock tracking by SKU and storage location; 2. Full traceability 
+of all cargo throughout the cargo lifecycle in the terminal.
 
 **From the client clarifications:**
 
@@ -108,4 +109,41 @@ expiryDate/receivedAt its unchanged except for inserting it into the new bay's F
 
 
 ### 1.7. System Sequence Diagram (SSD)
+
+![System Sequence Diagram](svg/USEI01-SSD.svg)
+
+The System Sequence Diagram shows the interactions between the Terminal Operator and the System for the main operations of the USEI01:
+
+#### **Main Operations:**
+
+1. **Unload Wagons Operation**:
+- CSV data loading
+- Data validation
+- Unloading wagons into bays
+- Processing existing orders
+
+2. **View Movement History**:
+- Query movement history
+- Display movements with timestamps
+
+3. **Export Movements**:
+- Export movements to CSV format
+- Generate structured content
+
+4. **Dispatch Operation**:
+- Shipment of products following FEFO/FIFO
+- Support for partial shipment
+- Movement recording
+
+5. **Relocate Box**:
+- Relocation of boxes between bays
+- Maintenance of FEFO/FIFO order
+- Movement recording
+
+#### **System Features:**
+- **Strict validation**: Verification of SKUs, date formats, and box uniqueness
+- **Full traceability**: All movements are recorded with timestamps
+- **Automatic FEFO/FIFO**: Automatic application of business rules
+- **Error management**: Detailed error feedback to the operator
+- **Data export**: Ability to export transactions to CSV
 

@@ -1,0 +1,71 @@
+@startuml
+!theme plain
+
+actor "Terminal Operator" as Operator
+participant "System" as System
+
+== Unload Wagons Operation ==
+
+Operator -> System: requestUnloadWagons()
+activate System
+
+System -> System: loadAllData()
+note right: Load CSV files:\n- items.csv\n- wagons.csv\n- bays.csv\n- orders.csv\n- order_lines.csv\n- returns.csv
+
+System -> System: validateData()
+note right: Validate:\n- SKU references\n- Numeric fields\n- Date formats\n- Box uniqueness
+
+System -> System: unloadWagonsIntoBays()
+note right: For each wagon:\n- Distribute boxes to bays\n- Apply FEFO/FIFO ordering\n- Respect bay capacity\n- Record movements
+
+System -> System: processExistingOrders()
+note right: Process all orders:\n- Dispatch following FEFO/FIFO\n- Record dispatch movements\n- Handle partial fulfillment
+
+System --> Operator: unloadResult(success: boolean, errors: List<String>)
+deactivate System
+
+== View Movement History ==
+
+Operator -> System: requestMovementHistory()
+activate System
+
+System -> System: getMovementHistory()
+note right: Retrieve all recorded\nmovements with timestamps
+
+System --> Operator: movementHistory(movements: List<Movement>)
+deactivate System
+
+== Export Movements ==
+
+Operator -> System: requestExportMovements()
+activate System
+
+System -> System: exportToCSV()
+note right: Generate CSV format:\n- MovementID\n- Source\n- Destination\n- BoxID\n- SKU\n- Timestamp
+
+System --> Operator: csvContent(content: String)
+deactivate System
+
+== Dispatch Operation ==
+
+Operator -> System: requestDispatch(sku: String, quantity: int)
+activate System
+
+System -> System: dispatch(sku, quantity)
+note right: Find boxes by SKU\n- Apply FEFO/FIFO rules\n- Consume from bay fronts\n- Support partial dispatch\n- Record movements
+
+System --> Operator: dispatchResult(success: boolean, remainingQty: int)
+deactivate System
+
+== Relocate Box ==
+
+Operator -> System: requestRelocate(boxId: String, newWarehouseId: String, newAisle: int, newBayNumber: int)
+activate System
+
+System -> System: relocate(boxId, newWarehouseId, newAisle, newBayNumber)
+note right: Find current box location\n- Remove from current bay\n- Insert in new bay (FEFO order)\n- Update box location\n- Record movement
+
+System --> Operator: relocateResult(success: boolean, error: String)
+deactivate System
+
+@enduml
