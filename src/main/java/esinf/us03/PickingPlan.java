@@ -80,57 +80,47 @@ public class PickingPlan {
     }
 
     public String generateSummaryReport() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("=== Picking Plan Summary ===\n");
-        sb.append(String.format("Heuristic: %s\n", heuristic));
-        sb.append(String.format("Trolley Capacity: %.2f kg\n", trolleyCapacity));
-        sb.append(String.format("Number of Trolleys: %d\n", getTrolleyCount()));
-        sb.append(String.format("Total Allocations: %d\n", totalAllocations));
-        sb.append(String.format("Total Weight: %.2f kg\n", totalWeight));
-        sb.append(String.format("Average Utilization: %.1f%%\n\n", getAverageUtilization()));
+        String report = "";
+        report += "Picking Plan Summary\n";
+        report += "Heuristic: " + heuristic + "\n";
+        report += "Trolley Capacity: " + trolleyCapacity + " kg\n";
+        report += "Total Number of Trolleys: " + getTrolleyCount() + "\n\n";
 
-        sb.append("Trolley Details:\n");
+        report += "Trolley Utilization:\n";
         for (Trolley trolley : trolleys) {
-            sb.append("  ").append(trolley.toString()).append("\n");
+            report += "Trolley " + trolley.getTrolleyNumber() + ": " + trolley.getUtilization() + "% full\n";
         }
 
-        return sb.toString();
+        return report;
     }
 
     public String generateDetailedPickingList() {
-        StringBuilder sb = new StringBuilder();
-        sb.append(String.format("=== Detailed Picking Plan (%s) ===\n\n", heuristic));
+        String report = "";
+        report += "Picking Plan: " + heuristic + "\n\n";
 
         for (Trolley trolley : trolleys) {
-            sb.append(String.format("Trolley %d (%.1f%% full - %.2f/%.2f kg):\n",
-                    trolley.getTrolleyNumber(),
-                    trolley.getUtilization(),
-                    trolley.getUsedWeight(),
-                    trolley.getCapacityWeight()));
-
-            sb.append(String.format("%-10s %-8s %-10s %-8s %-10s %-10s %-8s\n",
-                    "Order ID", "Line No", "Box ID", "Aisle", "Bay", "SKU", "Quantity"));
-            sb.append("-".repeat(80)).append("\n");
+            report += "Trolley " + trolley.getTrolleyNumber() + "\n";
+            report += "Utilization: " + trolley.getUtilization() + "%\n\n";
 
             for (var allocation : trolley.getAllocations()) {
-                sb.append(String.format("%-10s %-8d %-10s %-8d %-10d %-10s %-8d\n",
-                        allocation.getOrderID(),
-                        allocation.getLineNo(),
-                        allocation.getBoxID(),
-                        allocation.getAisle(),
-                        allocation.getBayNumber(),
-                        allocation.getSku(),
-                        allocation.getQuantityAllocated()));
+                report += "Order ID: " + allocation.getOrderID() + "\n";
+                report += "Line Number: " + allocation.getLineNo() + "\n";
+                report += "Aisle: " + allocation.getAisle() + "\n";
+                report += "Bay Number: " + allocation.getBayNumber() + "\n";
+                report += "Box ID: " + allocation.getBoxID() + "\n";
+                report += "SKU: " + allocation.getSku() + "\n";
+                report += "Quantity: " + allocation.getQuantityAllocated() + "\n";
+                report += "\n";
             }
-            sb.append("\n");
+            report += "\n";
         }
 
-        return sb.toString();
+        return report;
     }
 
     @Override
     public String toString() {
-        return String.format("PickingPlan[%s, trolleys=%d, allocations=%d, avgUtil=%.1f%%]",
-                heuristic, getTrolleyCount(), totalAllocations, getAverageUtilization());
+        return "PickingPlan: " + heuristic + ", trolleys=" + getTrolleyCount() +
+                ", allocations=" + totalAllocations + ", avgUtil=" + getAverageUtilization() + "%";
     }
 }

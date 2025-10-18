@@ -30,8 +30,7 @@ public class PickingPlanService {
         for (Allocation allocation : allocations) {
             Double unitWeight = itemWeights.get(allocation.getSku());
             if (unitWeight == null) {
-                throw new IllegalArgumentException(
-                        "No weight found for SKU: " + allocation.getSku());
+                unitWeight = 0.0;
             }
 
             double totalWeight = unitWeight * allocation.getQuantityAllocated();
@@ -44,23 +43,26 @@ public class PickingPlanService {
     private PickingPlan firstFit(List<AllocationWeight> allocationsWithWeights,
                                  double trolleyCapacity) {
 
+        if (trolleyCapacity <= 0) {
+            return new PickingPlan(PackingHeuristic.FIRST_FIT, trolleyCapacity);
+        }
+
         PickingPlan plan = new PickingPlan(PackingHeuristic.FIRST_FIT, trolleyCapacity);
         List<Trolley> trolleys = new ArrayList<>();
 
         for (AllocationWeight aw : allocationsWithWeights) {
             boolean placed = false;
+
             for (Trolley trolley : trolleys) {
                 if (trolley.addAllocation(aw.getAllocation(), aw.getWeight())) {
                     placed = true;
                     break;
                 }
             }
+
             if (!placed) {
                 Trolley newTrolley = new Trolley(trolleys.size() + 1, trolleyCapacity);
-                if (!newTrolley.addAllocation(aw.getAllocation(), aw.getWeight())) {
-                    throw new IllegalArgumentException(
-                            "Allocation exceeds trolley capacity: " + aw.getWeight() + " > " + trolleyCapacity);
-                }
+                newTrolley.addAllocation(aw.getAllocation(), aw.getWeight());
                 trolleys.add(newTrolley);
             }
         }
@@ -91,10 +93,7 @@ public class PickingPlanService {
 
             if (!placed) {
                 Trolley newTrolley = new Trolley(trolleys.size() + 1, trolleyCapacity);
-                if (!newTrolley.addAllocation(aw.getAllocation(), aw.getWeight())) {
-                    throw new IllegalArgumentException(
-                            "Allocation exceeds trolley capacity: " + aw.getWeight() + " > " + trolleyCapacity);
-                }
+                newTrolley.addAllocation(aw.getAllocation(), aw.getWeight());
                 trolleys.add(newTrolley);
             }
         }
@@ -126,14 +125,12 @@ public class PickingPlanService {
                     }
                 }
             }
+
             if (bestTrolley != null) {
                 bestTrolley.addAllocation(aw.getAllocation(), aw.getWeight());
             } else {
                 Trolley newTrolley = new Trolley(trolleys.size() + 1, trolleyCapacity);
-                if (!newTrolley.addAllocation(aw.getAllocation(), aw.getWeight())) {
-                    throw new IllegalArgumentException(
-                            "Allocation exceeds trolley capacity: " + aw.getWeight() + " > " + trolleyCapacity);
-                }
+                newTrolley.addAllocation(aw.getAllocation(), aw.getWeight());
                 trolleys.add(newTrolley);
             }
         }
@@ -160,29 +157,23 @@ public class PickingPlanService {
 
         Map<PackingHeuristic, PickingPlan> results = compareHeuristics(allocations, trolleyCapacity);
 
-        StringBuilder sb = new StringBuilder();
-        sb.append("=== Packing Heuristics Comparison ===\n\n");
-        sb.append(String.format("Total Allocations: %d\n", allocations.size()));
-        sb.append(String.format("Trolley Capacity: %.2f kg\n\n", trolleyCapacity));
-
-        sb.append(String.format("%-25s %10s %15s\n", "Heuristic", "Trolleys", "Avg Util (%)"));
-        sb.append("-".repeat(52)).append("\n");
+        String report = "";
+        report += "Packing Heuristics Comparison\n\n";
 
         for (Map.Entry<PackingHeuristic, PickingPlan> entry : results.entrySet()) {
             PickingPlan plan = entry.getValue();
-            sb.append(String.format("%-25s %10d %15.1f\n",
-                    entry.getKey(),
-                    plan.getTrolleyCount(),
-                    plan.getAverageUtilization()));
+            report += "Heuristic: " + entry.getKey() + "\n";
+            report += "Total Number of Trolleys: " + plan.getTrolleyCount() + "\n";
+            report += "Trolley Utilization:\n";
+            for (Trolley trolley : plan.getTrolleys()) {
+                report += "  Trolley " + trolley.getTrolleyNumber() + ": " + trolley.getUtilization() + "% full\n";
+            }
+            report += "\n";
         }
 
-        sb.append("\n");
-        for (Map.Entry<PackingHeuristic, PickingPlan> entry : results.entrySet()) {
-            sb.append(entry.getValue().generateSummaryReport()).append("\n");
-        }
-
-        return sb.toString();
+        return report;
     }
+
     public Map<String, Double> getItemWeights() {
         return itemWeights;
     }

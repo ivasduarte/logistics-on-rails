@@ -73,7 +73,7 @@ public class Trolley {
 
     @Override
     public String toString() {
-        return String.format("Trolley %d: %.2f/%.2f kg (%.1f%% full) - %d allocation(s)",
-                trolleyNumber, usedWeight, capacityWeight, getUtilization(), allocations.size());
+        return "Trolley " + trolleyNumber + ": " + usedWeight + "/" + capacityWeight +
+                " kg (" + getUtilization() + "% full) - " + allocations.size() + " allocation(s)";
     }
 }

@@ -35,7 +35,6 @@ public class AllocationWeight implements Comparable<AllocationWeight> {
 
     @Override
     public String toString() {
-        return String.format("AllocationWeight[%s, weight=%.2f kg]",
-                allocation.getBoxID(), weight);
+        return "AllocationWeight: " + allocation.getBoxID() + ", weight=" + weight + " kg";
     }
 }
