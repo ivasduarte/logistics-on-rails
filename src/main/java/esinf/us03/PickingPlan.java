@@ -1,5 +1,6 @@
 package esinf.us03;
 
+import esinf.us02.Allocation;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -10,6 +11,7 @@ public class PickingPlan {
     private List<Trolley> trolleys;
     private int totalAllocations;
     private double totalWeight;
+    private List<SkippedAllocation> skippedAllocations;
 
     public PickingPlan(PackingHeuristic heuristic, double trolleyCapacity) {
         this.heuristic = heuristic;
@@ -17,6 +19,7 @@ public class PickingPlan {
         this.trolleys = new ArrayList<>();
         this.totalAllocations = 0;
         this.totalWeight = 0.0;
+        this.skippedAllocations = new ArrayList<>();
     }
 
     public PackingHeuristic getHeuristic() {
@@ -41,6 +44,14 @@ public class PickingPlan {
 
     public double getTotalWeight() {
         return totalWeight;
+    }
+
+    public List<SkippedAllocation> getSkippedAllocations() {
+        return new ArrayList<>(skippedAllocations);
+    }
+
+    public int getSkippedCount() {
+        return skippedAllocations.size();
     }
 
     public double getAverageUtilization() {
@@ -70,6 +81,10 @@ public class PickingPlan {
         totalWeight += trolley.getUsedWeight();
     }
 
+    public void addSkippedAllocation(Allocation allocation, double weight) {
+        skippedAllocations.add(new SkippedAllocation(allocation, weight));
+    }
+
     private void recalculateMetrics() {
         totalAllocations = trolleys.stream()
                 .mapToInt(Trolley::getAllocationCount)
@@ -84,11 +99,19 @@ public class PickingPlan {
         report += "Picking Plan Summary\n";
         report += "Heuristic: " + heuristic + "\n";
         report += "Trolley Capacity: " + trolleyCapacity + " kg\n";
-        report += "Total Number of Trolleys: " + getTrolleyCount() + "\n\n";
+        report += "Total Number of Trolleys: " + getTrolleyCount() + "\n";
+        report += "Skipped Allocations: " + getSkippedCount() + "\n\n";
 
         report += "Trolley Utilization:\n";
         for (Trolley trolley : trolleys) {
-            report += "Trolley " + trolley.getTrolleyNumber() + ": " + trolley.getUtilization() + "% full\n";
+            report += "Trolley " + trolley.getTrolleyNumber() + ": " + String.format("%.2f", trolley.getUtilization()) + "% full\n";
+        }
+
+        if (!skippedAllocations.isEmpty()) {
+            report += "\nSkipped Allocations (exceeded capacity):\n";
+            for (SkippedAllocation skipped : skippedAllocations) {
+                report += "  BoxID: " + skipped.allocation.getBoxID() + ", SKU: " + skipped.allocation.getSku() + ", Weight: " + String.format("%.2f", skipped.weight) + " kg\n";
+            }
         }
 
         return report;
@@ -100,19 +123,34 @@ public class PickingPlan {
 
         for (Trolley trolley : trolleys) {
             report += "Trolley " + trolley.getTrolleyNumber() + "\n";
-            report += "Utilization: " + trolley.getUtilization() + "%\n\n";
+            report += "Utilization: " + String.format("%.2f", trolley.getUtilization()) + "%\n\n";
 
-            for (var allocation : trolley.getAllocations()) {
+            for (var allocationEntry : trolley.getAllocationEntries()) {
+                Allocation allocation = allocationEntry.allocation;
                 report += "Order ID: " + allocation.getOrderID() + "\n";
                 report += "Line Number: " + allocation.getLineNo() + "\n";
                 report += "Aisle: " + allocation.getAisle() + "\n";
                 report += "Bay Number: " + allocation.getBayNumber() + "\n";
                 report += "Box ID: " + allocation.getBoxID() + "\n";
                 report += "SKU: " + allocation.getSku() + "\n";
-                report += "Quantity: " + allocation.getQuantityAllocated() + "\n";
-                report += "\n";
+                report += "Quantity: " + allocation.getQuantityAllocated();
+                if (allocationEntry.isPartial) {
+                    report += " (PARTIAL: " + allocation.getQuantityAllocated() + "/" + allocationEntry.originalQuantity + ")";
+                }
+                report += "\n\n";
             }
             report += "\n";
+        }
+
+        if (!skippedAllocations.isEmpty()) {
+            report += "\nSkipped Allocations (exceeded capacity):\n";
+            for (SkippedAllocation skipped : skippedAllocations) {
+                report += "  Order ID: " + skipped.allocation.getOrderID() + "\n";
+                report += "  Box ID: " + skipped.allocation.getBoxID() + "\n";
+                report += "  SKU: " + skipped.allocation.getSku() + "\n";
+                report += "  Quantity: " + skipped.allocation.getQuantityAllocated() + "\n";
+                report += "  Weight: " + String.format("%.2f", skipped.weight) + " kg\n\n";
+            }
         }
 
         return report;
@@ -120,7 +158,16 @@ public class PickingPlan {
 
     @Override
     public String toString() {
-        return "PickingPlan: " + heuristic + ", trolleys=" + getTrolleyCount() +
-                ", allocations=" + totalAllocations + ", avgUtil=" + getAverageUtilization() + "%";
+        return "PickingPlan: " + heuristic + ", trolleys=" + getTrolleyCount() + ", allocations=" + totalAllocations + ", skipped=" + getSkippedCount() + ", avgUtil=" + String.format("%.2f", getAverageUtilization()) + "%";
+    }
+
+    public static class SkippedAllocation {
+        public final Allocation allocation;
+        public final double weight;
+
+        public SkippedAllocation(Allocation allocation, double weight) {
+            this.allocation = allocation;
+            this.weight = weight;
+        }
     }
 }

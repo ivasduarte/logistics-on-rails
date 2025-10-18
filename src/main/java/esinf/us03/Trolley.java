@@ -9,13 +9,15 @@ public class Trolley {
     private int trolleyNumber;
     private double capacityWeight;
     private double usedWeight;
-    private List<Allocation> allocations;
+    private List<AllocationEntry> allocationEntries;
+    private List<String> logs;
 
     public Trolley(int trolleyNumber, double capacityWeight) {
         this.trolleyNumber = trolleyNumber;
         this.capacityWeight = capacityWeight;
         this.usedWeight = 0.0;
-        this.allocations = new ArrayList<>();
+        this.allocationEntries = new ArrayList<>();
+        this.logs = new ArrayList<>();
     }
 
     public int getTrolleyNumber() {
@@ -35,7 +37,19 @@ public class Trolley {
     }
 
     public List<Allocation> getAllocations() {
-        return new ArrayList<>(allocations);
+        List<Allocation> allocations = new ArrayList<>();
+        for (AllocationEntry entry : allocationEntries) {
+            allocations.add(entry.allocation);
+        }
+        return allocations;
+    }
+
+    public List<AllocationEntry> getAllocationEntries() {
+        return new ArrayList<>(allocationEntries);
+    }
+
+    public List<String> getLogs() {
+        return new ArrayList<>(logs);
     }
 
     public double getUtilization() {
@@ -51,12 +65,25 @@ public class Trolley {
     }
 
     public boolean addAllocation(Allocation allocation, double weight) {
+        return addAllocation(allocation, weight, false, null);
+    }
+
+    public boolean addAllocation(Allocation allocation, double weight, boolean isPartial, Integer originalQuantity) {
         if (weight <= getRemainingCapacity()) {
-            allocations.add(allocation);
+            allocationEntries.add(new AllocationEntry(allocation, weight, isPartial, originalQuantity));
             usedWeight += weight;
+            if (isPartial) {
+                addLog("PARTIAL ALLOCATION: BoxID=" + allocation.getBoxID() +
+                        ", SKU=" + allocation.getSku() +
+                        " (Qty: " + allocation.getQuantityAllocated() + "/" + originalQuantity + ")");
+            }
             return true;
         }
         return false;
+    }
+
+    public void addLog(String logMessage) {
+        logs.add(logMessage);
     }
 
     public boolean canFit(double weight) {
@@ -64,16 +91,32 @@ public class Trolley {
     }
 
     public int getAllocationCount() {
-        return allocations.size();
+        return allocationEntries.size();
     }
 
     public boolean isEmpty() {
-        return allocations.isEmpty();
+        return allocationEntries.isEmpty();
     }
 
     @Override
     public String toString() {
-        return "Trolley " + trolleyNumber + ": " + usedWeight + "/" + capacityWeight +
-                " kg (" + getUtilization() + "% full) - " + allocations.size() + " allocation(s)";
+        return "Trolley " + trolleyNumber + ": " +
+                String.format("%.2f", usedWeight) + "/" + capacityWeight +
+                " kg (" + String.format("%.2f", getUtilization()) + "% full) - " +
+                allocationEntries.size() + " allocation(s)";
+    }
+
+    public static class AllocationEntry {
+        public final Allocation allocation;
+        public final double weight;
+        public final boolean isPartial;
+        public final Integer originalQuantity;
+
+        public AllocationEntry(Allocation allocation, double weight, boolean isPartial, Integer originalQuantity) {
+            this.allocation = allocation;
+            this.weight = weight;
+            this.isPartial = isPartial;
+            this.originalQuantity = originalQuantity;
+        }
     }
 }
