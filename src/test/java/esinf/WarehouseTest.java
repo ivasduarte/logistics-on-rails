@@ -4,6 +4,9 @@ import esinf.us01.Bay;
 import esinf.us01.Box;
 import esinf.us01.Wagon;
 import esinf.us01.Warehouse;
+import esinf.us02.Allocation;
+import esinf.us02.OrderAllocationResult;
+import esinf.us02.OrderLineResult;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +16,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -419,28 +423,21 @@ public class WarehouseTest {
 
     @Test
     void testProcessExistingOrders() {
-        warehouse.getItems(List.of("SKU,Name,Category,Unit,Volume,UnitWeight",
-                "SKU0001,Item1,Cat1,PC,1.0,0.5"));
-        warehouse.getBays(List.of("WarehouseID;Aisle;Bay;BoxCapacity",
-                "WH1;1;1;100"));
-        warehouse.getWagons(List.of("wagonId,boxId,sku,qty,expiryDate,receivedAt",
-                "WGN001,BOX00001,SKU0001,26,2026-01-05,2025-07-21T22:02:00"));
+        warehouse.getItems(List.of("SKU,Name,Category,Unit,Volume,UnitWeight", "SKU0001,Item1,Cat1,PC,1.0,0.5"));
+        warehouse.getBays(List.of("WarehouseID;Aisle;Bay;BoxCapacity", "WH1;1;1;100"));
+        warehouse.getWagons(List.of("wagonId,boxId,sku,qty,expiryDate,receivedAt", "WGN001,BOX00001,SKU0001,26,2026-01-05,2025-07-21T22:02:00"));
         warehouse.getOrders(List.of("orderId,dueDate,priority", "O1,2024-12-31,1"));
         warehouse.getOrderLines(List.of("orderId,lineNo,sku,qty", "O1,1,SKU0001,6"));
 
-        // Manually trigger the full flow
         warehouse.unloadWagonsIntoBays();
 
-        // Get initial quantity in bay
         Bay bay = warehouse.getWarehouses().get("WH1").iterator().next();
         int initialQty = bay.getBoxes().get(0).getQuantity();
         assertEquals(26, initialQty);
 
-        // Process the order
         boolean success = warehouse.dispatch("SKU0001", 6, null);
         assertTrue(success);
 
-        // After processing order, quantity should be reduced
         int finalQty = bay.getBoxes().get(0).getQuantity();
         assertEquals(20, finalQty);
 
@@ -449,13 +446,9 @@ public class WarehouseTest {
 
     @Test
     void testPrintMovementHistory(){
-        // Setup test data
-        warehouse.getItems(List.of("SKU,Name,Category,Unit,Volume,UnitWeight",
-                "SKU0001,Item1,Cat1,PC,1.0,0.5"));
-        warehouse.getBays(List.of("WarehouseID;Aisle;Bay;BoxCapacity",
-                "WH1;1;1;100"));
-        warehouse.getWagons(List.of("wagonId,boxId,sku,qty,expiryDate,receivedAt",
-                "WGN001,BOX001,SKU0001,20,2026-01-05,2025-07-21T22:02:00"));
+        warehouse.getItems(List.of("SKU,Name,Category,Unit,Volume,UnitWeight", "SKU0001,Item1,Cat1,PC,1.0,0.5"));
+        warehouse.getBays(List.of("WarehouseID;Aisle;Bay;BoxCapacity", "WH1;1;1;100"));
+        warehouse.getWagons(List.of("wagonId,boxId,sku,qty,expiryDate,receivedAt", "WGN001,BOX001,SKU0001,20,2026-01-05,2025-07-21T22:02:00"));
 
         warehouse.unloadWagonsIntoBays();
 
@@ -465,30 +458,100 @@ public class WarehouseTest {
 
     @Test
     void testExportToCSV() {
-        // Setup test data
-        warehouse.getItems(List.of("SKU,Name,Category,Unit,Volume,UnitWeight",
-                "SKU0001,Item1,Cat1,PC,1.0,0.5"));
-        warehouse.getBays(List.of("WarehouseID;Aisle;Bay;BoxCapacity",
-                "WH1;1;1;100"));
-        warehouse.getWagons(List.of("wagonId,boxId,sku,qty,expiryDate,receivedAt",
-                "WGN001,BOX001,SKU0001,20,2026-01-05,2025-07-21T22:02:00"));
+        warehouse.getItems(List.of("SKU,Name,Category,Unit,Volume,UnitWeight", "SKU0001,Item1,Cat1,PC,1.0,0.5"));
+        warehouse.getBays(List.of("WarehouseID;Aisle;Bay;BoxCapacity", "WH1;1;1;100"));
+        warehouse.getWagons(List.of("wagonId,boxId,sku,qty,expiryDate,receivedAt", "WGN001,BOX001,SKU0001,20,2026-01-05,2025-07-21T22:02:00"));
 
         warehouse.unloadWagonsIntoBays();
 
-        // Print movement to simulate a process
         warehouse.printMovementHistory();
 
-        // Export to CSV
         String csvContent = warehouse.exportToCSV();
         assertNotNull(csvContent);
         String[] csvLines = csvContent.split("\n");
 
-        // Verify header
         assertTrue(csvLines.length > 1);
         assertEquals("MovementID,Source,Destination,BoxID,SKU,Timestamp", csvLines[0]);
 
-        // Verify at least one movement exists in the CSV content
         assertTrue(csvLines.length > 1);
     }
 
+    @Test
+    void testAllocateOrder_allocatesAcrossBoxesInFEFOOrder() {
+        Warehouse warehouse = new Warehouse();
+
+        warehouse.getItems(List.of("SKU,Name,Category,Unit,Volume,UnitWeight", "SKU0001,Item1,Cat1,PC,1.0,0.5"));
+
+        warehouse.getBays(List.of("WarehouseID,Aisle,Bay,BoxCapacity".replace(",", ";"), "WH1;1;1;100"));
+
+        List<String> wLines = List.of(
+                "WagonID,BoxID,SKU,Quantity,ExpiryDate,ReceivedDate",
+                "W1,BOX_A,SKU0001,10,2025-12-31,2024-01-01T10:00:00",
+                "W1,BOX_B,SKU0001,10,2025-11-30,2024-01-01T11:00:00",
+                "W1,BOX_C,SKU0001,10,2025-12-15,2024-01-01T12:00:00"
+        );
+        warehouse.getWagons(wLines);
+
+        warehouse.unloadWagonsIntoBays();
+
+        warehouse.getOrders(List.of("OrderID,DueDate,Priority", "O1,2024-12-31,1"));
+        warehouse.getOrderLines(List.of("OrderID,LineNo,SKU,Quantity", "O1,1,SKU0001,25"));
+
+        OrderAllocationResult result = warehouse.allocateOrder("O1", true);
+        assertNotNull(result);
+
+        List<OrderLineResult> lineResults = result.getLineResults().stream().collect(Collectors.toList());
+        assertEquals(1, lineResults.size());
+
+        OrderLineResult lr = lineResults.get(0);
+        List<Allocation> allocs = lr.getAllocations().stream().collect(Collectors.toList());
+
+        int totalAllocated = allocs.stream().mapToInt(Allocation::getQuantityAllocated).sum();
+        assertEquals(25, totalAllocated);
+
+        List<String> boxOrder = allocs.stream().map(Allocation::getBoxID).collect(Collectors.toList());
+        assertEquals(List.of("BOX_B", "BOX_C", "BOX_A"), boxOrder);
+
+        List<Integer> qtys = allocs.stream().map(Allocation::getQuantityAllocated).collect(Collectors.toList());
+        assertEquals(List.of(10,10,5), qtys);
+    }
+
+    @Test
+    void testAllocateOrder_fifoWhenNoExpiry() {
+        Warehouse warehouse = new Warehouse();
+
+        warehouse.getItems(List.of("SKU,Name,Category,Unit,Volume,UnitWeight", "SKU0002,Item2,Cat2,PC,1.0,0.5"));
+
+        warehouse.getBays(List.of("WarehouseID,Aisle,Bay,BoxCapacity".replace(",", ";"), "WH1;1;1;100"));
+
+        List<String> wLines = List.of(
+                "WagonID,BoxID,SKU,Quantity,ExpiryDate,ReceivedDate",
+                "W1,BOX_X,SKU0002,5,,2024-03-01T10:00:00",
+                "W1,BOX_Y,SKU0002,5,,2024-01-01T11:00:00",
+                "W1,BOX_Z,SKU0002,5,,2024-02-01T12:00:00"
+        );
+        warehouse.getWagons(wLines);
+        warehouse.unloadWagonsIntoBays();
+
+        warehouse.getOrders(List.of("OrderID,DueDate,Priority", "O2,2024-12-31,1"));
+        warehouse.getOrderLines(List.of("OrderID,LineNo,SKU,Quantity", "O2,1,SKU0002,7"));
+
+        OrderAllocationResult result = warehouse.allocateOrder("O2", false);
+        assertNotNull(result);
+
+        List<OrderLineResult> lineResults = result.getLineResults().stream().collect(Collectors.toList());
+        assertEquals(1, lineResults.size());
+
+        OrderLineResult lr = lineResults.get(0);
+        List<Allocation> allocs = lr.getAllocations().stream().collect(Collectors.toList());
+
+        List<String> boxOrder = allocs.stream().map(Allocation::getBoxID).collect(Collectors.toList());
+        assertEquals(List.of("BOX_Y", "BOX_Z"), boxOrder);
+
+        List<Integer> qtys = allocs.stream().map(Allocation::getQuantityAllocated).collect(Collectors.toList());
+        assertEquals(List.of(5,2), qtys);
+
+        int totalAllocated = qtys.stream().mapToInt(Integer::intValue).sum();
+        assertEquals(7, totalAllocated);
+    }
 }
