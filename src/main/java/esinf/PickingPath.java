@@ -10,18 +10,43 @@ public class PickingPath {
 
     private final List<Trolley> trolleys;
 
+    /**
+     * Constructs a PickingPath instance using the given PickingPlan.
+     *
+     * @param plan the PickingPlan object that contains the trolleys and allocations
+     */
     public PickingPath(PickingPlan plan) {
         trolleys = plan.getTrolleys();
     }
 
+    /**
+     * Retrieves the list of trolleys associated with this PickingPath.
+     *
+     * @return a list of Trolley objects representing the trolleys in this PickingPath
+     */
     public List<Trolley> getTrolleys() {
         return trolleys;
     }
 
+    /**
+     * Retrieves the list of allocations associated with a specific trolley.
+     *
+     * @param trolley the Trolley object from which allocations are to be retrieved
+     * @return a list of Allocation objects representing the allocations assigned to the given trolley
+     */
     public List<Allocation> getTrolleyAllocations(Trolley trolley){
         return trolley.getAllocations();
     }
 
+    /**
+     * Minimizes the total traveling distance by ordering allocation points in ascending order
+     * based on their aisle and bay numbers. The method considers all allocation points, merges duplicates,
+     * and calculates the total distance required to visit these points in the optimized order.
+     *
+     * @param allocations the list of {@link Allocation} objects representing the allocation points,
+     *                    including their aisle and bay numbers
+     * @return the total distance required to fulfill all allocations in ascending order
+     */
     public int minimizeDistanceAscending(List<Allocation> allocations) {
         if (allocations.isEmpty()) return 0;
 
@@ -47,6 +72,16 @@ public class PickingPath {
         return totalDistance;
     }
 
+    /**
+     * Minimizes the total traveling distance by visiting the nearest allocation point
+     * each time from the current position. The method processes all allocation points,
+     * merges duplicates, and calculates the total distance required to complete all allocations.
+     *
+     * @param allocations the list of Allocation objects representing the allocation points,
+     *                    including their aisle and bay numbers
+     * @return the total minimum distance required to visit all allocation points
+     *         in the order of nearest unvisited points
+     */
     public int minimizeDistanceNearest(List<Allocation> allocations) {
         if (allocations.isEmpty()) return 0;
 
@@ -75,6 +110,16 @@ public class PickingPath {
         return totalDistance;
     }
 
+    /**
+     * Merges duplicate allocation entries that have the same aisle and bay number
+     * into a single unified allocation by summing the quantities.
+     *
+     * @param allocations a list of Allocation objects representing the allocation points
+     *                     to be processed. Duplicate allocations are determined by
+     *                     matching both aisle and bay number.
+     * @return a list of Allocation objects where duplicate bays have been merged into
+     *         a single entry, with aggregate quantities computed.
+     */
     private List<Allocation> mergeDuplicateBays(List<Allocation> allocations) {
         Map<String, Allocation> merged = new LinkedHashMap<>();
 
@@ -103,6 +148,14 @@ public class PickingPath {
         return new ArrayList<>(merged.values());
     }
 
+    /**
+     * Identifies the nearest allocation from the current position based on the calculated distance.
+     *
+     * @param currentAisle the current aisle position
+     * @param currentBay the current bay position
+     * @param unvisited a list of unvisited Allocation objects
+     * @return the nearest Allocation object from the current position; returns null if the list is empty
+     */
     private Allocation findNearestAllocation(int currentAisle, int currentBay, List<Allocation> unvisited) {
         Allocation nearest = null;
         int minDistance = Integer.MAX_VALUE;
@@ -119,6 +172,18 @@ public class PickingPath {
         return nearest;
     }
 
+    /**
+     * Calculates the distance between a starting position and a target allocation based on
+     * their aisle and bay numbers.
+     *
+     * The distance is computed using the formula:
+     * fromBay + (absolute difference between aisles * 3) + target bay number.
+     *
+     * @param fromAisle the aisle number at the starting position
+     * @param fromBay the bay number at the starting position
+     * @param to the target {@link Allocation} object containing the aisle and bay numbers
+     * @return the calculated distance as an integer
+     */
     private int calculateDistance(int fromAisle, int fromBay, Allocation to) {
         // Returns the distance based on the formula given in the assignment
         return fromBay + Math.abs(fromAisle - to.getAisle()) * 3 + to.getBayNumber();
