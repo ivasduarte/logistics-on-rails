@@ -646,6 +646,17 @@ public class Warehouse {
         return csv.toString();
     }
 
+    /**
+     * Allocates boxes for an order identified by its id.
+     * Iterates order lines in ascending order, trying to allocate required quantities, from available boxes.
+     * User a temporary per-box reservation map to avoid double allocation within the same order.
+     * For each line a line result is created and its status os computed.
+     *
+     * @param orderId the id of the order to allocate
+     * @param strictMode if True, applies the strict mode when computing line status
+     *
+     * @return allocation results per line in the order
+     */
     public OrderAllocationResult allocateOrder(String orderId, boolean strictMode) {
         OrderAllocationResult result = new OrderAllocationResult(orderId);
 
@@ -715,6 +726,12 @@ public class Warehouse {
         return result;
     }
 
+    /**
+     * Used to represent the location of a box within a bay and warehouse.
+     *
+     * Holds references to the box, the bay where it is stored and the warehouse ID.
+     * Compares different boxes to ensure FEFO/FIFO ordering when placed in sorted collections.
+     */
     private static class BoxLocation implements Comparable<BoxLocation> {
         Box box;
         Bay bay;
@@ -732,6 +749,16 @@ public class Warehouse {
         }
     }
 
+    /**
+     * Collects all boxes matching the given SKU across all warehouses and bays.
+     *
+     * Scans each warehouse and its bays, creating BoxLocation entries for matching boxes.
+     * The resulting list is sorted in FEFO/FIFO order based on box properties.
+     *
+     * @param sku the SKU to search for
+     *
+     * @return a sorted list of BoxLocation instances with matching boxes
+     */
     private List<BoxLocation> collectBoxesForSku(String sku) {
         List<BoxLocation> boxLocations = new ArrayList<>();
 
