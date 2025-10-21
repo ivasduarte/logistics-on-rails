@@ -46,13 +46,11 @@ executing any one of the three packing heuristics on the same set of order lines
 ### 1.5. Input and Output Data
 
 #### Input Data:
-- Typed data:
+
   - The trolley capacity (in kg);
   - The packing heuristic option (FF,FFD or BFD);
   - The Split/Defer option in case the items don't fit;
-- Automatic data:
   - The allocation rows from USEI2;
-  - Item weights from items.csv;
 
 #### Output Data:
 - For each heuristic executed:

@@ -1,0 +1,111 @@
+@startuml
+
+skinparam backgroundColor #FFFFFF
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+
+actor "Planner" as Planner
+participant ":PickingPlanService" as Service
+participant ":PickingPlan" as Plan
+participant ":Trolley" as Trolley
+participant ":AllocationWeight" as AW
+
+autonumber
+activate Planner
+== 1. Initialize Service ==
+
+Planner -> Service : new PickingPlanService(itemWeights)
+activate Service
+Service --> Planner : service created
+deactivate Service
+
+|||
+
+== 2. Create Picking Plan ==
+
+Planner -> Service : createPickingPlan(allocations, trolleyCapacity, heuristic)
+activate Service
+
+Service -> Service : validateInputs()
+Service -> Service : calculateWeights(allocations)
+
+loop for each allocation
+    Service -> AW : new AllocationWeight(allocation, weight)
+    activate AW
+    AW --> Service : allocationWeight
+    deactivate AW
+end
+
+|||
+
+== 3. Apply Heuristic ==
+
+alt heuristic == FIRST_FIT
+    Service -> Service : firstFit()
+else heuristic == FIRST_FIT_DECREASING
+    Service -> Service : Collections.sort(allocationWeights)
+    Service -> Service : firstFitDecreasing()
+else heuristic == BEST_FIT_DECREASING
+    Service -> Service : Collections.sort(allocationWeights)
+    Service -> Service : bestFitDecreasing()
+end
+
+|||
+
+== 4. Pack Allocations into Trolleys ==
+
+loop for each allocationWeight
+    alt allocation fits in existing trolley
+        Service -> Trolley : addAllocation(allocation, weight)
+        activate Trolley
+        Trolley -> Trolley : usedWeight += weight
+        Trolley --> Service : true
+        deactivate Trolley
+    else need new trolley
+        Service -> Trolley : new Trolley(number, capacity)
+        activate Trolley
+        Trolley --> Service : newTrolley
+        deactivate Trolley
+        Service -> Trolley : addAllocation(allocation, weight)
+    else allocation too heavy (splitting enabled)
+        Service -> Service : handleSplitting()
+        Service -> Trolley : addAllocation(partialAllocation)
+    else allocation too heavy (splitting disabled)
+        Service -> Plan : addSkippedAllocation(allocation, weight)
+    end
+end
+
+|||
+
+== 5. Build Picking Plan ==
+
+Service -> Plan : new PickingPlan(heuristic, capacity)
+activate Plan
+Plan --> Service : plan
+deactivate Plan
+
+loop for each trolley
+    Service -> Plan : addTrolley(trolley)
+    activate Plan
+    Plan --> Service : added
+    deactivate Plan
+end
+
+Service --> Planner : PickingPlan
+deactivate Service
+
+|||
+
+== 6. Generate Reports ==
+
+Planner -> Plan : generateSummaryReport()
+activate Plan
+Plan --> Planner : summaryReport
+deactivate Plan
+
+Planner -> Plan : generateDetailedPickingList()
+activate Plan
+Plan --> Planner : detailedPickingList
+deactivate Plan
+
+@enduml
