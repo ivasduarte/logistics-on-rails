@@ -7,66 +7,37 @@ hide circle
 hide methods
 
 class PickingPlan {
-    planId
-    totalTrolleys
-    packingStrategy
+    heuristic: PackingHeuristic
+    trolleyCapacity: double
+    totalAllocations: int
+    totalWeight: double
 }
 
 class Trolley {
-    trolleyId
-    capacityWeight
-    usedWeight
-    utilizationPercentage
+    trolleyNumber: int
+    capacityWeight: double
+    usedWeight: double
 }
 
-class Bay {
-    warehouseId
-    aisleNum
-    bayId
-    capacityBoxes
+class PickingPlanService {
+    allowSplitting: boolean
 }
 
-class Aisle {
-    warehouseId
-    aisleNum
+class AllocationWeight {
+    weight: double
+    isPartial: boolean
+    originalQuantity: Integer
 }
 
-class Box {
-    boxId
-    boxId
-    maxCapacity
-    productQty
-    productType
+enum PackingHeuristic {
+    FIRST_FIT
+    FIRST_FIT_DECREASING
+    BEST_FIT_DECREASING
 }
 
-class Item {
-    SKU
-    name
-    category
-    unit
-    volume
-    unitWeight
-}
-
-class OrderLine {
-    orderId
-    lineNo
-    sku
-    qty
-}
-
-class Orders {
-    orderId
-    dueDate
-    priority
-}
-
-PickingPlan "1" -- "*" Trolley : contains
-Trolley "1" -- "*" OrderLine : picks
-OrderLine "1..*" -- "1" Orders : has
-OrderLine "*" -- "1" Item : references
-Box "*" -- "1" Item : has
-Bay "1" -- "0..*" Box : has
-Aisle "1" -- "1..*" Bay : has
+PickingPlan "1" *-- "*" Trolley : contains
+PickingPlan "1" -- "1" PackingHeuristic : uses
+PickingPlanService "1" -- "*" PickingPlan : creates
+PickingPlanService "1" ..> AllocationWeight : uses
 
 @enduml
