@@ -34,7 +34,7 @@ public class WarehouseTest {
     void testGetWagons() throws IOException {
         warehouse.getItems(Files.readAllLines(Paths.get(Warehouse.ITEMS_FILE)));
         testLines.add("WagonID,BoxID,SKU,Quantity,ExpiryDate,ReceivedDate");
-        testLines.add("W1,B1,SKU0001,10,2024-12-31,2023-10-10");
+        testLines.add("W1,B1,SKU0001,10,2024-12-31T00:00:00,2023-10-10T00:00:00");
         warehouse.getWagons(testLines);
         assertFalse(warehouse.getWagonsMap().isEmpty());
     }
@@ -76,7 +76,7 @@ public class WarehouseTest {
     void testGetReturns() throws IOException {
         warehouse.getItems(Files.readAllLines(Paths.get(Warehouse.ITEMS_FILE)));
         testLines.add("ReturnID,SKU,Quantity,Reason,Timestamp,ExpiryDate");
-        testLines.add("R1,SKU0001,2,Damaged,2023-10-10,2024-12-31");
+        testLines.add("R1,SKU0001,2,Damaged,2023-10-10T00:00:00,2024-12-31T00:00:00");
         warehouse.getReturns(testLines);
         assertFalse(warehouse.getReturns().isEmpty());
     }
@@ -152,8 +152,8 @@ public class WarehouseTest {
     void testDuplicateBoxId() throws IOException {
         warehouse.getItems(Files.readAllLines(Paths.get(Warehouse.ITEMS_FILE)));
         testLines.add("WagonID,BoxID,SKU,Quantity,ExpiryDate,ReceivedDate");
-        testLines.add("W1,B1,SKU0001,10,2024-12-31,2023-10-10");
-        testLines.add("W2,B1,SKU0001,10,2024-12-31,2023-10-10"); // Same BoxID
+        testLines.add("W1,B1,SKU0001,10,2024-12-31T00:00:00,2023-10-10T00:00:00");
+        testLines.add("W2,B1,SKU0001,10,2024-12-31T00:00:00,2023-10-10T00:00:00"); // Same BoxID
         warehouse.getWagons(testLines);
 
         // Should have error about duplicate boxID
@@ -165,7 +165,7 @@ public class WarehouseTest {
     @Test
     void testInvalidDataFormat() {
         testLines.add("WagonID,BoxID,SKU,Quantity,ExpiryDate,ReceivedDate");
-        testLines.add("W1,B1,SKU0001,invalid,2024-12-31,2023-10-10");
+        testLines.add("W1,B1,SKU0001,invalid,2024-12-31T00:00:00,2023-10-10T00:00:00");
         warehouse.getWagons(testLines);
         assertFalse(warehouse.getImportErrors().isEmpty());
         assertTrue(warehouse.getImportErrors().get(0).contains("Invalid quantity"));
@@ -229,7 +229,7 @@ public class WarehouseTest {
     @Test
     void testInvalidReturnsQuantity() {
         testLines.add("ReturnID,SKU,Quantity,Reason,Timestamp,ExpiryDate");
-        testLines.add("R1,SKU0001,invalid,Damaged,2023-10-10,2024-12-31");
+        testLines.add("R1,SKU0001,invalid,Damaged,2023-10-10T00:00:00,2024-12-31T00:00:00");
         warehouse.getReturns(testLines);
         assertFalse(warehouse.getImportErrors().isEmpty());
         assertTrue(warehouse.getImportErrors().stream()
@@ -239,7 +239,7 @@ public class WarehouseTest {
     @Test
     void testMissingRequiredFields() {
         testLines.add("WagonID,BoxID,SKU,Quantity,ExpiryDate,ReceivedDate");
-        testLines.add(",B1,SKU0001,10,2024-12-31,2023-10-10");
+        testLines.add(",B1,SKU0001,10,2024-12-31T00:00:00,2023-10-10T00:00:00");
         warehouse.getWagons(testLines);
         assertTrue(warehouse.getWagonsMap().isEmpty());
         assertFalse(warehouse.getImportErrors().isEmpty());
@@ -253,7 +253,7 @@ public class WarehouseTest {
         warehouse.getBays(List.of("WarehouseID;Aisle;Bay;BoxCapacity",
                 "WH1;1;1;100"));
         warehouse.getWagons(List.of("wagonId,boxId,sku,qty,expiryDate,receivedAt",
-                "WGN001,BOX00001,SKU0001,26,2026-01-05,2025-07-21T22:02:00"));
+                "WGN001,BOX00001,SKU0001,26,2026-01-05T00:00:00,2025-07-21T22:02:00"));
 
         // Before unloading, wagons should have boxes
         Wagon wagon = warehouse.getWagonsMap().keySet().iterator().next();
@@ -282,7 +282,7 @@ public class WarehouseTest {
         warehouse.getBays(List.of("WarehouseID;Aisle;Bay;BoxCapacity",
                 "WH1;1;1;100"));
         warehouse.getWagons(List.of("wagonId,boxId,sku,qty,expiryDate,receivedAt",
-                "WGN001,BOX00001,SKU0001,20,2026-01-05,2025-07-21T22:02:00"));
+                "WGN001,BOX00001,SKU0001,20,2026-01-05T00:00:00,2025-07-21T22:02:00"));
 
         warehouse.unloadWagonsIntoBays();
 
@@ -313,7 +313,7 @@ public class WarehouseTest {
         warehouse.getBays(List.of("WarehouseID;Aisle;Bay;BoxCapacity",
                 "WH1;1;1;100"));
         warehouse.getWagons(List.of("wagonId,boxId,sku,qty,expiryDate,receivedAt",
-                "WGN001,BOX00001,SKU0001,10,2026-01-05,2025-07-21T22:02:00"));
+                "WGN001,BOX00001,SKU0001,10,2026-01-05T00:00:00,2025-07-21T22:02:00"));
 
         warehouse.unloadWagonsIntoBays();
 
@@ -331,7 +331,7 @@ public class WarehouseTest {
                 "WH1;1;1;100",
                 "WH1;1;2;100"));
         warehouse.getWagons(List.of("wagonId,boxId,sku,qty,expiryDate,receivedAt",
-                "WGN001,BOX00001,SKU0001,20,2026-01-05,2025-07-21T22:02:00"));
+                "WGN001,BOX00001,SKU0001,20,2026-01-05T00:00:00,2025-07-21T22:02:00"));
 
         warehouse.unloadWagonsIntoBays();
 
@@ -374,9 +374,9 @@ public class WarehouseTest {
         warehouse.getBays(List.of("WarehouseID;Aisle;Bay;BoxCapacity",
                 "WH1;1;1;100"));
         warehouse.getWagons(List.of("wagonId,boxId,sku,qty,expiryDate,receivedAt",
-                "WGN001,BOX001,SKU0001,10,2025-12-31,2024-01-01T10:00:00",
-                "WGN001,BOX002,SKU0001,10,2025-11-30,2024-01-01T11:00:00",
-                "WGN001,BOX003,SKU0001,10,2025-12-15,2024-01-01T12:00:00"));
+                "WGN001,BOX001,SKU0001,10,2025-12-31T00:00:00,2024-01-01T10:00:00",
+                "WGN001,BOX002,SKU0001,10,2025-11-30T00:00:00,2024-01-01T11:00:00",
+                "WGN001,BOX003,SKU0001,10,2025-12-15T00:00:00,2024-01-01T12:00:00"));
 
         warehouse.unloadWagonsIntoBays();
 
@@ -425,7 +425,7 @@ public class WarehouseTest {
     void testProcessExistingOrders() {
         warehouse.getItems(List.of("SKU,Name,Category,Unit,Volume,UnitWeight", "SKU0001,Item1,Cat1,PC,1.0,0.5"));
         warehouse.getBays(List.of("WarehouseID;Aisle;Bay;BoxCapacity", "WH1;1;1;100"));
-        warehouse.getWagons(List.of("wagonId,boxId,sku,qty,expiryDate,receivedAt", "WGN001,BOX00001,SKU0001,26,2026-01-05,2025-07-21T22:02:00"));
+        warehouse.getWagons(List.of("wagonId,boxId,sku,qty,expiryDate,receivedAt", "WGN001,BOX00001,SKU0001,26,2026-01-05T00:00:00,2025-07-21T22:02:00"));
         warehouse.getOrders(List.of("orderId,dueDate,priority", "O1,2024-12-31,1"));
         warehouse.getOrderLines(List.of("orderId,lineNo,sku,qty", "O1,1,SKU0001,6"));
 
@@ -448,7 +448,7 @@ public class WarehouseTest {
     void testPrintMovementHistory(){
         warehouse.getItems(List.of("SKU,Name,Category,Unit,Volume,UnitWeight", "SKU0001,Item1,Cat1,PC,1.0,0.5"));
         warehouse.getBays(List.of("WarehouseID;Aisle;Bay;BoxCapacity", "WH1;1;1;100"));
-        warehouse.getWagons(List.of("wagonId,boxId,sku,qty,expiryDate,receivedAt", "WGN001,BOX001,SKU0001,20,2026-01-05,2025-07-21T22:02:00"));
+        warehouse.getWagons(List.of("wagonId,boxId,sku,qty,expiryDate,receivedAt", "WGN001,BOX001,SKU0001,20,2026-01-05T00:00:00,2025-07-21T22:02:00"));
 
         warehouse.unloadWagonsIntoBays();
 
@@ -460,7 +460,7 @@ public class WarehouseTest {
     void testExportToCSV() {
         warehouse.getItems(List.of("SKU,Name,Category,Unit,Volume,UnitWeight", "SKU0001,Item1,Cat1,PC,1.0,0.5"));
         warehouse.getBays(List.of("WarehouseID;Aisle;Bay;BoxCapacity", "WH1;1;1;100"));
-        warehouse.getWagons(List.of("wagonId,boxId,sku,qty,expiryDate,receivedAt", "WGN001,BOX001,SKU0001,20,2026-01-05,2025-07-21T22:02:00"));
+        warehouse.getWagons(List.of("wagonId,boxId,sku,qty,expiryDate,receivedAt", "WGN001,BOX001,SKU0001,20,2026-01-05T00:00:00,2025-07-21T22:02:00"));
 
         warehouse.unloadWagonsIntoBays();
 
@@ -486,9 +486,9 @@ public class WarehouseTest {
 
         List<String> wLines = List.of(
                 "WagonID,BoxID,SKU,Quantity,ExpiryDate,ReceivedDate",
-                "W1,BOX_A,SKU0001,10,2025-12-31,2024-01-01T10:00:00",
-                "W1,BOX_B,SKU0001,10,2025-11-30,2024-01-01T11:00:00",
-                "W1,BOX_C,SKU0001,10,2025-12-15,2024-01-01T12:00:00"
+                "W1,BOX_A,SKU0001,10,2025-12-31T00:00:00,2024-01-01T10:00:00",
+                "W1,BOX_B,SKU0001,10,2025-11-30T00:00:00,2024-01-01T11:00:00",
+                "W1,BOX_C,SKU0001,10,2025-12-15T00:00:00,2024-01-01T12:00:00"
         );
         warehouse.getWagons(wLines);
 
@@ -553,5 +553,102 @@ public class WarehouseTest {
 
         int totalAllocated = qtys.stream().mapToInt(Integer::intValue).sum();
         assertEquals(7, totalAllocated);
+    }
+
+    @Test
+    void testFindBay_ReturnsBayWithSameSKU() {
+        // Setup warehouse, bays and boxes
+        warehouse.getItems(List.of("SKU,Name,Category,Unit,Volume,UnitWeight",
+                "SKU1000,ItemX,CatX,PC,1.0,0.5"));
+        warehouse.getBays(List.of("WarehouseID;Aisle;Bay;BoxCapacity", "WH1;1;1;100"));
+
+        // Adds a box manually
+        Bay bay = warehouse.getWarehouses().get("WH1").iterator().next();
+        Box box = new Box("BOX100", "SKU1000", 10, null, null);
+        bay.addBoxInFEFOOrder(box);
+
+        // Find the correct bay by SKU
+        Bay foundBay = warehouse.findBay("SKU1000");
+        assertNotNull(foundBay);
+        assertEquals(bay, foundBay);
+    }
+
+    @Test
+    void testFindBay_ReturnsNullWhenNoMatchingSKU() {
+        warehouse.getItems(List.of("SKU,Name,Category,Unit,Volume,UnitWeight",
+                "SKU2000,ItemY,CatY,PC,1.0,0.5"));
+        warehouse.getBays(List.of("WarehouseID;Aisle;Bay;BoxCapacity", "WH1;1;1;100"));
+
+        Bay result = warehouse.findBay("NON_EXISTENT_SKU");
+        assertNull(result);
+    }
+
+    @Test
+    void testFindAlternativeBay_ReturnsEmptyBayWithCapacity() {
+        warehouse.getItems(List.of("SKU,Name,Category,Unit,Volume,UnitWeight",
+                "SKU3000,ItemZ,CatZ,PC,1.0,0.5"));
+        warehouse.getBays(List.of("WarehouseID;Aisle;Bay;BoxCapacity", "WH1;1;1;100"));
+
+        Bay result = warehouse.findAlternativeBay("SKU3000");
+        assertNotNull(result);
+        assertTrue(result.getBoxes().isEmpty());
+        assertTrue(result.hasCapacity());
+    }
+
+    @Test
+    void testFindAlternativeBay_ReturnsNullIfNoEmptyBay() {
+        warehouse.getItems(List.of("SKU,Name,Category,Unit,Volume,UnitWeight",
+                "SKU4000,ItemW,CatW,PC,1.0,0.5"));
+        warehouse.getBays(List.of("WarehouseID;Aisle;Bay;BoxCapacity", "WH1;1;1;1"));
+
+        // Fills up the only bay
+        Bay bay = warehouse.getWarehouses().get("WH1").iterator().next();
+        bay.addBoxInFEFOOrder(new Box("BOX4000", "SKU4000", 1, null, null));
+
+        Bay result = warehouse.findAlternativeBay("SKU9999");
+        assertNull(result);
+    }
+
+    @Test
+    void testInsertBox_SuccessfullyInsertsBoxAndRegistersMovement() {
+        warehouse.getItems(List.of("SKU,Name,Category,Unit,Volume,UnitWeight",
+                "SKU5000,ItemA,CatA,PC,1.0,0.5"));
+        warehouse.getBays(List.of("WarehouseID;Aisle;Bay;BoxCapacity",
+                "WH1;1;1;100"));
+
+        Box newBox = new Box("BOX5000", "SKU5000", 10, null, null);
+
+        warehouse.insertBox(newBox);
+
+        // The box must be in the bay
+        Bay targetBay = warehouse.findBay("SKU5000");
+        assertNotNull(targetBay);
+        assertFalse(targetBay.getBoxes().isEmpty());
+        assertEquals("BOX5000", targetBay.getBoxes().get(0).getBoxID());
+
+        // Movement must be registered
+        assertFalse(warehouse.getMovementHistory().isEmpty());
+        assertTrue(warehouse.getMovementHistory().get(0).getBoxID().equals("BOX5000"));
+    }
+
+    @Test
+    void testInsertBox_WhenBoxIsNull_ThrowsException() {
+        assertThrows(IllegalArgumentException.class, () -> warehouse.insertBox(null));
+    }
+
+    @Test
+    void testInsertBox_WhenWarehouseFull_AddsImportError() {
+        warehouse.getItems(List.of("SKU,Name,Category,Unit,Volume,UnitWeight",
+                "SKU6000,ItemB,CatB,PC,1.0,0.5"));
+        warehouse.getBays(List.of("WarehouseID;Aisle;Bay;BoxCapacity", "WH1;1;1;1"));
+
+        Bay bay = warehouse.getWarehouses().get("WH1").iterator().next();
+        bay.addBoxInFEFOOrder(new Box("BOX_EXISTING", "SKU6000", 1, null, null));
+
+        Box newBox = new Box("BOX_NEW", "SKU6000", 1, null, null);
+        warehouse.insertBox(newBox);
+
+        assertFalse(warehouse.getImportErrors().isEmpty());
+        assertTrue(warehouse.getImportErrors().get(0).contains("Warehouse is full"));
     }
 }
