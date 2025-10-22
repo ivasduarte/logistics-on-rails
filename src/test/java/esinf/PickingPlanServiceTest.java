@@ -1,4 +1,3 @@
-// java
 package esinf;
 
 import esinf.us02.Allocation;
@@ -62,8 +61,8 @@ class PickingPlanServiceTest {
         List<Allocation> allocations = Collections.singletonList(alloc("SKU_S", 3));
         PickingPlan plan = svc.createPickingPlan(allocations, 10.0, PackingHeuristic.FIRST_FIT);
 
-        assertEquals(2, plan.getTrolleyCount(), "espera 2 trolleys após split (2 + 1 unidades)");
-        assertEquals(0, plan.getSkippedCount(), "não deve ter alocações ignoradas quando splitting ativado");
+        assertEquals(2, plan.getTrolleyCount());
+        assertEquals(0, plan.getSkippedCount());
         assertEquals(12.0, plan.getTotalWeight(), 1e-6);
     }
 
@@ -75,8 +74,8 @@ class PickingPlanServiceTest {
         List<Allocation> allocations = Collections.singletonList(alloc("SKU_S", 3));
         PickingPlan plan = svc.createPickingPlan(allocations, 10.0, PackingHeuristic.FIRST_FIT);
 
-        assertEquals(0, plan.getTrolleyCount(), "sem splitting e total > capacidade, nenhum trolley deve ser criado");
-        assertEquals(1, plan.getSkippedCount(), "alocação deve ser marcada como ignorada");
+        assertEquals(0, plan.getTrolleyCount());
+        assertEquals(1, plan.getSkippedCount());
     }
 
     @Test
@@ -99,5 +98,49 @@ class PickingPlanServiceTest {
         for (PackingHeuristic h : PackingHeuristic.values()) {
             assertTrue(report.contains(h.toString()));
         }
+    }
+
+    @Test
+    void allHeuristics_basicPacking_sameTotalWeightAndSingleTrolley() {
+        Map<String, Double> weights = Map.of("A", 2.0, "B", 3.0);
+        PickingPlanService svc = new PickingPlanService(weights);
+
+        List<Allocation> allocations = Arrays.asList(alloc("A", 2), alloc("B", 1));
+
+        for (PackingHeuristic heuristic : PackingHeuristic.values()) {
+            PickingPlan plan = svc.createPickingPlan(allocations, 10.0, heuristic);
+            assertEquals(heuristic, plan.getHeuristic());
+            assertEquals(7.0, plan.getTotalWeight(), 1e-6);
+            assertEquals(1, plan.getTrolleyCount());
+            assertEquals(0, plan.getSkippedCount());
+        }
+    }
+
+    @Test
+    void firstFitDecreasing_handlesSplitting_sameResultAsFirstFitForSplitCase() {
+        Map<String, Double> weights = Map.of("SKU_S", 4.0);
+        PickingPlanService svc = new PickingPlanService(weights, true);
+
+        List<Allocation> allocations = Collections.singletonList(alloc("SKU_S", 3));
+
+        PickingPlan planFFD = svc.createPickingPlan(allocations, 10.0, PackingHeuristic.FIRST_FIT_DECREASING);
+        assertEquals(PackingHeuristic.FIRST_FIT_DECREASING, planFFD.getHeuristic());
+        assertEquals(2, planFFD.getTrolleyCount());
+        assertEquals(0, planFFD.getSkippedCount());
+        assertEquals(12.0, planFFD.getTotalWeight(), 1e-6);
+    }
+
+    @Test
+    void bestFitDecreasing_handlesSplitting_sameResultAsFirstFitForSplitCase() {
+        Map<String, Double> weights = Map.of("SKU_S", 4.0);
+        PickingPlanService svc = new PickingPlanService(weights, true);
+
+        List<Allocation> allocations = Collections.singletonList(alloc("SKU_S", 3));
+
+        PickingPlan planBFD = svc.createPickingPlan(allocations, 10.0, PackingHeuristic.BEST_FIT_DECREASING);
+        assertEquals(PackingHeuristic.BEST_FIT_DECREASING, planBFD.getHeuristic());
+        assertEquals(2, planBFD.getTrolleyCount());
+        assertEquals(0, planBFD.getSkippedCount());
+        assertEquals(12.0, planBFD.getTotalWeight(), 1e-6);
     }
 }

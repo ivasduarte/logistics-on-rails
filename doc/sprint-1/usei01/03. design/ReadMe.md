@@ -104,7 +104,7 @@ The Full Sequence Diagram shows all interactions between the USEI01 system class
 - **Capacity Limits**: Bays cannot exceed their defined box capacity
 - **Movement Audit Trail**: Every operation creates an auditable movement record
 
-### 3.2. Other Observations
+### 3.3. Other Observations
 
 This simplified diagram focuses on the core USEI01 functionality, removing unnecessary UI layers to highlight the
 essential warehouse management logic. The diagram demonstrates how the Warehouse control class coordinates Bay and
@@ -112,6 +112,6 @@ Box entities to implement FEFO/FIFO inventory management, ensuring product quali
 traceability of all operations, and robust error handling throughout the system lifecycle.
 
 
-## 3.3. Class Diagram (CD)
+## 3.4. Class Diagram (CD)
 
 ![Class Diagram](svg/USEI01-ClassDiagram.svg)
