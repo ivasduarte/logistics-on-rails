@@ -1,0 +1,43 @@
+@startuml
+skinparam monochrome true
+skinparam packageStyle rectangle
+skinparam classAttributeIconSize 0
+
+hide circle
+hide methods
+
+class PickingPlan {
+    heuristic
+    trolleyCapacity
+    trolleys
+    totalAllocations
+    totalWeight
+    skippedAllocations
+}
+
+class Trolley {
+    trolleyId
+    capacityWeight
+    usedWeight
+    utilizationPercentage
+}
+
+class Allocation {
+    orderID
+    boxID
+    warehouseId
+    sku
+    lineNo
+    aisle
+    bayNumber
+    quantityAllocated
+}
+
+class PickingPath {
+    trolleys
+}
+
+PickingPlan "1" -- "*" Trolley : has
+Trolley "1" -- "*" Allocation : has
+
+@enduml
