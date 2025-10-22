@@ -1,4 +1,103 @@
-package esinf;
+# USEI04 - Minimize Walking Distance
+
+## 4. Tests
+
+**Test 1:** Tests the functionality to get the list of trolleys to obtain the bays for the PickingPath.
+
+```java
+@Test
+void testGetTrolleys() {
+    List<Trolley> result = pickingPath.getTrolleys();
+    assertNotNull(result);
+    assertEquals(1, result.size());
+}
+```
+
+**Test 2:** Tests the functionality to get the allocations (bays) for a given trolley.
+
+```java
+@Test
+void testGetTrolleyAllocations() {
+    List<Trolley> trolleys = pickingPath.getTrolleys();
+    List<Allocation> allocations = pickingPath.getTrolleyAllocations(trolleys.getFirst());
+    assertNotNull(allocations);
+}
+```
+
+**Test 3:** Tests the functionality to minimize the distance between bays in ascending order.
+
+```java
+@Test
+void testMinimizeDistanceAscending() {
+    List<Allocation> allocations = new ArrayList<>();
+    Allocation allocation1 = new Allocation("O1", "B1", "W1", "SKU1", 1, 1, 8, 10);
+    Allocation allocation2 = new Allocation("O2", "B2", "W1", "SKU2", 1, 2, 2, 10);
+
+    allocations.add(allocation1);
+    allocations.add(allocation2);
+
+    int distance = pickingPath.minimizeDistanceAscending(allocations);
+    assertEquals(24, distance);
+}
+```
+
+**Test 4:** Tests the functionality to minimize the distance between the current bay to the nearest one.
+
+```java
+@Test
+void testMinimizeDistanceNearest() {
+    List<Allocation> allocations = new ArrayList<>();
+    Allocation allocation1 = new Allocation("O1", "B1", "W1", "SKU1", 1, 1, 8, 10);
+    Allocation allocation2 = new Allocation("O2", "B2", "W1", "SKU2", 1, 2, 2, 10);
+
+    allocations.add(allocation1);
+    allocations.add(allocation2);
+
+    int distance = pickingPath.minimizeDistanceNearest(allocations);
+    assertEquals(21, distance);
+}
+```
+
+**Test 5:** Tests the merge of duplicate bays in ascending order.
+
+```java
+@Test
+void testMinimizeDistanceAscendingDuplicate() {
+    List<Allocation> allocations = new ArrayList<>();
+    Allocation allocation1 = new Allocation("O1", "B1", "W1", "SKU1", 1, 1, 8, 10);
+    Allocation allocation2 = new Allocation("O1", "B1", "W1", "SKU1", 1, 1, 8, 10);
+
+    allocations.add(allocation1);
+    allocations.add(allocation2);
+
+    int distance = pickingPath.minimizeDistanceAscending(allocations);
+    assertEquals(11, distance);
+}
+```
+
+**Test 6:** Tests the merge of duplicate bays from current to nearest.
+
+```java
+@Test
+void testMinimizeDistanceNearestDuplicate() {
+    List<Allocation> allocations = new ArrayList<>();
+    Allocation allocation1 = new Allocation("O1", "B1", "W1", "SKU1", 1, 1, 8, 10);
+    Allocation allocation2 = new Allocation("O1", "B1", "W1", "SKU1", 1, 1, 8, 10);
+
+    allocations.add(allocation1);
+    allocations.add(allocation2);
+
+    int distance = pickingPath.minimizeDistanceNearest(allocations);
+    assertEquals(11, distance);
+}
+```
+
+## 5. Construction (Implementation)
+
+### Class PickingPath.java
+
+```java
+package esinf.us04;
 
 import esinf.us02.Allocation;
 import esinf.us03.PickingPlan;
@@ -189,3 +288,4 @@ public class PickingPath {
         return fromBay + Math.abs(fromAisle - to.getAisle()) * 3 + to.getBayNumber();
     }
 }
+```
