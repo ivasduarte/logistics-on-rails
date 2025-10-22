@@ -1,0 +1,98 @@
+@startuml
+
+class ReturnsManager {
+    + quarantineQueue: QuarantineQueue
+    + inspection: InventoryInspection
+    + receiveReturn(returnItem: Returns): void
+    + processReturns(): void
+}
+
+class QuarantineQueue {
+    - quarantinedItems: List<Returns>
+    + addReturn(returnItem: Returns): void
+    + getNextForInspection(): Returns
+}
+
+class InventoryInspection {
+    - warehouse: Warehouse
+    - auditLog: AuditLog
+    + shouldBeDiscarded(returnedItem: Returns): boolean
+    + inspect(returnedItem: Returns): void
+    + restock(returnedItem: Returns): void
+}
+
+class AuditLog {
+    - LOG_FILE_PATH: String
+    - LOG_FILE_NAME: String
+    + logInspection(returnID: String, sku: String, quantity: int, \nqtyRestocked: int, qtyDiscarded: int, action: StockAction): void
+}
+
+class Returns {
+    - returnID: String
+    - sku: String
+    - qty: int
+    - reason: ReturnReasons
+    - timestamp: String
+    - expiryDate: String
+    - discarded: boolean
+    + getReturnID(): String
+    + setReturnID(returnID: String): void
+    + getSku(): String
+    + setSku(sku: String): void
+    + getQty(): int
+    + setQty(qty: int): void
+    + getReason(): ReturnReasons
+    + setReason(reason: ReturnReasons): void
+    + getTimestamp(): String
+    + setTimestamp(timestamp: String): void
+    + getExpiryDate(): String
+    + setExpiryDate(expiryDate: String): void
+    + setDiscarded(discarded: boolean): void
+    + isExpired(): boolean
+    + isDamaged(): boolean
+    + isCustomerRemorse(): boolean
+    + isCycleCount(): boolean
+    + equals(o: Object): boolean
+    + hashCode(): int
+    + toString(): String
+}
+
+enum ReturnReasons {
+    REMORSE
+    DAMAGED
+    EXPIRED
+    CYCLE_COUNT
+    + getDescription(): String
+    + shouldBeDiscarded(): boolean
+    + shouldBeRestocked(): boolean
+    + parse(raw: String): ReturnReasons
+}
+
+enum StockAction {
+    DISCARDED
+    RESTOCKED
+}
+
+class Warehouse {
+    + insertBox(box: Box): void
+}
+
+class Box {
+    - boxID: String
+    - sku: String
+    - quantity: int
+    - expiryDate: LocalDateTime
+    - receivedAt: String
+}
+
+' Relationships
+ReturnsManager ||--|| QuarantineQueue : "manages"
+ReturnsManager ||--|| InventoryInspection : "uses"
+QuarantineQueue ||--o{ Returns : "contains"
+InventoryInspection ||--|| Warehouse : "depends on"
+InventoryInspection ||--|| AuditLog : "uses"
+Returns ||--|| ReturnReasons : "has"
+InventoryInspection ||--o| Box : "creates"
+Box ||--|| Warehouse : "stored in"
+
+@enduml

@@ -260,6 +260,8 @@ void testFIFOOrdering() {
 ```java
 package esinf.us01;
 
+import esinf.us05.Returns;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -292,13 +294,33 @@ public class Warehouse {
     public static final String RETURNS_FILE = CSV_BASE_PATH + "returns.csv";
 
     // Getters
-    public Map<Wagon, Set<Box>> getWagonsMap() { return wagons; }
-    public Map<String, Set<Bay>> getWarehouses() { return warehouses; }
-    public Map<String, Item> getItems() { return items; }
-    public Map<Order, Set<OrderLines>> getOrderLines() { return order_lines; }
-    public Map<String, Order> getOrders() { return orders; }
-    public Map<String, Returns> getReturns() { return returns; }
-    public List<String> getImportErrors() { return importErrors; }
+    public Map<Wagon, Set<Box>> getWagonsMap() {
+        return wagons;
+    }
+
+    public Map<String, Set<Bay>> getWarehouses() {
+        return warehouses;
+    }
+
+    public Map<String, Item> getItems() {
+        return items;
+    }
+
+    public Map<Order, Set<OrderLines>> getOrderLines() {
+        return order_lines;
+    }
+
+    public Map<String, Order> getOrders() {
+        return orders;
+    }
+
+    public Map<String, Returns> getReturns() {
+        return returns;
+    }
+
+    public List<String> getImportErrors() {
+        return importErrors;
+    }
 
     /**
      * Loads all CSV data into memory with validation.
@@ -326,23 +348,37 @@ public class Warehouse {
 
     /** Utility: checks if string is a valid integer. */
     private boolean isValidInteger(String s) {
-        try { Integer.parseInt(s); return true; }
-        catch (NumberFormatException e) { return false; }
+        try {
+            Integer.parseInt(s);
+            return true;
+        } catch (NumberFormatException e) {
+            return false;
+        }
     }
 
     /** Utility: checks if string is a valid double. */
     private boolean isValidDouble(String s) {
-        try { Double.parseDouble(s); return true; }
-        catch (NumberFormatException e) { return false; }
+        try {
+            Double.parseDouble(s);
+            return true;
+        } catch (NumberFormatException e) {
+            return false;
+        }
     }
 
     /** Utility: checks if string is a valid ISO date or timestamp (allow blank for optional fields). */
     private boolean isValidDateOrTimestamp(String s) {
         if (s == null || s.isBlank()) return true;
-        try { LocalDateTime.parse(s); return true; }
-        catch (DateTimeParseException e1) {
-            try { LocalDate.parse(s); return true; }
-            catch (DateTimeParseException e2) { return false; }
+        try {
+            LocalDateTime.parse(s);
+            return true;
+        } catch (DateTimeParseException e1) {
+            try {
+                LocalDate.parse(s);
+                return true;
+            } catch (DateTimeParseException e2) {
+                return false;
+            }
         }
     }
 
