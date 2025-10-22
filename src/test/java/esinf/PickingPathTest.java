@@ -3,6 +3,7 @@ package esinf;
 import esinf.us02.Allocation;
 import esinf.us03.PickingPlan;
 import esinf.us03.Trolley;
+import esinf.us04.PickingPath;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
