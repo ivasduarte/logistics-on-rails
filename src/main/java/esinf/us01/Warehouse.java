@@ -3,6 +3,9 @@ package esinf.us01;
 import esinf.us02.Allocation;
 import esinf.us02.OrderAllocationResult;
 import esinf.us02.OrderLineResult;
+import esinf.us05.ReturnReasons;
+import esinf.us05.Returns;
+import esinf.us05.StockAction;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -112,7 +115,7 @@ public class Warehouse {
             String boxID = parts[1].trim();
             String sku = parts[2].trim();
             String qtyStr = parts[3].trim();
-            String expiryDate = parts[4].trim();
+            String expiryStr = parts[4].trim();
             String receivedDate = parts[5].trim();
 
             if (wagonID.isBlank() || boxID.isBlank() || sku.isBlank()) {
@@ -144,7 +147,8 @@ public class Warehouse {
                 importErrors.add("Invalid receivedAt timestamp in wagons.csv line " + (i + 1));
                 continue;
             }
-            if (!isValidDateOrTimestamp(expiryDate)) {
+            // Validate expiry string (can be blank)
+            if (!isValidDateOrTimestamp(expiryStr)) {
                 importErrors.add("Invalid expiryDate in wagons.csv line " + (i + 1));
                 continue;
             }
@@ -159,9 +163,22 @@ public class Warehouse {
                 currentBoxes = new HashSet<>();
             }
 
-            Box box = new Box(boxID, sku, quantity,
-                    expiryDate.isBlank() ? null : expiryDate,
-                    receivedDate);
+            // Parse expiry date if provided
+            LocalDateTime expiryDate = null;
+            if (!expiryStr.isBlank()) {
+                try {
+                    expiryDate = LocalDateTime.parse(expiryStr);
+                } catch (DateTimeParseException e1) {
+                    try {
+                        expiryDate = LocalDate.parse(expiryStr).atStartOfDay();
+                    } catch (DateTimeParseException e2) {
+                        importErrors.add("Invalid expiryDate in wagons.csv line " + (i + 1));
+                        continue;
+                    }
+                }
+            }
+
+            Box box = new Box(boxID, sku, quantity, expiryDate, receivedDate);
             currentBoxes.add(box);
             allBoxIds.add(boxID);
         }
@@ -357,7 +374,13 @@ public class Warehouse {
             String returnID = parts[0].trim();
             String sku = parts[1].trim();
             String qtyStr = parts[2].trim();
-            String reason = parts[3].trim();
+            ReturnReasons reason;
+            try {
+                reason = ReturnReasons.parse(parts[3]);
+            } catch (IllegalArgumentException e) {
+                importErrors.add("Invalid return reason in returns.csv line " + (i + 1) + ": " + parts[3]);
+                continue;
+            }
             String timestamp = parts[4].trim();
             String expiryDate = parts[5].trim();
 
@@ -390,6 +413,103 @@ public class Warehouse {
                     expiryDate.isBlank() ? null : expiryDate);
             returns.put(returnID, r);
         }
+    }
+
+    public void insertBox(Box box){
+        if(box == null) throw new IllegalArgumentException("Box cannot be null");
+
+        Bay targetBay = findBay(box.getSku()); // 1. Tries to find a bay that already has this SKU
+        String targetWarehouseID = null;
+
+        if (targetBay == null) {
+            targetBay = findAlternativeBay(box.getSku()); // 2. Tries to find an alternative bay
+        }
+
+        // 3. If bay doesn't have space, launches an exception
+        if (targetBay == null){
+            String errorMessage = String.format("Warehouse is full. Not possible to insert box %s", box.getBoxID());
+            importErrors.add(errorMessage);
+            return;
+        }
+
+        // 4. Find warehouseID of this bay
+        for(Map.Entry<String, Set<Bay>> warehouseEntry : warehouses.entrySet()){
+            if(warehouseEntry.getValue().contains(targetBay)){
+                targetWarehouseID = warehouseEntry.getKey();
+                break;
+            }
+        }
+
+        // 5. Inserts in the selected bay using FEFO/FIFO
+        boolean inserted = targetBay.addBoxInFEFOOrder(box);
+        if (!inserted){
+            String errorMessage = String.format("Warehouse is full. Not possible to insert box %s", box.getBoxID());
+            importErrors.add(errorMessage);
+            return;
+        }
+
+        // 6. Updates box localization
+        box.setLocation(targetWarehouseID, targetBay.getAisle(), targetBay.getBayNumber());
+
+        // 7. Registers the movement
+        Movements movement = new Movements(
+                MovementType.RETURN,
+                box.getBoxID(),
+                box.getSku(),
+                box.getQuantity(),
+                "returns",
+                targetWarehouseID + ":" + targetBay.getAisle() + "/" + targetBay.getBayNumber()
+        );
+        movementHistory.add(movement);
+    }
+
+    /**
+     * Finds the best bay for a SKU that already exists in the warehouse.
+     * Searches for a bay that already has that SKU and still has capacity.
+     * @param sku The product's SKU.
+     * @return The best bay for the SKU, or null if no suitable bay was found.
+     */
+    public Bay findBay(String sku){
+        // Iterate over warehouses
+        for(Map.Entry<String, Set<Bay>> warehouseEntry : warehouses.entrySet()){
+            Set<Bay> bays = warehouseEntry.getValue();
+
+            for(Bay bay : bays){
+                // Checks if bay has boxes with SKU
+                boolean hasSKU = false;
+                for(Box b : bay.getBoxes()){
+                    if(b.getSku().equals(sku)){
+                        hasSKU = true;
+                        break;
+                    }
+                }
+                // If a bay has boxes with SKU, return it
+                if(hasSKU && bay.hasCapacity()){
+                    return bay;
+                }
+            }
+        }
+        return null; // No suitable bay found
+    }
+
+    /**
+     * Finds an alternative bay for a new SKU.
+     * @param sku The product's SKU.
+     * @return An empty bay or null if one isn't found.
+     */
+    public Bay findAlternativeBay(String sku){
+        // Iterate over warehouses
+        for(Map.Entry<String, Set<Bay>> warehouseEntry : warehouses.entrySet()){
+            Set<Bay> bays = warehouseEntry.getValue();
+
+            for(Bay bay : bays){
+                // Checks if the bay is empty and has capacity
+                if(bay.getBoxes().isEmpty() && bay.hasCapacity()){
+                    return bay;
+                }
+            }
+        }
+        return null; // No suitable bay found
     }
 
     /**

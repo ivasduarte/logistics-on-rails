@@ -1,16 +1,18 @@
-package esinf.us01;
+package esinf.us05;
 
+import java.time.LocalDate;
 import java.util.Objects;
 
 public class Returns {
     private String returnID;
     private String sku;
     private int qty;
-    private String reason;
+    private ReturnReasons reason;
     private String timestamp;
     private String expiryDate;
+    private boolean discarded = false;
 
-    public Returns(String returnID, String sku, int qty, String reason, String timestamp, String expiryDate) {
+    public Returns(String returnID, String sku, int qty, ReturnReasons reason, String timestamp, String expiryDate) {
         this.returnID = returnID;
         this.sku = sku;
         this.qty = qty;
@@ -43,11 +45,11 @@ public class Returns {
         this.qty = qty;
     }
 
-    public String getReason() {
+    public ReturnReasons getReason() {
         return reason;
     }
 
-    public void setReason(String reason) {
+    public void setReason(ReturnReasons reason) {
         this.reason = reason;
     }
 
@@ -65,6 +67,27 @@ public class Returns {
 
     public void setExpiryDate(String expiryDate) {
         this.expiryDate = expiryDate;
+    }
+
+    public void setDiscarded(boolean discarded){
+        this.discarded = discarded;
+    }
+
+    public boolean isExpired(){
+        LocalDate expiryDate = LocalDate.parse(getExpiryDate());
+        return expiryDate != null && expiryDate.isBefore(LocalDate.now());
+    }
+
+    public boolean isDamaged(){
+        return getReason() == ReturnReasons.DAMAGED;
+    }
+
+    public boolean isCustomerRemorse(){
+        return getReason() == ReturnReasons.REMORSE;
+    }
+
+    public boolean isCycleCount(){
+        return getReason() == ReturnReasons.CYCLE_COUNT;
     }
 
     @Override

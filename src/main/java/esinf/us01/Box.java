@@ -16,7 +16,7 @@ public class Box implements Comparable<Box> {
     private String boxID;
     private String sku;
     private int quantity;
-    private String expiryDate; // ISO date string or null
+    private LocalDateTime expiryDate; // ISO date string or null
     private String receivedAt; // ISO timestamp string
 
     // Location information
@@ -24,7 +24,7 @@ public class Box implements Comparable<Box> {
     private Integer aisle;
     private Integer bayNumber;
 
-    public Box(String boxID, String sku, int quantity, String expiryDate, String receivedAt) {
+    public Box(String boxID, String sku, int quantity, LocalDateTime expiryDate, String receivedAt) {
         this.boxID = boxID;
         this.sku = sku;
         this.quantity = quantity;
@@ -49,7 +49,7 @@ public class Box implements Comparable<Box> {
         this.quantity = quantity;
     }
 
-    public String getExpiryDate() {
+    public LocalDateTime getExpiryDate() {
         return expiryDate;
     }
 
@@ -58,7 +58,7 @@ public class Box implements Comparable<Box> {
     }
 
     public boolean hasExpirationDate() {
-        return expiryDate != null && !expiryDate.isBlank();
+        return expiryDate != null;
     }
 
     public String getWarehouseId() {
