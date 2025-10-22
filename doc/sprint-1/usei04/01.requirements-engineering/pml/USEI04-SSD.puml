@@ -1,0 +1,27 @@
+@startuml
+skinparam monochrome true
+skinparam packageStyle rectangle
+skinparam shadowing false
+
+autonumber
+
+actor "Picker" as Picker
+participant ":System" as System
+
+activate Picker
+
+Picker -> System : asks for a minimized walking distance
+    activate System
+    == Input Operation ==
+    System --> Picker : requests for set of bays
+    deactivate System
+
+Picker -> System : inputs set of bays
+    activate System
+    == Output Operation ==
+    System --> Picker : outputs a minimized walking distance
+    deactivate System
+
+deactivate Picker
+
+@enduml
