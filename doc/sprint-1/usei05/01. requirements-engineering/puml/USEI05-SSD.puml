@@ -2,82 +2,25 @@
 !theme plain
 skinparam sequenceArrowThickness 2
 skinparam roundcorner 20
-skinparam maxmessagesize 60
 
 actor "Quality Operator" as QO
-participant "ReturnsManager" as RM
-participant "QuarantineQueue" as QQ
-participant "InventoryInspection" as II
-participant "AuditLog" as AL
-participant "Warehouse" as WH
+participant "System" as SYS
 
-== Process Returns in Quarantine ==
+activate QO
+QO -> SYS : receive new return
+deactivate QO
+activate SYS
 
-QO -> RM: processReturns()
-activate RM
+SYS -> SYS: adds return
+SYS -> SYS: validates returned item
+SYS -> SYS: adds returned item to quarantine queue
 
-RM -> QQ: getNextForInspection()
-activate QQ
-QQ -> QQ: sortByTimestamp(descending)
-QQ -> QQ: sortByReturnID(ascending)
-QQ --> RM: next return item
-deactivate QQ
+SYS -> QO: processes returned item in inspection in correct order
+SYS -> QO: checks if returned item should or not de discarded
+SYS -> QO: keeps every movement done of a returned item registered in an audit file
+SYS -> QO: quarantine processing complete
+deactivate SYS
+activate QO
 
-alt Return item exists
-    RM -> II: inspect(returnedItem)
-    activate II
-    
-    II -> II: shouldBeDiscarded(returnedItem)
-    
-    alt Return should be discarded
-        II -> AL: logInspection(returnID, sku, qty, 0, 0, DISCARDED)
-        activate AL
-        AL -> AL: writeToFile(timestamp, returnID, sku, action, qty)
-        AL --> II: log entry created
-        deactivate AL
-        
-        II --> RM: inspection complete (discarded)
-        
-    else Return should be restocked
-        II -> II: restock(returnedItem)
-        II -> II: createNewBox("RET-" + returnID, now(), expiryDate)
-        II -> WH: insertBox(newBox)
-        activate WH
-        WH --> II: insertion success
-        deactivate WH
-        
-        II -> AL: logInspection(returnID, sku, qty, qty, 0, RESTOCKED)
-        activate AL
-        AL -> AL: writeToFile(timestamp, returnID, sku, action, qty, qtyRestocked, qtyDiscarded)
-        AL --> II: log entry created
-        deactivate AL
-        
-        II --> RM: inspection complete (restocked)
-    end
-    
-    deactivate II
-    
-else No returns to process
-    RM -> RM: System.out.println("No returns to process.")
-    RM --> QO: processing complete
-end
-
-RM --> QO: quarantine processing complete
-deactivate RM
-
-== Receive New Return ==
-
-QO -> RM: receiveReturn(returnItem)
-activate RM
-
-RM -> QQ: addReturn(returnItem)
-activate QQ
-QQ -> QQ: validateReturnItem(returnItem)
-QQ -> QQ: addToQuarantineQueue(returnItem)
-QQ --> RM: return added to queue
-deactivate QQ
-
-RM --> QO: return received successfully
-deactivate RM
 
 @enduml
