@@ -1,0 +1,84 @@
+@startuml
+
+class PickingPath {
+    - trolleys: List<Trolley>
+    + getTrolleys(): List<Trolley>
+    + getTrolleyAllocations(Trolley trolley): List<Allocation>
+    + minimizeDistanceAscending(List<Allocation> allocations): int
+    + minimizeDistanceNearest(List<Allocation> allocations): int
+    + mergeDuplicateBays(List<Allocation> allocations): List<Allocation>
+    + findNearestAllocation(int currentAisle, int currentBay, List<Allocation> unvisited): Allocation
+    + calculateDistance(int fromAisle, int fromBay, Allocation to): int
+}
+
+class PickingPlan {
+    - heuristic: PackingHeuristic
+    - trolleyCapacity: double
+    - trolleys: List<Trolley>
+    - totalAllocations: int
+    - totalWeight: double
+    - skippedAllocations: List<SkippedAllocation>
+    + PickingPlan(heuristic: PackingHeuristic, trolleyCapacity: double)
+    + getHeuristic(): PackingHeuristic
+    + getTrolleyCapacity(): double
+    + getTrolleys(): List<Trolley>
+    + getTrolleyCount(): int
+    + getTotalAllocations(): int
+    + getTotalWeight(): double
+    + getSkippedAllocations(): List<SkippedAllocation>
+    + getSkippedCount(): int
+    + getAverageUtilization(): double
+    + addTrolley(trolley: Trolley): void
+    + addSkippedAllocation(allocation: Allocation, weight: double): void
+    + generateSummaryReport(): String
+    + generateDetailedPickingList(): String
+    - recalculateMetrics(): void
+}
+
+class Trolley {
+    - trolleyNumber: int
+    - capacityWeight: double
+    - usedWeight: double
+    - allocationEntries: List<AllocationEntry>
+    - logs: List<String>
+    + Trolley(trolleyNumber: int, capacityWeight: double)
+    + getTrolleyNumber(): int
+    + getCapacityWeight(): double
+    + getUsedWeight(): double
+    + getRemainingCapacity(): double
+    + getAllocations(): List<Allocation>
+    + getAllocationEntries(): List<AllocationEntry>
+    + getLogs(): List<String>
+    + getUtilization(): double
+    + getAllocationCount(): int
+    + isEmpty(): boolean
+    + addAllocation(allocation: Allocation, weight: double): boolean
+    + addAllocation(allocation: Allocation, weight: double, isPartial: boolean, originalQuantity: Integer): boolean
+    + addLog(logMessage: String): void
+    + canFit(weight: double): boolean
+}
+
+class Allocation {
+    - orderID: String
+    - boxID: String
+    - warehouseId: String
+    - sku: String
+    - lineNo: int
+    - aisle: int
+    - bayNumber: int
+    - quantityAllocated: int
+    + getOrderID(): String
+    + getBoxID(): String
+    + getWarehouseId(): String
+    + getSku(): String
+    + getLineNo(): int
+    + getAisle(): int
+    + getBayNumber(): int
+    + getQuantityAllocated(): int
+}
+
+PickingPlan ||--o{ Trolley : contains
+Trolley ||--o{ Allocation : contains
+PickingPath ||--o{ Allocation : "uses"
+
+@enduml

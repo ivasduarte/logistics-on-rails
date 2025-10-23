@@ -1,0 +1,64 @@
+@startuml USEI04-SD
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam sequenceArrowThickness 2
+skinparam roundcorner 20
+
+actor "Picker" as P
+activate P
+
+participant "PickingPath" as PP
+participant "PickingPlan" as PP2
+participant "Trolley" as T
+participant "Allocation" as A
+
+== Get Set of Bays from PickingPlan ==
+
+P -> PP : Ask for a minimized walking path to go through a set of bays without return leg
+activate PP
+
+PP -> PP2 : Gets PickingPlan generated in USEI03
+activate PP2
+
+PP2 --> PP : Returns PickingPlan
+deactivate PP2
+
+PP -> PP2 : Asks for trolleys utilized in the plan
+activate PP2
+
+PP2 -> T : Gets set of trolleys
+activate T
+
+T --> PP2 : Returns set of trolleys
+deactivate T
+
+PP2 -> T : Asks for set of allocations associated to the trolley
+activate T
+
+T -> A : Gets set of allocations
+activate A
+
+A --> T : Returns set of allocations
+deactivate A
+
+T --> PP2 : Returns set of allocations
+deactivate T
+
+== Merging and sorting of allocations ==
+
+PP2 --> PP : Returns set of allocations
+PP -> PP : Merges duplicate allocations
+
+== Calculations to obtain the minimized walking path and distance with two strategies ==
+
+PP -> PP : Sorts allocations in ascending order from first to last aisle and first to last bay
+PP -> PP : Calculates minimized walking path and distance in ascending order
+PP -> PP : Calculates minimized walking path and distance from current to nearest allocations
+
+== Return paths and corresponding distances ==
+
+PP --> P : Returns minimized walking path and distance obtained through both strategies
+deactivate PP
+
+
+@enduml
