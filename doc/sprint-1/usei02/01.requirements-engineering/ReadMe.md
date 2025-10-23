@@ -60,6 +60,6 @@ The distances traversed in the different warehouses must be added.
 ### 1.4. Found out Dependencies
 - **USEI01** : This User Story depends on the inventory organization made on USEI01.
 
-### 1.7. System Sequence Diagram (SSD)
+### 1.5. System Sequence Diagram (SSD)
 
 ![System Sequence Diagram](svg/USEI02-SSD.svg)

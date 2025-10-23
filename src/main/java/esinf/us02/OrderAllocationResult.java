@@ -193,8 +193,7 @@ public class OrderAllocationResult {
      */
     @Override
     public String toString() {
-        return String.format("OrderAllocationResult for order %s: lines=%d, allocations=%d, eligible=%s.",
-                orderID, lineResults.size(), allAllocations.size(), isFullyEligible());
+        return String.format("OrderAllocationResult for order %d: lines=%d, allocations=%d, eligible=%s.", orderID, lineResults.size(), allAllocations.size(), isFullyEligible());
     }
 
     /**
