@@ -39,5 +39,6 @@ class PickingPath {
 
 PickingPlan "1" -- "*" Trolley : has
 Trolley "1" -- "*" Allocation : has
+PickingPath "1" -- "*" Allocation : uses
 
 @enduml
