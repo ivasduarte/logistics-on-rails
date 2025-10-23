@@ -62,12 +62,22 @@ public class PickingPath {
         int currentBay = 0;
         int totalDistance = 0;
 
+        System.out.println("\n--- ASCENDING ORDER STRATEGY ---");
+        System.out.println("Path:");
+        System.out.println("  0. Start (0-0)");
+
         // Go through every bay to calculate the distance in ascending order
+        int step = 1;
         for (Allocation allocation : merged) {
-            totalDistance += calculateDistance(currentAisle, currentBay, allocation);
+            int distance = calculateDistance(currentAisle, currentBay, allocation);
+            totalDistance += distance;
+            System.out.printf("  %d. Aisle %d, Bay %d (distance: %d)%n",
+                    step++, allocation.getAisle(), allocation.getBayNumber(), distance);
             currentAisle = allocation.getAisle();
             currentBay = allocation.getBayNumber();
         }
+
+        System.out.println("Total Distance: " + totalDistance + " units\n");
 
         return totalDistance;
     }
@@ -94,10 +104,18 @@ public class PickingPath {
         int currentBay = 0;
         int totalDistance = 0;
 
+        System.out.println("\n--- NEAREST NEIGHBOR STRATEGY ---");
+        System.out.println("Path:");
+        System.out.println("  0. Start (0-0)");
+
         // Check for unvisited bays to calculate the distance from the current bay to the nearest one
+        int step = 1;
         while (!unvisited.isEmpty()) {
             Allocation nearest = findNearestAllocation(currentAisle, currentBay, unvisited);
-            totalDistance += calculateDistance(currentAisle, currentBay, nearest);
+            int distance = calculateDistance(currentAisle, currentBay, nearest);
+            totalDistance += distance;
+            System.out.printf("  %d. Aisle %d, Bay %d (distance: %d)%n",
+                    step++, nearest.getAisle(), nearest.getBayNumber(), distance);
 
             // Replaces current aisle and current bay to the new values
             currentAisle = nearest.getAisle();
@@ -106,6 +124,8 @@ public class PickingPath {
             // Removes bay from the unvisited list
             unvisited.remove(nearest);
         }
+
+        System.out.println("Total Distance: " + totalDistance + " units\n");
 
         return totalDistance;
     }
