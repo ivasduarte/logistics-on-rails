@@ -1,5 +1,5 @@
 CREATE TABLE Location (
-  id NUMBER(10) GENERATED AS IDENTITY,
+  id NUMBER(10),
 
   latitude VARCHAR2(255)
     CONSTRAINT nn_Location_latitude NOT NULL,
@@ -12,8 +12,7 @@ CREATE TABLE Location (
 );
 
 CREATE TABLE Owner (
-  shortName VARCHAR2(255)
-    CONSTRAINT nn_Owner_shortName NOT NULL,
+  shortName VARCHAR2(255),
 
   name VARCHAR2(255)
     CONSTRAINT nn_Owner_name NOT NULL,
@@ -26,8 +25,7 @@ CREATE TABLE Owner (
 );
 
 CREATE TABLE Operator (
-  shortName VARCHAR2(255)
-    CONSTRAINT nn_Operator_shortName NOT NULL,
+  shortName VARCHAR2(255),
 
   name VARCHAR2(255)
     CONSTRAINT nn_Operator_name NOT NULL,
@@ -40,7 +38,7 @@ CREATE TABLE Operator (
 );
 
 CREATE TABLE Endpoint (
-  endpointID NUMBER(10) GENERATED AS IDENTITY,
+  endpointID NUMBER(10),
 
   name VARCHAR2(255)
     CONSTRAINT nn_Endpoint_name NOT NULL,
@@ -94,7 +92,7 @@ CREATE TABLE Terminal (
 );
 
 CREATE TABLE Line_Type (
-  id NUMBER(10) GENERATED AS IDENTITY,
+  id NUMBER(10),
 
   isElectric VARCHAR2(255)
     CONSTRAINT nn_Line_Type_isElectric NOT NULL,
@@ -106,7 +104,7 @@ CREATE TABLE Line_Type (
 );
 
 CREATE TABLE Rail_Line (
-  id NUMBER(10) GENERATED AS IDENTITY,
+  id NUMBER(10),
 
   name VARCHAR2(255)
     CONSTRAINT nn_Rail_Line_name NOT NULL,
@@ -127,7 +125,7 @@ CREATE TABLE Rail_Line (
 );
 
 CREATE TABLE Line_Segment (
-  id NUMBER(10) GENERATED AS IDENTITY,
+  id NUMBER(10),
 
   Rail_LineId NUMBER(10)
     CONSTRAINT nn_Line_Segment_Rail_LineId NOT NULL,
@@ -149,7 +147,7 @@ CREATE TABLE Line_Segment (
 );
 
 CREATE TABLE Rolling_Stock (
-  id NUMBER(10) GENERATED AS IDENTITY,
+  id NUMBER(10),
 
   name VARCHAR2(255)
     CONSTRAINT nn_Rolling_Stock_name NOT NULL,
@@ -168,7 +166,7 @@ CREATE TABLE Operator_Rolling_Stock (
 );
 
 CREATE TABLE Locomotive_Model (
-  id NUMBER(10) GENERATED AS IDENTITY,
+  id NUMBER(10),
 
   model VARCHAR2(255)
     CONSTRAINT nn_Locomotive_Model_model NOT NULL,
@@ -227,7 +225,7 @@ CREATE TABLE Locomotive_Electric (
 );
 
 CREATE TABLE Locomotive (
-  id NUMBER(10) GENERATED AS IDENTITY,
+  id NUMBER(10),
 
   rollingStockID NUMBER(10)
     CONSTRAINT nn_Locomotive_rollingStockID NOT NULL,
@@ -251,18 +249,8 @@ CREATE TABLE Locomotive (
   CONSTRAINT pk_Locomotive_id PRIMARY KEY (id)
 );
 
-CREATE TABLE Wagon_Type (
-  id NUMBER(10) GENERATED AS IDENTITY,
-
-  typeName VARCHAR2(255)
-    CONSTRAINT nn_Wagon_Type_typeName NOT NULL
-    CONSTRAINT uq_Wagon_Type_typeName UNIQUE,
-
-  CONSTRAINT pk_Wagon_Type_id PRIMARY KEY (id)
-);
-
 CREATE TABLE Wagon_Model (
-  id NUMBER(10) GENERATED AS IDENTITY,
+  id NUMBER(10),
 
   model VARCHAR2(255)
     CONSTRAINT nn_Wagon_Model_model NOT NULL,
@@ -296,9 +284,6 @@ CREATE TABLE Wagon_Model (
 
   volume NUMBER(10)
     CONSTRAINT nn_Wagon_Model_volume NOT NULL,
-
-  typeID NUMBER(10)
-    CONSTRAINT nn_Wagon_Model_typeID NOT NULL,
 
   CONSTRAINT pk_Wagon_Model_id PRIMARY KEY (id)
 );
@@ -372,7 +357,7 @@ CREATE TABLE Wagon_Tank_Car (
 );
 
 CREATE TABLE Wagon (
-  id NUMBER(10) GENERATED AS IDENTITY,
+  id NUMBER(10),
 
   rollingStockID NUMBER(10)
     CONSTRAINT nn_Wagon_rollingStockID NOT NULL,
@@ -388,6 +373,7 @@ CREATE TABLE Wagon (
 
   CONSTRAINT pk_Wagon_id PRIMARY KEY (id)
 );
+
 
 ALTER TABLE Endpoint 
   ADD CONSTRAINT fk_Location_Endpoint_id_locationID FOREIGN KEY (locationID) REFERENCES Location (id);
@@ -433,9 +419,6 @@ ALTER TABLE Wagon
 
 ALTER TABLE Wagon 
   ADD CONSTRAINT fk_Wagon_Model_Wagon_id_modelID FOREIGN KEY (modelID) REFERENCES Wagon_Model (id);
-
-ALTER TABLE Wagon_Model 
-  ADD CONSTRAINT fk_Wagon_Type_Wagon_Model_id_typeID FOREIGN KEY (typeID) REFERENCES Wagon_Type (id);
 
 ALTER TABLE Wagon_Boxcar 
   ADD CONSTRAINT fk_Wagon_Model_Wagon_Boxcar_id_id FOREIGN KEY (id) REFERENCES Wagon_Model (id);
