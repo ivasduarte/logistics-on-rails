@@ -1,0 +1,60 @@
+@startuml
+
+skinparam monochrome true
+skinparam packageStyle rectangle
+skinparam shadowing false
+
+autonumber
+
+actor "Warehouse\n Planner" as plan
+participant ":Warehouse" as warehouse
+participant ":OrderLine" as line
+participant ":BoxLocation" as box
+
+activate plan
+
+plan -> warehouse: requests to examine inventory and allocate quantities from boxes
+activate warehouse
+
+create ":OrderAllocationResult" as allRes
+warehouse -> allRes: create()
+activate allRes
+
+warehouse -> warehouse: gets all lines in an order
+
+loop for each Line in Order
+    create ":OrderLineResult" as res
+    warehouse -> res: create()
+    activate res
+
+    warehouse -> line: getQty()
+    activate line
+    line --> warehouse: remaining quantity to fulfill request
+    deactivate line
+
+    warehouse -> box: collectBoxesForSku()
+    activate box
+    box --> warehouse: returns available boxes
+    deactivate box
+
+    loop for each box in list
+        warehouse -> warehouse: verifies if line is already satisfied
+        warehouse -> warehouse: verifies if there's quantity available
+
+        create ":Allocation" as all
+        warehouse -> all: create()
+
+        warehouse -> res: adds allocation for results summary
+        warehouse -> warehouse: calculates remaining quantity
+    end
+
+    res --> allRes: returns line result\nfor full order summary
+    deactivate res
+end
+
+allRes --> warehouse: returns order results summary
+deactivate allRes
+
+warehouse --> plan: Receives complete order report
+
+@enduml
