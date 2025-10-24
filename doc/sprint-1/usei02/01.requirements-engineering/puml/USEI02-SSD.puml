@@ -6,13 +6,10 @@ participant "System" as sys
 
 activate plan
 
-plan -> sys: processExistingOrders()
+plan -> sys: asks to process existing orders in FEFO/FIFO order
 activate sys
 
-sys -> sys: allocateOrder()
-note right: This method is responsible for:\n - Receiving the Organization Mode\n - Allocate quantities to each order line\n - Generate line reports\n - Give a full order report
-
-sys --> plan: generateSummaryReport()
+sys --> plan: returns order results summary
 deactivate sys
 
 @enduml
