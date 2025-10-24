@@ -1,0 +1,68 @@
+@startuml
+skinparam monochrome true
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+
+hide circle
+hide methods
+
+class Warehouse {
+    -warehouseId: String
+}
+
+enum LineStatus {
+    ELIGIBLE
+    PARTIAL
+    UNDISPATCHABLE
+}
+
+class Allocation {
+    -orderId: String
+    -boxId: String
+    -warehouseId: String
+    -lineNo: int
+    -aisle: int
+    -bayNumber: int
+    -quantityAllocated: int
+}
+
+class OrderAllocationResult {
+    -orderId: String
+    -lineResults: List<OrderLineResult>
+    -allAllocations: List<Allocation>
+    -perLineStatuses: Map<Integer, LineStatus>
+}
+
+class OrderLineResult {
+    -sku: String
+    -lineNo: int
+    -requestedQty: int
+    -allocatedQty: int
+    -status: LineStatus
+    -allocations: List<Allocation>
+}
+
+class Order {
+    -orderId: String
+    -dueDate:String
+    -priority: int
+}
+
+class OrderLines {
+    -sku: String
+    -lineNo: int
+    -qty: int
+}
+
+Warehouse "1" -- "*" Order: has
+Order "1" -- "*" OrderLines: has
+
+OrderLines -- Allocation: responsible for
+
+OrderLines -- LineStatus: is
+OrderLines -- OrderLineResult: generates
+
+OrderLineResult "*" -- "1" OrderAllocationResult: generate
+
+@enduml
