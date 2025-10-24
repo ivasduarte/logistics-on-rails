@@ -163,7 +163,7 @@ public class OrderAllocationResult {
      *
      * @return multi-line formatted summary report
      */
-    public String generateSummaryReport() { // Alterar posteriormente
+    public String generateSummaryReport() {
         StringBuilder sb = new StringBuilder();
         sb.append("=== Order Allocation Result: ").append(orderID).append(" ===\n");
         sb.append("Total Lines: ").append(lineResults.size()).append("\n");
@@ -193,7 +193,7 @@ public class OrderAllocationResult {
      */
     @Override
     public String toString() {
-        return String.format("OrderAllocationResult for order %d: lines=%d, allocations=%d, eligible=%s.", orderID, lineResults.size(), allAllocations.size(), isFullyEligible());
+        return String.format("OrderAllocationResult for order %s: lines=%d, allocations=%d, eligible=%s.", orderID, lineResults.size(), allAllocations.size(), isFullyEligible());
     }
 
     /**

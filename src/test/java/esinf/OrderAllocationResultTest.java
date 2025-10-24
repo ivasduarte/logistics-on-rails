@@ -125,7 +125,7 @@ public class OrderAllocationResultTest {
         assertTrue(report.contains("ELIGIBLE: 1"));
 
         String str = oar.toString();
-        assertTrue(str.contains("order=O1"));
+        assertTrue(str.contains("order O1"));
         assertTrue(str.contains("lines=1"));
         assertTrue(str.contains("eligible=true"));
     }
