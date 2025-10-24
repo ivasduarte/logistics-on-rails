@@ -1,0 +1,122 @@
+@startuml
+
+class Warehouse {
+    - Map<Wagon, Set<Box>> wagons
+    - Map<String, Set<Bay>> warehouses
+    - Map<String, Item> items
+    - Map<Order, Set<OrderLines>> order_lines
+    - Map<String, Order> orders
+    - Map<String, Returns> returns
+    - List<String> importErrors
+    - List<Movements> movementHistory
+    + loadAllData()
+    + getItems()
+    + getWagons()
+    + getBays()
+    + getOrders()
+    + getOrderLines()
+    + getReturns()
+    + unloadWagonsIntoBays()
+    + dispatch()
+    + relocate()
+    + printMovementHistory()
+    + exportToCSV()
+    + allocateOrder()
+    + collectBoxesForSku()
+}
+
+class Order {
+    - String orderId
+    - String dueDate
+    - int priority
+    + getOrderId()
+    + getDueDate()
+    + getPriority()
+}
+
+class OrderLines {
+    - int lineNo
+    - String sku
+    - int qty
+    + getLineNo()
+    + getSku()
+    + getQty()
+}
+
+class Allocation {
+    - String orderId
+    - String boxId
+    - String warehouseId
+    - String sku
+    - int lineNo
+    - int aisle
+    - int bayNumber
+    - int quantityAllocated
+    + getOrderId()
+    + getBoxId()
+    + getWarehouseId()
+    + getSku()
+    + getLineNo()
+    + getAisle()
+    + getBayNumber()
+    + getQuantityAllocated()
+}
+
+class OrderLineResult {
+    - String sku
+    - int lineNo
+    - int requestedQty
+    - int allocatedQty
+    - LineStatus status
+    - List<Allocation> allocations
+    + getSku()
+    + getLineNo()
+    + getRequestedQty()
+    + getAllocatedQty()
+    + getStatus()
+    + getAllocations()
+    + addAllocation()
+    + computeStatus()
+    + isFullySatisfied()
+    + hasAllocations()
+}
+
+class OrderAllocationResult {
+    - String orderId
+    - List<OrderLineResult> lineResults
+    - List<Allocation> allAllocations
+    - Map<Integer, LineStatus> perLineStatuses
+    + getOrderId()
+    + getLineResults()
+    + getAllAllocations()
+    + getPerLineStatuses()
+    + addLineResult()
+    + getLineResult()
+    + getLineStatus()
+    + isFullyEligible()
+    + hasPartialLines()
+    + hasUndispatchableLines()
+    + getLinesByStatus()
+    + getTotalAllocationCount()
+    + getStatusSummary()
+    + generateSummaryReport()
+}
+
+enum LineStatus {
+    ELIGIBLE
+    PARTIAL
+    UNDISPATCHABLE
+}
+
+OrderLines ..> LineStatus
+
+Warehouse "1" -- "*" Order: manages
+
+Order "1" -- "*" OrderLines: has
+
+OrderLines -- Allocation: is responsible for
+OrderLines -- OrderLineResult: generates
+
+OrderLineResult "*" -- "1" OrderAllocationResult: create
+
+@enduml
