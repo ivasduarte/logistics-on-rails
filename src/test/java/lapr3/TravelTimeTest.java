@@ -12,7 +12,9 @@ import static org.junit.jupiter.api.Assertions.*;
 public class TravelTimeTest {
 
     private Locomotive locomotive;
-    private Line line;
+    private Station startStation;
+    private Station endStation;
+    private List<Line> lines;
     private TravelTime travelTime;
 
     @BeforeEach
@@ -21,25 +23,31 @@ public class TravelTimeTest {
                 1000, 20.5, 3.0, 4.0, 80, 120, 100, 50, "Electric",
                 25000, 50, "Op1", 1435, 0);
 
-        line = new Line(1, "Line1", "Owner1", 1, 2, 1435);
+        startStation = new Station(1, "Station1");
+        endStation = new Station(2, "Station2");
+
+        Line line = new Line(1, "Line1", "Owner1", 1, 2, 1435);
         List<Segment> segments = new ArrayList<>();
         segments.add(new Segment(1, 1, 1, true, 100, 1000, 2));
         segments.add(new Segment(2, 1, 2, true, 100, 2000, 2));
         line.setSegments(segments);
 
-        travelTime = new TravelTime(locomotive, line);
+        lines = new ArrayList<>();
+        lines.add(line);
+
+        travelTime = new TravelTime(locomotive, startStation, endStation);
     }
 
     @Test
     void testGetters() {
         assertEquals(locomotive, travelTime.getLocomotive());
-        assertEquals(line, travelTime.getLine());
+        assertEquals(List.of(startStation, endStation), travelTime.getStations());
     }
 
     @Test
     void testCalculateTravelDistance() {
         int expectedDistance = 3000; // 1000 + 2000
-        assertEquals(expectedDistance, travelTime.calculateTravelDistance());
+        assertEquals(expectedDistance, travelTime.calculateTravelDistance(lines));
     }
 
     @Test

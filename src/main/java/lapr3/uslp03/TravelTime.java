@@ -4,27 +4,21 @@ import java.util.List;
 
 public class TravelTime {
 
-    /**
-     * Represents the locomotive used in travel calculations.
-     * This variable is part of the travel time calculations and provides characteristics
-     * and capabilities of the locomotive, such as speed and other attributes, that
-     * influence the overall travel time and performance on the rail line.
-     * The locomotive is immutable and defined during the construction of the containing object.
-     */
     private final Locomotive locomotive;
-    private final Line line;
+    private final List<Station> stations;
 
     /**
-     * Constructs a TravelTime object using a specified locomotive and rail line.
+     * Constructs a TravelTime object, initializing the locomotive to be used
+     * and the start and end stations for the travel.
      *
-     * @param locomotive the locomotive used for travel time calculations. It determines
-     *                   the performance characteristics such as speed and other attributes.
-     * @param line       the rail line used for travel calculations. It defines the segments
-     *                   and total distance of the travel path.
+     * @param locomotive the locomotive used for travel calculations, which
+     *                   provides characteristics such as speed and performance.
+     * @param startStation the station where the travel begins.
+     * @param endStation the station where the travel ends.
      */
-    public TravelTime(Locomotive locomotive, Line line) {
+    public TravelTime(Locomotive locomotive, Station startStation, Station endStation) {
         this.locomotive = locomotive;
-        this.line = line;
+        this.stations = List.of(startStation, endStation);
     }
 
     /**
@@ -38,13 +32,32 @@ public class TravelTime {
     }
 
     /**
-     * Retrieves the rail line associated with this travel time calculation.
+     * Retrieves the list of stations associated with this travel.
      *
-     * @return the rail line used in travel calculations, representing the travel path
-     *         and its associated properties such as segments and track details.
+     * @return a list of Station objects representing the stations involved in this travel
      */
-    public Line getLine() {
-        return line;
+    public List<Station> getStations() {
+        return stations;
+    }
+
+    /**
+     * Finds a railway line that directly connects the start station and the end station
+     * from the provided list of lines.
+     *
+     * @param lines a list of Line objects, representing available railway lines
+     * @return a Line object representing the direct connection between the start
+     *         and end station
+     * @throws IllegalArgumentException if no direct line connects the start and end stations
+     */
+    private Line findConnectingLine(List<Line> lines) {
+        int startStationId = stations.get(0).getStationID();
+        int endStationId = stations.get(1).getStationID();
+
+        return lines.stream()
+                .filter(l -> (l.getStartStationID() == startStationId && l.getEndStationID() == endStationId) ||
+                        (l.getStartStationID() == endStationId && l.getEndStationID() == startStationId))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("No direct line connects these stations"));
     }
 
     /**
@@ -53,7 +66,9 @@ public class TravelTime {
      *
      * @return the total travel distance in meters
      */
-    public int calculateTravelDistance() {
+    public int calculateTravelDistance(List<Line> lines) {
+        Line line = findConnectingLine(lines);
+
         List<Segment> segments = line.getSegments();
         int travelDistance = 0;
 
