@@ -22,9 +22,8 @@ class InventoryInspection {
 }
 
 class AuditLog {
-    - LOG_FILE_PATH: String
-    - LOG_FILE_NAME: String
-    + logInspection(returnID: String, sku: String, quantity: int, \nqtyRestocked: int, qtyDiscarded: int, action: StockAction): void
+    - logFilePath: String
+    + logInspection(returnID: String, sku: String, quantity: int, qtyRestocked: int, qtyDiscarded: int, action: StockAction): void
 }
 
 class Returns {
@@ -86,13 +85,18 @@ class Box {
 }
 
 ' Relationships
-ReturnsManager ||--|| QuarantineQueue : "manages"
-ReturnsManager ||--|| InventoryInspection : "uses"
-QuarantineQueue ||--o{ Returns : "contains"
-InventoryInspection ||--|| Warehouse : "depends on"
-InventoryInspection ||--|| AuditLog : "uses"
-Returns ||--|| ReturnReasons : "has"
-InventoryInspection ||--o| Box : "creates"
-Box ||--|| Warehouse : "stored in"
+ReturnsManager "1" *-- "1" QuarantineQueue : manages
+ReturnsManager "1" *-- "1" InventoryInspection : uses
+ReturnsManager ..> Warehouse : uses
+
+QuarantineQueue "1" o-- "*" Returns : contains
+
+InventoryInspection "1" --> "1" Warehouse : depends on
+InventoryInspection "1" *-- "1" AuditLog : uses
+InventoryInspection ..> Box : <<creates>>
+
+AuditLog ..> StockAction : uses
+
+Warehouse "1" *-- "*" Box : stores
 
 @enduml

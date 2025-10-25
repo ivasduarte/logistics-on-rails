@@ -17,7 +17,7 @@ public class AuditLog {
         this.LOG_FILE_PATH = LOG_FILE_PATH;
     }
 
-    public void logInspection(String returnID, String sku, int quantity, int qtyRestocked, int qtyDiscarded, StockAction action) throws IOException {
+    public void logInspection(String returnID, String sku, int quantity, int qtyRestocked, int qtyDiscarded, StockAction action){
         try(FileWriter writer = new FileWriter(LOG_FILE_PATH + LOG_FILE_NAME, true);
         BufferedWriter bw = new BufferedWriter(writer);
         PrintWriter out = new PrintWriter(bw)) {
@@ -29,12 +29,12 @@ public class AuditLog {
             sb.append(timestamp.format(formatter)).append(" | returnID = ").append(returnID).append(" | SKU = ")
                     .append(sku).append(" | action = ").append(action).append(" | quantity = ").append(quantity);
 
-            if(qtyRestocked != 0 && qtyDiscarded != 0){
+            if(qtyRestocked != 0 || qtyDiscarded != 0){
                 sb.append(" | qtyRestocked = ").append(qtyRestocked).append(" | qtyDiscarded = ").append(qtyDiscarded);
             }
-            out.println(sb.toString());
+            out.println(sb);
         } catch (IOException e){
-            System.err.println("Error writing to audit log file: " + e.getMessage());
+            System.err.println("\nError writing to audit log file: " + e.getMessage());
         }
     }
 }

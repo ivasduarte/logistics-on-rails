@@ -23,8 +23,16 @@ public class InventoryInspection {
         StockAction action;
 
         if(shouldBeDiscarded(returnedItem)){
+            // Discard
             action = StockAction.DISCARDED;
-            auditLog.logInspection(returnedItem.getReturnID(), returnedItem.getSku(), returnedItem.getQty(), 0, 0, action);
+            auditLog.logInspection(returnedItem.getReturnID(), returnedItem.getSku(),
+                    returnedItem.getQty(), 0, returnedItem.getQty(), action);
+        } else {
+            // Restock
+            restock(returnedItem);
+            action = StockAction.RESTOCKED;
+            auditLog.logInspection(returnedItem.getReturnID(), returnedItem.getSku(),
+                    returnedItem.getQty(), returnedItem.getQty(), 0, action);
         }
     }
 

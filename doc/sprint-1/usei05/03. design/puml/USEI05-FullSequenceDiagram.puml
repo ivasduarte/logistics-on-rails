@@ -10,7 +10,6 @@ participant "ReturnsManager" as RM
 participant "QuarantineQueue" as QQ
 participant "InventoryInspection" as II
 participant "AuditLog" as AL
-participant "Returns" as R
 participant "Warehouse" as WH
 participant "Box" as B
 
@@ -21,70 +20,64 @@ activate RM
 
 RM -> QQ: addReturn(returnItem)
 activate QQ
-QQ -> QQ: validateReturnItem(returnItem)
-QQ -> QQ: addToQuarantineQueue(returnItem)
-QQ --> RM: return added to queue
+note right: Item added to quarantine\n(latest timestamp first,\nties by returnID ASC)
 deactivate QQ
 
-RM --> QO: return received successfully
 deactivate RM
 
 == Process Returns in Quarantine ==
 
-QO -> RM: processReturns()
-activate RM
+loop while quarantine not empty
 
-RM -> QQ: getNextForInspection()
-activate QQ
-QQ -> QQ: sortByTimestamp(descending)
-QQ -> QQ: sortByReturnID(ascending)
-QQ --> RM: next return item
-deactivate QQ
+    QO -> RM: processReturns()
+    activate RM
 
-alt Return item exists
-    RM -> II: inspect(returnedItem)
-    activate II
-    
-    II -> II: shouldBeDiscarded(returnedItem)
-    
-    alt Return should be discarded
-        II -> AL: logInspection(returnID, sku, qty, 0, 0, DISCARDED)
-        activate AL
-        AL -> AL: writeToFile(timestamp, returnID, sku, action, qty)
-        AL --> II: log entry created
-        deactivate AL
-        
-        II --> RM: inspection complete (discarded)
-        
-    else Return should be restocked
-        II -> II: restock(returnedItem)
-        II -> II: createNewBox("RET-" + returnID, now(), expiryDate)
-        activate B
-        B --> II: new box created
-        deactivate B
-        
-        II -> WH: insertBox(newBox)
-        activate WH
-        WH --> II: insertion success
-        deactivate WH
-        
-        II -> AL: logInspection(returnID, sku, qty, qty, 0, RESTOCKED)
-        activate AL
-        AL -> AL: writeToFile(timestamp, returnID, sku, action, qty, qtyRestocked, qtyDiscarded)
-        AL --> II: log entry created
-        deactivate AL
-        
-        II --> RM: inspection complete (restocked)
+    RM -> QQ: getNextForInspection()
+    activate QQ
+    QQ --> RM: returnedItem
+    deactivate QQ
+
+    alt returnedItem != null
+
+        RM -> II: inspect(returnedItem)
+        activate II
+
+        II -> II: shouldBeDiscarded(returnedItem)
+
+        alt reason = DAMAGED or EXPIRED
+
+            II -> AL: logInspection(returnID, sku, qty, 0, qty, DISCARDED)
+            activate AL
+            deactivate AL
+
+        else reason = REMORSE or CYCLE_COUNT
+
+            II -> II: restock(returnedItem)
+
+            create B
+            II -> B: new Box("RET-"+returnID, sku, qty, expiryDate, now())
+
+            II -> WH: insertBox(newBox)
+            activate WH
+            note right: FEFO/FIFO insertion rules
+            deactivate WH
+
+            II -> AL: logInspection(returnID, sku, qty, qty, 0, RESTOCKED)
+            activate AL
+            deactivate AL
+
+        end
+
+        deactivate II
+
+    else no items in quarantine
+
+        note over RM: "No returns to process"
+
     end
-    
-    deactivate II
-    
-else No returns to process
-    RM -> RM: System.out.println("No returns to process.")
-    RM --> QO: processing complete
-end
 
-RM --> QO: quarantine processing complete
-deactivate RM
+    deactivate RM
+
+end
 
 @enduml

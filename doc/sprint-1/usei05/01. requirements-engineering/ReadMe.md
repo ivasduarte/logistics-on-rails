@@ -20,6 +20,27 @@ them, and create an audit file detailing the processing done to each product.
 - **EXPIRED**: The product has passed its expiry date. These items cannot be sold and must be discarded.
 - **CYCLE_COUNT**: A mismatch was found during a stock audit. These items are not faulty but must be rechecked before restocking.
 
+
+**From client specifications:**
+
+> **Question:** Should the audit log keep a complete historical record of all inspections (i.e., new entries are appended to the same file over time), or should it be reset/overwritten each time the application runs? Under what circumstances can a returned product be partially restocked? ("if partially restocked, include qtyRestocked and qtyDiscarded").
+
+> **Answer:** Default to append-only (keep history). Partial restock is for reasons where unit-by-unit acceptance makes sense; expired/damaged default to full discard; always log qtyRestocked and qtyDiscarded and insert the accepted portion as a new FEFO-sorted return box.
+
+---
+
+> **Question:** In USEI05, the user has to choose if each item returned is restocked or thrown away. We are exploring three potential methods:
+Complete manual: the user determines for each return whether to restock or throw it away.
+Semi-automatic: automatically rejects expired and damaged items, while the user chooses regarding the other reasons (e.g., customer remorse, cycle count).
+Completely automated: each item is automatically accepted or denied purely based on its return reason, without any user involvement.
+Could you please specify what method is anticipated for the execution?
+Thank you!
+
+> **Answer:** Please ensure the process is fully automated.
+
+---
+
+
 ### 1.3. Acceptance Criteria
 
 > **1. Handle customer returns putting them in quarantine first**

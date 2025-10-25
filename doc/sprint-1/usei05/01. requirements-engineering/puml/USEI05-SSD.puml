@@ -2,25 +2,35 @@
 !theme plain
 skinparam sequenceArrowThickness 2
 skinparam roundcorner 20
+skinparam sequenceMessageAlign direction
 
-actor "Quality Operator" as QO
-participant "System" as SYS
+actor "Quality Operator"
+participant "System"
 
-activate QO
-QO -> SYS : receive new return
-deactivate QO
-activate SYS
+activate "Quality Operator"
 
-SYS -> SYS: adds return
-SYS -> SYS: validates returned item
-SYS -> SYS: adds returned item to quarantine queue
+== 1. Receive Returns ==
 
-SYS -> QO: processes returned item in inspection in correct order
-SYS -> QO: checks if returned item should or not de discarded
-SYS -> QO: keeps every movement done of a returned item registered in an audit file
-SYS -> QO: quarantine processing complete
-deactivate SYS
-activate QO
+"Quality Operator" -> "System" : Receive return
+activate "System"
+
+"System" -> "Quality Operator" : Confirmation
+deactivate "System"
+
+==  2. Process Quarantined Items ==
+
+loop while Quarantine Isn't Empty
+    "Quality Operator" -> "System" : Process returns
+    activate "System"
+
+    alt Item Should Be Discarded \n(Damaged or Expired)
+        "System" -> "Quality Operator" : Item discarded, Audit logged
+    else Item Should Be Restocked \n(Remorse or Cycle Count)
+        "Quality Operator" -> "System" : Restock item
+        "System" -> "Quality Operator" : Item restocked, Audit logged
+    end
+end
+
 
 
 @enduml

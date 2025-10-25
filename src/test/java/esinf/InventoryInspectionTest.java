@@ -59,23 +59,13 @@ class InventoryInspectionTest {
     }
 
     @Test
-    void testInspect_ItemShouldNotBeDiscarded_NoLog() throws IOException {
-        Returns returnedItem = new Returns("R011", "SKU11", 8, ReturnReasons.CYCLE_COUNT, 
-                "2024-01-01T10:00:00", "2024-12-31T00:00:00");
-
-        inspection.inspect(returnedItem);
-
-        assertTrue(auditLog.loggedActions.isEmpty(), "Nenhum log deve ser gerado");
-    }
-
-    @Test
     void testRestock_AddsBoxToWarehouse() {
         Returns returnedItem = new Returns("R100", "SKU100", 10, ReturnReasons.REMORSE, 
                 "2024-01-01T10:00:00", "2030-01-01T00:00:00");
 
         inspection.restock(returnedItem);
 
-        assertEquals(1, warehouse.boxes.size(), "Uma caixa deve ser adicionada ao armazém");
+        assertEquals(1, warehouse.boxes.size());
         Box box = warehouse.boxes.get(0);
         assertEquals("RET-R100", box.getBoxID());
         assertEquals("SKU100", box.getSku());
@@ -94,8 +84,7 @@ class InventoryInspectionTest {
 
         Box box = warehouse.boxes.get(0);
         LocalDateTime receivedAt = LocalDateTime.parse(box.getReceivedAt());
-        assertTrue(receivedAt.isAfter(before.minusSeconds(1)) && receivedAt.isBefore(after.plusSeconds(1)),
-                "A data de receção deve ser próxima do momento atual");
+        assertTrue(receivedAt.isAfter(before.minusSeconds(1)) && receivedAt.isBefore(after.plusSeconds(1)));
     }
 
     static class FakeWarehouse extends Warehouse {

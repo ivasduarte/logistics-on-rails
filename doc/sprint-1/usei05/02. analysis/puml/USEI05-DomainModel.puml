@@ -15,12 +15,6 @@ class Returns {
   - timestamp : String
   - expiryDate : String
   - discarded : boolean
-  + getReturnID() : String
-  + getSku() : String
-  + getQty() : int
-  + getReason() : ReturnReasons
-  + getTimestamp() : String
-  + getExpiryDate() : String
   + isExpired() : boolean
   + isDamaged() : boolean
   + isCustomerRemorse() : boolean
@@ -32,10 +26,8 @@ enum ReturnReasons {
   DAMAGED
   EXPIRED
   CYCLE_COUNT
-  + getDescription() : String
   + shouldBeDiscarded() : boolean
   + shouldBeRestocked() : boolean
-  + parse(raw : String) : ReturnReasons
 }
 
 enum StockAction {
@@ -59,14 +51,13 @@ class ReturnsManager {
 }
 
 class QuarantineQueue {
-  - quarantinedItems : List<Returns>
+  - quarantinedItems : PriorityQueue<Returns>
   + addReturn(returnItem : Returns) : void
   + getNextForInspection() : Returns
 }
 
 class AuditLog {
-  - LOG_FILE_PATH : String
-  - LOG_FILE_NAME : String
+  - logFilePath : String
   + logInspection(returnID : String, sku : String, quantity : int, qtyRestocked : int, qtyDiscarded : int, action : StockAction) : void
 }
 
@@ -83,14 +74,18 @@ class Box {
 }
 
 ' Relationships
+ReturnsManager "1" *-- "1" QuarantineQueue : manages
+ReturnsManager "1" *-- "1" InventoryInspection : uses
+ReturnsManager ..> Warehouse : uses
 
-Returns "1" -- "1" ReturnReasons : has
-ReturnsManager "1" -- "1" QuarantineQueue : manages
-ReturnsManager "1" -- "1" InventoryInspection : uses
-InventoryInspection "1" -- "1" Warehouse : depends on
-InventoryInspection "1" -- "1" AuditLog : uses
-QuarantineQueue "1" -- "*" Returns : contains
-InventoryInspection "1" -- "*" Box : creates
-Box "1" -- "1" Warehouse : stored in
+InventoryInspection "1" --> "1" Warehouse : depends on
+InventoryInspection "1" --> "1" AuditLog : uses
+InventoryInspection ..> Box : <<creates>>
+
+QuarantineQueue "1" o-- "*" Returns : contains
+
+AuditLog ..> StockAction : logs
+
+Warehouse "1" *-- "*" Box : stores
 
 @enduml
