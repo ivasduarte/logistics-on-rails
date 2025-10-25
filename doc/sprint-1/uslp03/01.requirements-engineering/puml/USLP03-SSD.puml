@@ -1,0 +1,27 @@
+@startuml
+skinparam monochrome true
+skinparam packageStyle rectangle
+skinparam shadowing false
+
+autonumber
+
+actor "Traffic Dispatcher" as TP
+participant ":System" as System
+
+activate TP
+
+TP -> System : asks for the estimated travel time between two stations
+    activate System
+    == Input Operation ==
+    System --> TP : requests for stations and locomotive
+    deactivate System
+
+TP -> System : inputs stations and locomotive
+    activate System
+    == Output Operation ==
+    System --> TP : outputs the distance and estimated travel time
+    deactivate System
+
+deactivate TP
+
+@enduml
