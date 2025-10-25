@@ -1,0 +1,79 @@
+@startuml USLP03-SD
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam sequenceArrowThickness 2
+skinparam roundcorner 20
+
+actor "User" as U
+activate U
+
+participant "TravelTime" as TT
+participant "Line" as L
+participant "Segment" as S
+participant "Locomotive" as Loc
+participant "Station" as St
+
+== Initialize Travel Components ==
+
+U -> TT : Request travel time estimation\nbetween stations
+activate TT
+
+TT -> Loc : Get locomotive for travel
+activate Loc
+
+Loc --> TT : Returns locomotive with specifications
+deactivate Loc
+
+TT -> St : Get start station
+activate St
+
+St --> TT : Returns start station
+deactivate St
+
+TT -> St : Get end station
+activate St
+
+St --> TT : Returns end station
+deactivate St
+
+== Find Connecting Line ==
+
+TT -> TT : findConnectingLine(lines)
+TT -> L : Search for line connecting stations
+activate L
+
+L --> TT : Returns connecting line
+deactivate L
+
+== Calculate Travel Distance ==
+
+TT -> L : Get segments from line
+activate L
+
+L -> S : Get list of segments
+activate S
+
+S --> L : Returns segments
+deactivate S
+
+L --> TT : Returns segments
+deactivate L
+
+TT -> TT : Sum segment lengths to\ncalculate total distance
+
+== Calculate Travel Time ==
+
+TT -> Loc : Get maximum speed
+activate Loc
+
+Loc --> TT : Returns max speed
+deactivate Loc
+
+TT -> TT : Calculate travel time\n(distance / max speed)
+
+== Return Results ==
+
+TT --> U : Returns travel distance and time
+deactivate TT
+
+@enduml

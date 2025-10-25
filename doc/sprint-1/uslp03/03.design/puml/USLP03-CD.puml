@@ -1,0 +1,113 @@
+@startuml USLP03-CD
+
+class TravelTime {
+    - locomotive: Locomotive
+    - stations: List<Station>
+    + TravelTime(locomotive: Locomotive, startStation: Station, endStation: Station)
+    + getLocomotive(): Locomotive
+    + getStations(): List<Station>
+    + calculateTravelDistance(lines: List<Line>): int
+    + calculateTravelTime(distance: int): double
+    - findConnectingLine(lines: List<Line>): Line
+}
+
+class Locomotive {
+    - locomotiveID: int
+    - locomotiveName: String
+    - make: String
+    - model: String
+    - serviceYear: int
+    - numberBogies: int
+    - bogies: String
+    - power: int
+    - length: double
+    - width: double
+    - height: double
+    - weight: int
+    - maxSpeed: int
+    - operationalSpeed: int
+    - traction: int
+    - type: String
+    - voltage: int
+    - frequency: int
+    - operator: String
+    - gauge: int
+    - fuel: int
+    + Locomotive(...)
+    + getLocomotiveID(): int
+    + getLocomotiveName(): String
+    + getMake(): String
+    + getModel(): String
+    + getServiceYear(): int
+    + getNumberBogies(): int
+    + getBogies(): String
+    + getPower(): int
+    + getLength(): double
+    + getWidth(): double
+    + getHeight(): double
+    + getWeight(): int
+    + getMaxSpeed(): int
+    + getOperationalSpeed(): int
+    + getTraction(): int
+    + getType(): String
+    + getVoltage(): int
+    + getFrequency(): int
+    + getOperator(): String
+    + getGauge(): int
+    + getFuel(): int
+}
+
+class Station {
+    - stationID: int
+    - stationName: String
+    + Station(stationID: int, stationName: String)
+    + getStationID(): int
+    + getStationName(): String
+}
+
+class Line {
+    - lineID: int
+    - lineName: String
+    - ownerName: String
+    - startStationID: int
+    - endStationID: int
+    - gauge: int
+    - segments: List<Segment>
+    + Line(lineID: int, lineName: String, ownerName: String, startStationID: int, endStationID: int, gauge: int)
+    + getLineID(): int
+    + getLineName(): String
+    + getOwnerName(): String
+    + getStartStationID(): int
+    + getEndStationID(): int
+    + getGauge(): int
+    + getSegments(): List<Segment>
+    + setSegments(segments: List<Segment>): void
+}
+
+class Segment {
+    - segmentID: int
+    - lineID: int
+    - order: int
+    - electrified: boolean
+    - maxWeight: int
+    - length: int
+    - numberTracks: int
+    + Segment(segmentID: int, lineID: int, order: int, electrified: boolean, maxWeight: int, length: int, numberTracks: int)
+    + getSegmentID(): int
+    + getLineID(): int
+    + getOrder(): int
+    + isElectrified(): boolean
+    + getMaxWeight(): int
+    + getLength(): int
+    + getNumberTracks(): int
+}
+
+TravelTime "1" --> "1" Locomotive : uses
+TravelTime "1" ..> "*" Line : queries
+TravelTime "1" --> "*" Segment : uses
+Line "1" --> "2" Station : connects
+Line "1" --> "*" Segment : contains
+Line "1" --> "1" Station : starts at
+Line "1" --> "1" Station : ends at
+
+@enduml
