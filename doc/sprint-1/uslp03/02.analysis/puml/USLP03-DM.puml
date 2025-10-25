@@ -1,0 +1,68 @@
+@startuml
+skinparam monochrome true
+skinparam packageStyle rectangle
+skinparam classAttributeIconSize 0
+
+hide circle
+hide methods
+
+class Line {
+    lineID
+    lineName
+    ownerName
+    startStationID
+    endStationID
+    gauge
+    segments
+}
+
+class Locomotive {
+    locomotiveID
+    locomotiveName
+    make
+    model
+    serviceYear
+    numberBogies
+    bogies
+    power
+    length
+    width
+    height
+    weight
+    maxSpeed
+    operationalSpeed
+    traction
+    type
+    voltage
+    frequency
+    operator
+    gauge
+    fuel
+}
+
+class Segment {
+    segmentID
+    lineID
+    order
+    electrified
+    maxWeight
+    length
+    numberTracks
+}
+
+class Station {
+    stationID;
+    stationName;
+}
+
+class TravelTime {
+    locomotive
+    stations
+}
+
+Line "1" -- "*" Station : has
+Line "1" -- "*" Segment : has
+TravelTime "1" -- "1" Locomotive : uses
+TravelTime "1" -- "*" Segment : uses
+
+@enduml
