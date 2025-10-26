@@ -2,6 +2,10 @@ package esinf.us01;
 
 import java.util.*;
 
+/**
+ * Represents a wagon identified by a unique Wagon ID.
+ * Encapsulates basic information and behaviors associated with a wagon.
+ */
 public class Wagon {
     private String wagonID;
 

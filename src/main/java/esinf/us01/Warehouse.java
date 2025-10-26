@@ -5,7 +5,6 @@ import esinf.us02.OrderAllocationResult;
 import esinf.us02.OrderLineResult;
 import esinf.us05.ReturnReasons;
 import esinf.us05.Returns;
-import esinf.us05.StockAction;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -415,6 +414,14 @@ public class Warehouse {
         }
     }
 
+    /**
+     * Inserts a box into the appropriate bay in the warehouse, ensuring that the
+     * bay has space and follows the proper FEFO/FIFO order rules. If no suitable
+     * bay is available, logs an error.
+     *
+     * @param box The box to be inserted into a bay. Must not be null.
+     * @throws IllegalArgumentException if the provided box is null.
+     */
     public void insertBox(Box box){
         if(box == null) throw new IllegalArgumentException("Box cannot be null");
 
@@ -513,11 +520,23 @@ public class Warehouse {
     }
 
     /**
-     * Unloads all boxes from wagons into warehouse bays.
-     * Distributes boxes across available bays respecting capacity limits.
-     * Boxes are inserted in FEFO/FIFO order within each bay.
+     * Unloads all boxes from wagons into warehouse bays following FEFO/FIFO rules.
+     *
+     * Process:
+     * 1. Iterates through all wagons and their boxes
+     * 2. Finds available bays (sorted by aisle, then bay number for consistency)
+     * 3. Inserts each box into a bay using addBoxInFEFOOrder() which:
+     *    - Adds the box to the bay's list
+     *    - Sorts all boxes by: expiryDate (earliest first, null last), receivedAt (oldest first), boxID (ascending)
+     * 4. Updates box location metadata (warehouse, aisle, bay)
+     * 5. Records an UNLOAD movement in the movement history for WMS tracking
+     * 6. Clears wagons after successful unloading
+     *
+     * If no bay has capacity, the box is not placed and an error is recorded.
+     * Empty bays remain in the system - only boxes are removed, not bays.
      */
     public void unloadWagonsIntoBays() {
+        // Iterate through all wagons
         for (Map.Entry<Wagon, Set<Box>> entry : wagons.entrySet()) {
             Set<Box> boxes = entry.getValue();
 
@@ -535,11 +554,16 @@ public class Warehouse {
                     sortedBays.sort(Comparator.comparingInt(Bay::getAisle)
                             .thenComparingInt(Bay::getBayNumber));
 
+                    // Find bay with capacity
                     for (Bay bay : sortedBays) {
                         if (bay.hasCapacity()) {
+                            // Insert box in FEFO/FIFO order into the bay (uses Box.compareTo())
                             bay.addBoxInFEFOOrder(box);
+
+                            // Update box location metadata (warehouse, aisle, bay)
                             box.setLocation(warehouseId, bay.getAisle(), bay.getBayNumber());
-                            // Register movement of UNLOAD (from wagon to bay location)
+
+                            // Record UNLOAD movement in the movement history for WMS tracking
                             Movements movement = new Movements(
                                     MovementType.UNLOAD,
                                     box.getBoxID(),
@@ -557,13 +581,14 @@ public class Warehouse {
                     if (placed) break;
                 }
 
+                // Record error if box couldn't be placed
                 if (!placed) {
                     importErrors.add("No available bay capacity for box " + box.getBoxID());
                 }
             }
         }
 
-        // Clear wagons after unloading
+        // Clear wagons after unloading (they're now empty)
         for (Wagon wagon : wagons.keySet()) {
             wagons.put(wagon, new HashSet<>());
         }
@@ -588,15 +613,27 @@ public class Warehouse {
     }
 
     /**
-     * Dispatches items from warehouse bays following FEFO/FIFO rules.
-     * Consumes stock from the front of bay lists, supporting partial dispatch
-     * across multiple bays.
-     *
-     * @param sku the SKU to dispatch
-     * @param quantity the quantity to dispatch
-     * @param warehouseId optional warehouse ID (null = search all warehouses)
-     * @return true if fully dispatched, false if insufficient stock
-     */
+     * * Dispatches items from warehouse bays following strict FEFO/FIFO consumption rules.
+     *      * Always consumes stock from the "front" of bay lists (earliest expiry, oldest received).
+     *      *
+     *      * Process:
+     *      * 1. Determines which warehouses to search (specific warehouse or all)
+     *      * 2. Sorts bays by aisle and bay number for consistent processing
+     *      * 3. For each bay, calls dispatchFromFront() which:
+     *      *    - Iterates through boxes in FEFO/FIFO order (already sorted in bay)
+     *      *    - Matches boxes by SKU
+     *      *    - Consumes from front: either entire box OR partial consumption
+     *      *    - Records DISPATCH movement for each consumption
+     *      *    - Removes empty boxes (NOT empty bays)
+     *      * 4. Supports partial dispatch across multiple bays:
+     *      *    - If one bay runs out, continues to next bay with ascending number
+     *      *    - Stops when quantity is fully dispatched or no more stock
+     *      *
+     *      * @param sku the SKU to dispatch
+     *      * @param quantity the quantity to dispatch
+     *      * @param warehouseId optional warehouse ID (null = search all warehouses)
+     *      * @return true if fully dispatched, false if insufficient stock
+     *      */
     public boolean dispatch(String sku, int quantity, String warehouseId) {
         int remaining = quantity;
 
@@ -608,6 +645,7 @@ public class Warehouse {
             warehousesToSearch.addAll(warehouses.keySet());
         }
 
+        // Process each warehouse
         for (String whId : warehousesToSearch) {
             Set<Bay> bays = warehouses.get(whId);
 
@@ -616,8 +654,16 @@ public class Warehouse {
             sortedBays.sort(Comparator.comparingInt(Bay::getAisle)
                     .thenComparingInt(Bay::getBayNumber));
 
+            // Dispatch from each bay until the quantity is fully dispatched or no more stock
             for (Bay bay : sortedBays) {
                 String bayLocation = whId + ":" + bay.getAisle() + "/" + bay.getBayNumber();
+
+                // Consume from front of bay (FEFO/FIFO order)
+                // dispatchFromFront handles:
+                // - Matching boxes by SKU
+                // - Full or partial consumption
+                // - Recording movements
+                // - Removing empty boxes
                 remaining = bay.dispatchFromFront(sku, remaining, movementHistory, bayLocation, null);
 
                 if (remaining == 0) {
@@ -631,8 +677,21 @@ public class Warehouse {
 
     /**
      * Relocates a box from its current bay to a new location.
-     * The box is removed from its current bay and inserted into the new bay
-     * in the correct FEFO/FIFO position.
+     * Updates only the box's warehouseId/aisle/bay attributes.
+     * The box is inserted into the new bay's correct FEFO/FIFO position.
+     *
+     * Process:
+     * 1. Searches all bays to find and remove the box by boxId
+     * 2. Validates target bay (exists and has capacity)
+     * 3. If validation fails, returns the box to the original bay
+     * 4. If validation succeeds:
+     *    - Inserts box into a new bay using addBoxInFEFOOrder()
+     *    - This automatically places it in the correct FEFO/FIFO position
+     *    - Updates box location metadata
+     *    - Records RELOCATE movement for WMS tracking
+     *
+     * Note: The box's expiryDate and receivedAt are unchanged.
+     * The re-sorting happens naturally via addBoxInFEFOOrder() based on existing dates.
      *
      * @param boxId the box to relocate
      * @param newWarehouseId the target warehouse
@@ -641,11 +700,12 @@ public class Warehouse {
      * @return true if relocation successful, false otherwise
      */
     public boolean relocate(String boxId, String newWarehouseId, int newAisle, int newBayNumber) {
-        // Find the box in current location
+        // Step 1: Find and remove the box from its current location
         Box boxToRelocate = null;
         Bay currentBay = null;
         String currentWarehouseId = null;
 
+        // Search all warehouses and bays
         for (Map.Entry<String, Set<Bay>> entry : warehouses.entrySet()) {
             for (Bay bay : entry.getValue()) {
                 Box box = bay.removeBox(boxId);
@@ -659,12 +719,13 @@ public class Warehouse {
             if (boxToRelocate != null) break;
         }
 
+        // Box not found
         if (boxToRelocate == null) {
             importErrors.add("Box " + boxId + " not found for relocation");
             return false;
         }
 
-        // Find target bay
+        // Step 2: Validate target warehouse exists
         Set<Bay> targetBays = warehouses.get(newWarehouseId);
         if (targetBays == null) {
             importErrors.add("Warehouse " + newWarehouseId + " not found");
@@ -673,6 +734,7 @@ public class Warehouse {
             return false;
         }
 
+        // Step 3: Find target bay
         Bay targetBay = null;
         for (Bay bay : targetBays) {
             if (bay.getAisle() == newAisle && bay.getBayNumber() == newBayNumber) {
@@ -688,6 +750,7 @@ public class Warehouse {
             return false;
         }
 
+        // Step 4: Check if target bay has capacity
         if (!targetBay.hasCapacity()) {
             importErrors.add("Target bay has no capacity");
             // Return box to original location
@@ -695,11 +758,15 @@ public class Warehouse {
             return false;
         }
 
-        // Insert into a new bay in FEFO order
+        // Step 5: Insert into new bay in FEFO/FIFO position
+        // addBoxInFEFOOrder() will automatically place the box in correct order
+        // based on its existing expiryDate and receivedAt (unchanged)
         targetBay.addBoxInFEFOOrder(boxToRelocate);
+
+        // Step 6: Update box location metadata
         boxToRelocate.setLocation(newWarehouseId, newAisle, newBayNumber);
 
-        // Register movement of RELOCATE
+        // Step 7: Record RELOCATE movement for WMS tracking
         String fromLoc = currentWarehouseId + ":" + currentBay.getAisle() + "/" + currentBay.getBayNumber();
         String toLoc = newWarehouseId + ":" + newAisle + "/" + newBayNumber;
         Movements movement = new Movements(

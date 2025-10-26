@@ -2,6 +2,10 @@ package esinf.us01;
 
 import java.util.Objects;
 
+/**
+ * Represents a line in an order, containing details about an ordered item.
+ * Provides methods to access and modify order line data.
+ */
 public class OrderLines {
     private int lineNo;
     private String sku;

@@ -1,5 +1,10 @@
 package esinf.us01;
 
+/**
+ * The Movements class represents a record of an item movement within a warehouse system.
+ * It captures details such as the type of movement, associated item and location details,
+ * quantity, a timestamp, and optional metadata like order ID and notes.
+ */
 public class Movements {
     private String timestamp;
     private MovementType type;

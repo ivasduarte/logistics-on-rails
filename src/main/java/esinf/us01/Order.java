@@ -2,6 +2,11 @@ package esinf.us01;
 
 import java.util.Objects;
 
+/**
+ * Represents an order with an associated ID, priority level, and due date.
+ * Provides methods to access and modify the order details. The equality of
+ * orders is determined based on their unique order ID.
+ */
 public class Order {
     private String orderID;
     private String dueDate;

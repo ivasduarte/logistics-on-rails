@@ -2,6 +2,9 @@ package esinf.us01;
 
 import java.util.Objects;
 
+/**
+ * Represents an item with specific details such as SKU, name, category, and weight information.
+ */
 public class Item {
     private String sku;
     private String itemName;
