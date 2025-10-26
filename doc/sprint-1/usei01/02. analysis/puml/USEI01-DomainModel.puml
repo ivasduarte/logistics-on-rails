@@ -19,14 +19,13 @@ class Bay {
     - bayNumber: int
     - aisle: int
     - boxCapacity: int
-    - boxes: LinkedList<Box>
 }
 
 class Box {
     - boxID: String
     - sku: String
     - quantity: int
-    - expiryDate: String
+    - expiryDate: LocalDateTime
     - receivedAt: String
     - warehouseId: String
     - aisle: Integer
@@ -58,7 +57,7 @@ class Returns {
     - returnID: String
     - sku: String
     - qty: int
-    - reason: String
+    - reason: ReturnReasons
     - timestamp: String
     - expiryDate: String
 }
@@ -82,28 +81,34 @@ enum MovementType {
     RETURN
 }
 
+enum ReturnReasons {
+    REMORSE
+    DAMAGED
+    EXPIRED
+    CYCLE_COUNT
+}
 
-' Relationships
-Warehouse "1" -- "*" Wagon : manages
-Warehouse "1" -- "*" Bay : contains
-Warehouse "1" -- "*" Item : stores
-Warehouse "1" -- "*" Order : processes
-Warehouse "1" -- "*" Returns : handles
-Warehouse "1" -- "*" Movements : tracks
+' Core Relationships
+Warehouse "1" *-- "*" Bay : contains
+Warehouse "1" *-- "*" Movements : tracks
+Warehouse "1" --> "*" Item : has catalog
+Warehouse "1" --> "*" Order : manages
+Warehouse "1" --> "*" Returns : manages
+Warehouse ..> Wagon : receives from
 
-Wagon "1" -- "*" Box : carries
+Wagon "1" o-- "*" Box : carries temporarily
 
-Bay "1" -- "*" Box : stores
+Bay "1" o-- "*" Box : stores
 
-Box "1" -- "1" Item : contains
+Box "*" --> "1" Item : references (via SKU)
 
-Order "1" -- "*" OrderLines : contains
+Order "1" *-- "*" OrderLines : contains
 
-OrderLines "1" -- "1" Item : references
+OrderLines "*" --> "1" Item : references (via SKU)
 
-Returns "1" -- "1" Item : references
+Returns "*" --> "1" Item : references (via SKU)
+Returns "*" --> "1" ReturnReasons : has reason
 
-Movements "1" -- "1" MovementType : has type
-Movements "1" -- "1" Box : involves
+Movements ..> Box : references (via boxID)
 
 @enduml

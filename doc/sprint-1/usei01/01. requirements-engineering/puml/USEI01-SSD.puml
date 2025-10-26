@@ -1,71 +1,66 @@
 @startuml
 !theme plain
+skinparam sequenceArrowThickness 2
+skinparam roundcorner 20
+skinparam sequenceMessageAlign direction
 
 actor "Terminal Operator" as Operator
 participant "System" as System
 
-== Unload Wagons Operation ==
+== Initialize Warehouse System ==
 
-Operator -> System: requestUnloadWagons()
+activate Operator
+Operator -> System: Load data from .csv files
 activate System
 
-System -> System: loadAllData()
-note right: Load CSV files:\n- items.csv\n- wagons.csv\n- bays.csv\n- orders.csv\n- order_lines.csv\n- returns.csv
+alt Load Successful
+    System --> Operator: Success
+else Load Failed
+    System --> Operator: Error list
+end
 
-System -> System: validateData()
-note right: Validate:\n- SKU references\n- Numeric fields\n- Date formats\n- Box uniqueness
-
-System -> System: unloadWagonsIntoBays()
-note right: For each wagon:\n- Distribute boxes to bays\n- Apply FEFO/FIFO ordering\n- Respect bay capacity\n- Record movements
-
-System -> System: processExistingOrders()
-note right: Process all orders:\n- Dispatch following FEFO/FIFO\n- Record dispatch movements\n- Handle partial fulfillment
-
-System --> Operator: unloadResult(success: boolean, errors: List<String>)
 deactivate System
 
-== View Movement History ==
+== Query Movement History ==
 
-Operator -> System: requestMovementHistory()
+Operator -> System: Request movement history
 activate System
 
-System -> System: getMovementHistory()
-note right: Retrieve all recorded\nmovements with timestamps
-
-System --> Operator: movementHistory(movements: List<Movement>)
+System --> Operator: Movement list
 deactivate System
 
-== Export Movements ==
+== Export Movements to CSV ==
 
-Operator -> System: requestExportMovements()
+Operator -> System: Request to export movement to csv
 activate System
 
-System -> System: exportToCSV()
-note right: Generate CSV format:\n- MovementID\n- Source\n- Destination\n- BoxID\n- SKU\n- Timestamp
-
-System --> Operator: csvContent(content: String)
+System --> Operator: CSV content
 deactivate System
 
 == Dispatch Operation ==
 
-Operator -> System: requestDispatch(sku: String, quantity: int)
+Operator -> System: Request to dispatch
 activate System
 
-System -> System: dispatch(sku, quantity)
-note right: Find boxes by SKU\n- Apply FEFO/FIFO rules\n- Consume from bay fronts\n- Support partial dispatch\n- Record movements
+alt Dispatch Successful
+    System --> Operator: Success
+else Insufficient Stock
+    System --> Operator: Failure
+end
 
-System --> Operator: dispatchResult(success: boolean, remainingQty: int)
 deactivate System
 
 == Relocate Box ==
 
-Operator -> System: requestRelocate(boxId: String, newWarehouseId: String, newAisle: int, newBayNumber: int)
+Operator -> System: Request to relocate box
 activate System
 
-System -> System: relocate(boxId, newWarehouseId, newAisle, newBayNumber)
-note right: Find current box location\n- Remove from current bay\n- Insert in new bay (FEFO order)\n- Update box location\n- Record movement
+alt Relocation Successful
+    System --> Operator: Success
+else Box Not Found / No Capacity
+    System --> Operator: Failure
+end
 
-System --> Operator: relocateResult(success: boolean, error: String)
 deactivate System
 
 @enduml

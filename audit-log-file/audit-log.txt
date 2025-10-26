@@ -1,4 +1,4 @@
-2025-10-25 16:53 | returnID = R100 | SKU = PRODUCT_A | action = RESTOCKED | quantity = 50 | qtyRestocked = 30 | qtyDiscarded = 20
-2025-10-25 16:53 | returnID = R101 | SKU = PRODUCT_B | action = DISCARDED | quantity = 100 | qtyRestocked = 0 | qtyDiscarded = 100
-2025-10-25 16:53 | returnID = R300 | SKU = FIRST | action = RESTOCKED | quantity = 10 | qtyRestocked = 5 | qtyDiscarded = 5
-2025-10-25 16:53 | returnID = R301 | SKU = SECOND | action = RESTOCKED | quantity = 20 | qtyRestocked = 10 | qtyDiscarded = 10
+2025-10-25 18:08 | returnID = R100 | SKU = PRODUCT_A | action = RESTOCKED | quantity = 50 | qtyRestocked = 30 | qtyDiscarded = 20
+2025-10-25 18:08 | returnID = R101 | SKU = PRODUCT_B | action = DISCARDED | quantity = 100 | qtyRestocked = 0 | qtyDiscarded = 100
+2025-10-25 18:08 | returnID = R300 | SKU = FIRST | action = RESTOCKED | quantity = 10 | qtyRestocked = 5 | qtyDiscarded = 5
+2025-10-25 18:08 | returnID = R301 | SKU = SECOND | action = RESTOCKED | quantity = 20 | qtyRestocked = 10 | qtyDiscarded = 10

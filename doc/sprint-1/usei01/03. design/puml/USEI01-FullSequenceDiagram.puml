@@ -1,59 +1,23 @@
 @startuml
-
-!define ACTOR_COLOR #FFB6C1
-
-' Classes that contain the business logic and coordinate the workflow between Boundaries and Entities.
-!define CONTROL_COLOR #90EE90
-
-' Classes that represent **domain concepts** and store system data/state.
-!define ENTITY_COLOR #FFD700
-
-skinparam backgroundColor #FFFFFF
 skinparam sequenceMessageAlign center
 skinparam responseMessageBelowArrow true
 
-actor "Terminal\nOperator" as Operator ACTOR_COLOR
-participant ":Warehouse" as WH CONTROL_COLOR
-participant ":Bay" as Bay ENTITY_COLOR
-participant ":Box" as Box ENTITY_COLOR
+actor "Terminal\nOperator" as Operator
+participant ":Warehouse" as WH
+participant ":Bay" as Bay
+participant ":Box" as Box
+participant ":Movements" as Mov
 
 autonumber
 
-== 1. Load and Validate Data ==
-
-Operator -> WH : loadAllData()
-activate WH
-
-loop for each CSV file (items, wagons, bays, orders, order_lines, returns)
-    WH -> WH : validate CSV
-
-    alt validation errors found
-        WH -> WH : importErrors.add(errorMessage)
-    else data valid
-        WH -> WH : store in memory structures
-    end
-end
-
-alt errors exist
-    WH -> Operator : display import errors
-end
-
-WH --> Operator : data loaded
-
-deactivate WH
-
-|||
-
-== 2. Unload Wagons Into Bays ==
+== Stock Initialization / Unloading Wagons ==
 
 Operator -> WH : unloadWagonsIntoBays()
 activate WH
 
 loop for each wagon
-    WH -> WH : get boxes from wagon
-
-    loop for each box
-        WH -> WH : find available bay (sorted by aisle, bayNumber)
+    loop for each box in wagon
+        WH -> WH : find available bay()
 
         WH -> Bay : hasCapacity()
         activate Bay
@@ -63,20 +27,18 @@ loop for each wagon
         alt bay has capacity
             WH -> Bay : addBoxInFEFOOrder(box)
             activate Bay
-
-            Bay -> Bay : findInsertPosition(box)
-            Bay --> WH : box added
+            Bay -> Bay : boxes.add(box)
+            Bay -> Bay : Collections.sort(boxes)
+            Bay --> WH : true
             deactivate Bay
 
             WH -> Box : setLocation(warehouseId, aisle, bayNumber)
-            activate Box
-            Box --> WH : location set
-            deactivate Box
 
-            WH -> WH : log movement (UNLOAD)
+            WH -> Mov : new Movements(UNLOAD, boxID, sku, qty, from, to)
+            WH -> WH : movementHistory.add(movement)
 
         else no capacity
-            WH -> WH : importErrors.add("No capacity for box")
+            WH -> WH : importErrors.add("No capacity")
         end
     end
 
@@ -86,37 +48,42 @@ end
 WH --> Operator : unloading complete
 deactivate WH
 
-|||
+autonumber stop
 
-== 3. Dispatch (FEFO/FIFO Consumption) ==
+== Dispatch Operation (FEFO/FIFO Consumption) ==
+
+autonumber
 
 Operator -> WH : dispatch(sku, quantity, warehouseId)
 activate WH
 
-WH -> WH : get bays (sorted by aisle, bayNumber)
+WH -> WH : get bays
 
 loop for each bay while remaining > 0
-    WH -> Bay : dispatchFromFront(sku, remaining)
+    WH -> Bay : dispatchFromFront(sku, remaining, movements, bayLocation, orderId)
     activate Bay
 
-    loop while remaining > 0 AND boxes with sku exist
-        Bay -> Bay : get first box with matching sku
-        Bay -> Box : getQuantity()
-        activate Box
-        Box --> Bay : qty
-        deactivate Box
+    loop while iterator.hasNext() AND remaining > 0
+        Bay -> Bay : box = iterator.next()
 
-        alt box.qty >= remaining
-            Bay -> Box : setQuantity()
+        alt box.sku matches
+            Bay -> Box : getQuantity()
             activate Box
-            Box --> Bay : quantity reduced
+            Box --> Bay : quantity
             deactivate Box
 
-            Bay -> Bay : log movement (DISPATCH)
-            Bay -> Bay : remaining
+            alt quantity <= remaining
+                Bay -> Bay : iterator.remove()
 
-        else box.qty < remaining
-            Bay -> Bay : log movement (DISPATCH, box.qty)
+                Bay -> Mov : new Movements(DISPATCH, boxID, sku, consumed, from, to)
+                Bay -> WH : movements.add(movement)
+                Bay -> Bay : remaining -= quantity
+
+            else quantity > remaining
+                Bay -> Box : setQuantity(quantity - remaining)
+                Bay -> Mov : new Movements(DISPATCH, boxID, sku, remaining, from, to)
+                Bay -> WH : movements.add(movement)
+            end
         end
     end
 
@@ -124,29 +91,30 @@ loop for each bay while remaining > 0
     deactivate Bay
 end
 
-alt remaining > 0
+alt remaining == 0
+    WH --> Operator : true (fully dispatched)
+else remaining > 0
     WH --> Operator : false (insufficient stock)
-else remaining == 0
-    WH --> Operator : true (success)
 end
 
 deactivate WH
 
-|||
+autonumber stop
 
-== 4. Relocate Box ==
+
+== Relocation ==
+
+autonumber
 
 Operator -> WH : relocate(boxId, newWarehouseId, newAisle, newBayNumber)
 activate WH
 
-WH -> WH : search box in all bays
-
-loop for each bay
+loop for each warehouse and bay
     WH -> Bay : removeBox(boxId)
     activate Bay
 
     alt box found
-        Bay -> Bay : remove(box)
+        Bay -> Bay : iterator.remove()
         Bay --> WH : box
     else not found
         Bay --> WH : null
@@ -155,28 +123,31 @@ loop for each bay
 end
 
 alt box not found
-    WH --> Operator : false (box not found)
+    WH -> WH : importErrors.add("Box not found")
+    WH --> Operator : false
+
 else box found
-    WH -> WH : validate target (warehouse, bay exists, has capacity)
+    WH -> WH : validate target bay\n(exists and has capacity)
 
     alt validation fails
         WH -> Bay : addBoxInFEFOOrder(box)
-        WH --> Operator : false (validation error)
+        WH -> WH : importErrors.add(error)
+        WH --> Operator : false
+
     else validation ok
         WH -> Bay : addBoxInFEFOOrder(box)
         activate Bay
-        Bay -> Bay : findInsertPosition(box)
-        Bay -> Bay : add(position, box)
-        Bay --> WH : box relocated
+        Bay -> Bay : boxes.add(box)
+        Bay -> Bay : Collections.sort(boxes)
+        Bay --> WH : true
         deactivate Bay
 
         WH -> Box : setLocation(newWarehouseId, newAisle, newBayNumber)
-        activate Box
-        Box --> WH : location updated
-        deactivate Box
+        WH -> Mov : new Movements(RELOCATE, boxID, sku, qty, fromLoc, toLoc)
+        activate Mov
+        WH -> WH : movementHistory.add(movement)
 
-        WH -> WH : log movement (RELOCATE)
-        WH --> Operator : true (success)
+        WH --> Operator : true
     end
 end
 
