@@ -4,13 +4,15 @@ import domain.order.Allocation;
 import domain.order.Order;
 import domain.order.OrderAllocationResult;
 import domain.picking.*;
+import domain.returns.Returns;
+import domain.returns.ReturnsManager;
 import domain.service.LoadData;
+import domain.warehouse.Movement;
 import domain.warehouse.Warehouse;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Scanner;
+import java.io.IOException;
+import java.sql.SQLOutput;
+import java.util.*;
 
 public class MenuESINF {
     private static OrderAllocationResult lastAllocationResult = null;
@@ -165,7 +167,37 @@ public class MenuESINF {
                     }
                 }
 
-                case 5 -> System.out.println("USEI05 not implemented yet.");
+                case 5 -> {
+                    System.out.println("\nExecuting USEI05 - Returns & Quarantine...");
+
+                    // Check if there are any loaded returns
+                    Map<String, Returns> returns = LoadData.getReturns();
+                    if(returns == null || returns.isEmpty()){
+                        System.out.println("No returns have been found in the system.");
+                        break;
+                    }
+
+                    System.out.println("\nFound " + returns.size() + " returns to process.");
+
+                    String logPath = "audit-log-file/";
+                    ReturnsManager returnsManager = new ReturnsManager(warehouse, logPath);
+
+                    try{
+                        List<Returns> returnsList = new ArrayList<>(returns.values());
+
+                        List<ReturnsManager.ReturnProcessingResult> results = returnsManager.processBatchReturns(returnsList);
+
+                        for(ReturnsManager.ReturnProcessingResult result : results){
+                            System.out.println(result);
+                        }
+
+                        System.out.println("\nAudit log saved to: " + logPath + "audit-log.txt");
+                    } catch (IOException e) {
+                        System.out.println("Error processing returns: " + e.getMessage() + ".");
+                        e.printStackTrace();
+                    }
+
+                }
                 case 0 -> System.out.println("Returning to Main Menu...");
                 default -> System.out.println("Invalid option.");
             }

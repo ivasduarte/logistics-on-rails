@@ -1,17 +1,16 @@
 package domain.returns;
 
+import domain.logistics.StockAction;
 import domain.warehouse.Warehouse;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class ReturnsManager {
-    // Queue holding returns awaiting inspection (LIFO ordering)
     public QuarantineQueue quarantineQueue;
-
-    // Inspection service that evaluates and processes returns
     public InventoryInspection inspection;
 
     /**
@@ -26,13 +25,8 @@ public class ReturnsManager {
      * @param logFilePath Path to the audit log file
      */
     public ReturnsManager(Warehouse warehouse, String logFilePath) {
-        // Step 1: Initialize the quarantine queue with LIFO ordering
         this.quarantineQueue = new QuarantineQueue();
-
-        // Step 2: Create an audit logger
         AuditLog auditLog = new AuditLog(logFilePath);
-
-        // Step 3: Create an inspection service with dependencies
         this.inspection = new InventoryInspection(warehouse, auditLog);
     }
 
@@ -46,30 +40,16 @@ public class ReturnsManager {
      * @param returnItem The return to add to quarantine
      */
     public void receiveReturn(Returns returnItem) {
-        // Delegate to quarantine queue
-        // Queue handles ordering based on timestamp + returnID
         quarantineQueue.addReturn(returnItem);
     }
-
     /**
-     * Receives and processes a batch of returns.
+     * Processes all returns currently in the quarantine queue.
+     * Returns a summary of actions taken.
      *
-     * Process:
-     * 1. Add all returns to quarantine queue
-     * 2. Process them in LIFO order
-     * 3. Return summary of actions taken
-     *
-     * @param returns List of returns to process
      * @return Map with counts of restocked and discarded items
      * @throws IOException If audit logging fails
      */
-    public Map<String, Integer> processBatchReturns(List<Returns> returns) throws IOException {
-        // Step 1: Add all to quarantine
-        for (Returns returnItem : returns) {
-            quarantineQueue.addReturn(returnItem);
-        }
-
-        // Step 2: Process all and count actions
+    public Map<String, Integer> processAllReturns() throws IOException {
         int restockedCount = 0;
         int discardedCount = 0;
 
@@ -84,11 +64,81 @@ public class ReturnsManager {
             }
         }
 
-        // Step 3: Return summary
         Map<String, Integer> summary = new HashMap<>();
         summary.put("restocked", restockedCount);
         summary.put("discarded", discardedCount);
+        summary.put("total", restockedCount + discardedCount);
 
         return summary;
+    }
+
+    /**
+     * Processes a batch of returns with detailed results.
+     *
+     * @param returns List of returns to process
+     * @return List of processing results
+     * @throws IOException If audit logging fails
+     */
+    public List<ReturnProcessingResult> processBatchReturns(List<Returns> returns)
+            throws IOException {
+
+        // Add all to quarantine
+        for (Returns returnItem : returns) {
+            quarantineQueue.addReturn(returnItem);
+        }
+
+        // Process and collect results
+        List<ReturnProcessingResult> results = new ArrayList<>();
+
+        Returns returnedItem;
+        while ((returnedItem = quarantineQueue.getNextForInspection()) != null) {
+            inspection.inspect(returnedItem);
+
+            StockAction action = inspection.shouldBeDiscarded(returnedItem)
+                    ? StockAction.DISCARDED
+                    : StockAction.RESTOCKED;
+
+            results.add(new ReturnProcessingResult(
+                    returnedItem.getReturnID(),
+                    returnedItem.getSku(),
+                    returnedItem.getQty(),
+                    returnedItem.getReason(),
+                    action
+            ));
+        }
+
+        return results;
+    }
+
+    /**
+     * Inner class to store processing results.
+     */
+    public static class ReturnProcessingResult {
+        private String returnId;
+        private String sku;
+        private int quantity;
+        private ReturnReasons reason;
+        private StockAction action;
+
+        public ReturnProcessingResult(String returnId, String sku, int quantity,
+                                      ReturnReasons reason, StockAction action) {
+            this.returnId = returnId;
+            this.sku = sku;
+            this.quantity = quantity;
+            this.reason = reason;
+            this.action = action;
+        }
+
+        public String getReturnId() { return returnId; }
+        public String getSku() { return sku; }
+        public int getQuantity() { return quantity; }
+        public ReturnReasons getReason() { return reason; }
+        public StockAction getAction() { return action; }
+
+        @Override
+        public String toString() {
+            return returnId + " | SKU: " + sku + " | Qty: " + quantity +
+                    " | Reason: " + reason + " | Action: " + action;
+        }
     }
 }
