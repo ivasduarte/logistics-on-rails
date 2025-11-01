@@ -393,8 +393,6 @@ public class QuarantineQueue {
 ```java
 package esinf.us05;
 
-import esinf.us01.Box;
-
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -411,9 +409,9 @@ public class AuditLog {
     }
 
     public void logInspection(String returnID, String sku, int quantity, int qtyRestocked, int qtyDiscarded, StockAction action) throws IOException {
-        try(FileWriter writer = new FileWriter(LOG_FILE_PATH + LOG_FILE_NAME, true);
-        BufferedWriter bw = new BufferedWriter(writer);
-        PrintWriter out = new PrintWriter(bw)) {
+        try (FileWriter writer = new FileWriter(LOG_FILE_PATH + LOG_FILE_NAME, true);
+             BufferedWriter bw = new BufferedWriter(writer);
+             PrintWriter out = new PrintWriter(bw)) {
 
             LocalDateTime timestamp = LocalDateTime.now();
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
@@ -422,11 +420,11 @@ public class AuditLog {
             sb.append(timestamp.format(formatter)).append(" | returnID = ").append(returnID).append(" | SKU = ")
                     .append(sku).append(" | action = ").append(action).append(" | quantity = ").append(quantity);
 
-            if(qtyRestocked != 0 && qtyDiscarded != 0){
+            if (qtyRestocked != 0 && qtyDiscarded != 0) {
                 sb.append(" | qtyRestocked = ").append(qtyRestocked).append(" | qtyDiscarded = ").append(qtyDiscarded);
             }
             out.println(sb.toString());
-        } catch (IOException e){
+        } catch (IOException e) {
             System.err.println("Error writing to audit log file: " + e.getMessage());
         }
     }
@@ -438,7 +436,7 @@ public class AuditLog {
 ```java
 package esinf.us05;
 
-import esinf.us01.Box;
+import warehouse.Box;
 import esinf.us01.Warehouse;
 
 import java.io.IOException;
@@ -453,24 +451,24 @@ public class InventoryInspection {
         this.auditLog = auditLog;
     }
 
-    public boolean shouldBeDiscarded(Returns returnedItem){
+    public boolean shouldBeDiscarded(Returns returnedItem) {
         return returnedItem.getReason().shouldBeDiscarded();
     }
 
     public void inspect(Returns returnedItem) throws IOException {
         StockAction action;
 
-        if(shouldBeDiscarded(returnedItem)){
+        if (shouldBeDiscarded(returnedItem)) {
             action = StockAction.DISCARDED;
             auditLog.logInspection(returnedItem.getReturnID(), returnedItem.getSku(), returnedItem.getQty(), 0, 0, action);
         }
     }
 
-    public void restock(Returns returnedItem){
+    public void restock(Returns returnedItem) {
         // Create a new box for the returned item
         String newBoxID = "RET-" + returnedItem.getReturnID();
         LocalDateTime receivedAt = LocalDateTime.now();
-        
+
         // Parse expiry date from string if provided
         LocalDateTime expiryDate = null;
         if (returnedItem.getExpiryDate() != null && !returnedItem.getExpiryDate().isBlank()) {

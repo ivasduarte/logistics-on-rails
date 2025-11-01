@@ -261,6 +261,9 @@ void testFIFOOrdering() {
 package esinf.us01;
 
 import esinf.us05.Returns;
+import warehouse.Bay;
+import warehouse.Box;
+import warehouse.Item;
 
 import java.io.IOException;
 import java.nio.file.Files;
