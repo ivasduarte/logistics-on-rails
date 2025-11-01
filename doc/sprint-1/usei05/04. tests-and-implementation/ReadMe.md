@@ -58,8 +58,8 @@ void testProcessReturnsWithDifferentReasons() throws IOException {
         "2024-12-31"
     );
 
-    returnsManager.receiveReturn(remorseReturn);
-    assertDoesNotThrow(() -> returnsManager.processReturns());
+    returnsController.receiveReturn(remorseReturn);
+    assertDoesNotThrow(() -> returnsController.processReturns());
 
     // Test with DAMAGED reason (should be discarded)
     Returns damagedReturn = new Returns(
@@ -71,8 +71,8 @@ void testProcessReturnsWithDifferentReasons() throws IOException {
         "2024-12-31"
     );
 
-    returnsManager.receiveReturn(damagedReturn);
-    assertDoesNotThrow(() -> returnsManager.processReturns());
+    returnsController.receiveReturn(damagedReturn);
+    assertDoesNotThrow(() -> returnsController.processReturns());
 }
 ```
 
@@ -162,7 +162,7 @@ void testGetNextForInspectionRemovesItem() {
 @Test
 void testProcessReturnsWithEmptyQueue() throws IOException {
     // Test processing returns when queue is empty
-    assertDoesNotThrow(() -> returnsManager.processReturns());
+    assertDoesNotThrow(() -> returnsController.processReturns());
     
     // Should not throw exception and should handle empty queue gracefully
 }
@@ -180,8 +180,8 @@ void testProcessReturnsWithExpiredItems() throws IOException {
         expiredDate
     );
 
-    returnsManager.receiveReturn(expiredReturn);
-    assertDoesNotThrow(() -> returnsManager.processReturns());
+    returnsController.receiveReturn(expiredReturn);
+    assertDoesNotThrow(() -> returnsController.processReturns());
 }
 ```
 

@@ -1,6 +1,7 @@
-package domain.returns;
+package controller;
 
 import domain.logistics.StockAction;
+import domain.returns.*;
 import domain.warehouse.Warehouse;
 
 import java.io.IOException;
@@ -9,22 +10,17 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class ReturnsManager {
+public class ReturnsController {
     public QuarantineQueue quarantineQueue;
     public InventoryInspection inspection;
 
     /**
      * Initializes the return management system.
      *
-     * Setup Process:
-     * 1. Create an empty quarantine queue
-     * 2. Create an audit log instance for the specified file
-     * 3. Create an inspection service with warehouse access and audit logging
-     *
      * @param warehouse The warehouse where restocked items will be inserted
      * @param logFilePath Path to the audit log file
      */
-    public ReturnsManager(Warehouse warehouse, String logFilePath) {
+    public ReturnsController(Warehouse warehouse, String logFilePath) {
         this.quarantineQueue = new QuarantineQueue();
         AuditLog auditLog = new AuditLog(logFilePath);
         this.inspection = new InventoryInspection(warehouse, auditLog);
@@ -33,15 +29,12 @@ public class ReturnsManager {
     /**
      * Receives a returned item and places it in quarantine for inspection.
      *
-     * Process:
-     * - Add return to priority queue (automatically ordered by LIFO rules)
-     * - Return is now awaiting inspection
-     *
      * @param returnItem The return to add to quarantine
      */
     public void receiveReturn(Returns returnItem) {
         quarantineQueue.addReturn(returnItem);
     }
+
     /**
      * Processes all returns currently in the quarantine queue.
      * Returns a summary of actions taken.
