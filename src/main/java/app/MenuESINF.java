@@ -132,7 +132,7 @@ public class MenuESINF {
                         break;
                     }
 
-                    PickingPath pickingPath = new PickingPath(lastPlan);
+                    PickingPath pickingPath = new PickingPath();
 
                     System.out.println("\nSelect path optimization strategy:");
                     System.out.println("1. Ascending Order Strategy");
@@ -143,20 +143,26 @@ public class MenuESINF {
 
                     int trolleyCounter = 1;
 
-                    for (Trolley trolley : pickingPath.getTrolleys()) {
+                    for (Trolley trolley : lastPlan.getTrolleys()) {
                         System.out.println("\n=== Trolley #" + trolleyCounter++ + " ===");
-                        List<Allocation> allocations = pickingPath.getTrolleyAllocations(trolley);
+                        List<Allocation> allocations = trolley.getAllocations();
 
                         if (allocations.isEmpty()) {
                             System.out.println("No allocations for this trolley.");
                             continue;
                         }
 
-                        int totalDistance = (pathOption == 1)
-                                ? pickingPath.minimizeDistanceAscending(allocations)
-                                : pickingPath.minimizeDistanceNearest(allocations);
+                        List<Allocation> optimizedPath = (pathOption == 1)
+                                ? pickingPath.getPathAscending(allocations)
+                                : pickingPath.getPathNearest(allocations);
 
+                        int totalDistance = pickingPath.calculatePathDistance(optimizedPath);
                         System.out.println("Total Distance for this Trolley: " + totalDistance + " units");
+
+                        System.out.println("\nOptimized Path:");
+                        optimizedPath.forEach(a ->
+                                System.out.printf("Aisle: %d, Bay: %d, SKU: %s, Qty: %d%n",
+                                        a.getAisle(), a.getBayNumber(), a.getSku(), a.getQuantityAllocated()));
                     }
                 }
 
