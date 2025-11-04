@@ -1,7 +1,7 @@
 #define KEY 5
 #include <stdio.h>
 #include <ctype.h>
-#include "encrypt_string.h"
+#include "encrypt_data.h"
 
 int main() {
     char input[256] = "HELLO";
@@ -16,7 +16,7 @@ int main() {
     printf("Input:     '%s'\n", input);
     printf("Key:       %d\n", KEY);
 
-    result = encrypt_string(input, KEY, output);
+    result = encrypt_data(input, KEY, output);
 
     printf("\n--- Result ---\n");
     if (result == 1) {

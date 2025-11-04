@@ -1,5 +1,5 @@
 .text
-.globl decrypt_string
+.globl decrypt_data
 
 #   a0 - char* in  (input string pointer)
 #   a1 - int key   (decryption key)
@@ -7,7 +7,7 @@
 # Returns:
 #   a0 - 1 on success, 0 on failure
 
-decrypt_string:
+decrypt_data:
     # Validations for the inputs
     li t0, 1
     blt a1, t0, decrypt_error

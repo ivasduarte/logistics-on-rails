@@ -1,5 +1,5 @@
 .text
-.globl encrypt_string
+.globl encrypt_data
 
 #   a0 - char* in  (input string pointer)
 #   a1 - int key   (encryption key)
@@ -7,7 +7,7 @@
 # Returns:
 #   a0 - 1 on success, 0 on failure
 
-encrypt_string:
+encrypt_data:
     # Validations for the inputs
     li t0, 1
     blt a1, t0, error

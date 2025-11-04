@@ -1,10 +1,10 @@
 package esinf;
 
-import esinf.us02.Allocation;
-import esinf.us03.PickingPlanService;
-import esinf.us03.PackingHeuristic;
-import esinf.us03.PickingPlan;
-import esinf.us03.Trolley;
+import domain.order.Allocation;
+import domain.picking.PickingPlanService;
+import domain.picking.PackingHeuristic;
+import domain.picking.PickingPlan;
+import domain.picking.Trolley;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

@@ -1,7 +1,7 @@
 package esinf;
 
-import esinf.us02.Allocation;
-import esinf.us03.Trolley;
+import domain.order.Allocation;
+import domain.picking.Trolley;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
