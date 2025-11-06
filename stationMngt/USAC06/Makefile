@@ -1,0 +1,24 @@
+CC=riscv32-linux-gcc
+CFLAGS=-Wall -Wextra -fanalyzer -g
+ARCHFLAGS=-march=rv32imd -mabi=ilp32d
+LIBRV32=${HOME}/bin/bootlin/riscv32-buildroot-linux-gnu/sysroot
+
+program.elf: usac06_main.o usac06_dequeue_value.o
+	$(CC) $(CFLAGS) $(ARCHFLAGS) usac06_main.o usac06_dequeue_value.o -o program.elf
+
+usac06_main.o: usac06_main.c
+	$(CC) $(CFLAGS) $(ARCHFLAGS) -c usac06_main.c
+
+usac06_dequeue_value.o: usac06_dequeue_value.s usac06_dequeue_value.h
+	$(CC) $(CFLAGS) $(ARCHFLAGS) -c usac06_dequeue_value.s
+
+clean:
+	rm -f *.o *.elf
+
+run: program.elf
+	qemu-riscv32 -L $(LIBRV32) ./program.elf
+
+debug: program.elf
+	@echo "On other terminal window do:"
+	@echo "riscv32-linux-gdb -tui ./program.elf"
+	qemu-riscv32 -L $(LIBRV32) -g 1234 program.elf -S
