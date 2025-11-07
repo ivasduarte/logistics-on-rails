@@ -17,6 +17,26 @@ enqueue_value:
     # verify if buffer is full (*nelem == length)
     bne t0, a1, buffer_not_full
 
+buffer_full:
+    # buffer is full - delete oldest element (position 0)
+    # determine offset: tail * 4 (each int has 4 bytes)
+    slli t3, t1, 2      # t3 = tail * 4
+    add t3, a0, t3      # t3 = buffer + (tail * 4)
+    sw a5, 0(t3)        # buffer[tail] = value
+
+    # update tail: tail = (tail + 1) % length
+    addi t1, t1, 1      # tail++
+    rem t1, t1, a1      # tail = tail % length
+    sw t1, 0(a3)        # *tail = new value
+
+    # update head: head = (head + 1) % length
+    addi t2, t2, 1      # head++
+    rem t2, t2, a1      # head = head % length
+    sw t2, 0(a4)        # *head = new value
+
+    # call return_one (buffer is full)
+    j return_one
+
 buffer_not_full:
     # buffer is not full - insert new element normally
     # determine offset: tail * 4
