@@ -1,8 +1,8 @@
 package esinf;
 
-import esinf.us05.AuditLog;
-import esinf.us05.StockAction;
 import org.junit.jupiter.api.*;
+import warehouseMngt.logistics.StockAction;
+import warehouseMngt.returns.AuditLog;
 import java.io.*;
 import java.nio.file.*;
 import java.util.List;

@@ -1,8 +1,8 @@
 package esinf;
 
-import esinf.us05.ReturnReasons;
-import esinf.us05.Returns;
 import org.junit.jupiter.api.Test;
+import warehouseMngt.returns.ReturnReasons;
+import warehouseMngt.returns.Returns;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -23,7 +23,7 @@ public class ReturnsTest {
             "RET001", 
             "SKU123", 
             5, 
-            ReturnReasons.REMORSE, 
+            ReturnReasons.REMORSE,
             "2024-01-15T10:30:00", 
             "2024-12-31"
         );

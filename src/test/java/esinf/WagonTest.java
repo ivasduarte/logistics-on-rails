@@ -1,7 +1,7 @@
 package esinf;
 
-import esinf.us01.Wagon;
 import org.junit.jupiter.api.Test;
+import warehouseMngt.logistics.Wagon;
 
 import static org.junit.jupiter.api.Assertions.*;
 

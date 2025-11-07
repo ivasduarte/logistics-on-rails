@@ -1,8 +1,8 @@
 package esinf;
 
-import esinf.us02.Allocation;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import warehouseMngt.order.Allocation;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 

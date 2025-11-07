@@ -1,9 +1,9 @@
 package lapr3;
 
-import lapr3.uslp03.Line;
-import lapr3.uslp03.Segment;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import spatialQuerying.railwayMngt.Line;
+import spatialQuerying.railwayMngt.Segment;
 
 import java.util.ArrayList;
 import java.util.List;

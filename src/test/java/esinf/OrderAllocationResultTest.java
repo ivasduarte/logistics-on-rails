@@ -1,11 +1,10 @@
 package esinf;
 
-import esinf.us02.Allocation;
-import esinf.us02.LineStatus;
-import esinf.us02.OrderAllocationResult;
-import esinf.us02.OrderLineResult;
 import org.junit.jupiter.api.Test;
-
+import warehouseMngt.order.Allocation;
+import warehouseMngt.order.OrderAllocationResult;
+import warehouseMngt.order.OrderLineResult;
+import warehouseMngt.service.LineStatus;
 import java.util.List;
 import java.util.Map;
 
