@@ -333,7 +333,7 @@ public class PickingPlanService {
                     }
 
                     AllocationWeight remainder = handleSplitting(aw, targetTrolley, aw.getOriginalQuantity());
-                    if (remainder.getAllocation().getQuantityAllocated() > 0) {
+                    if (remainder != null && remainder.getAllocation().getQuantityAllocated() > 0) {
                         pendingQueue.offer(remainder);
                     }
                 } else {
@@ -418,7 +418,7 @@ public class PickingPlanService {
                     }
 
                     AllocationWeight remainder = handleSplitting(aw, targetTrolley, aw.getOriginalQuantity());
-                    if (remainder.getAllocation().getQuantityAllocated() > 0) {
+                    if (remainder != null && remainder.getAllocation().getQuantityAllocated() > 0) {
                         pendingQueue.offer(remainder);
                     }
                 } else {

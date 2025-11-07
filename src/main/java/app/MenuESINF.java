@@ -120,10 +120,50 @@ public class MenuESINF {
                     lastPlan = plan;
 
                     System.out.println("\n=== PICKING PLAN SUMMARY ===");
-                    System.out.println(plan.generateSummaryReport());
+                    System.out.println("Heuristic: " + plan.getHeuristic());
+                    System.out.println("Trolley Capacity: " + plan.getTrolleyCapacity() + " kg");
+                    System.out.println("Total Number of Trolleys: " + plan.getTrolleyCount());
+                    System.out.println("Skipped Allocations: " + plan.getSkippedCount());
+                    System.out.println("\nTrolley Utilization:");
+                    for (Trolley trolley : plan.getTrolleys()) {
+                        System.out.printf("Trolley %d: %.2f%% full%n",
+                                trolley.getTrolleyNumber(), trolley.getUtilization());
+                    }
+
+                    if (plan.getSkippedCount() > 0) {
+                        System.out.println("\nSkipped Allocations (exceeded capacity):");
+                        for (PickingPlan.SkippedAllocation skipped : plan.getSkippedAllocations()) {
+                            System.out.printf("  BoxID: %s, SKU: %s, Weight: %.2f kg%n",
+                                    skipped.allocation.getBoxID(),
+                                    skipped.allocation.getSku(),
+                                    skipped.weight);
+                        }
+                    }
 
                     System.out.println("\n=== DETAILED PICKING LIST ===");
-                    System.out.println(plan.generateDetailedPickingList());
+                    System.out.println("Picking Plan: " + plan.getHeuristic() + "\n");
+
+                    for (Trolley trolley : plan.getTrolleys()) {
+                        System.out.println("Trolley " + trolley.getTrolleyNumber());
+                        System.out.printf("Utilization: %.2f%%%n%n", trolley.getUtilization());
+
+                        for (var entry : trolley.getAllocationEntries()) {
+                            Allocation alloc = entry.allocation;
+                            System.out.println("Order ID: " + alloc.getOrderID());
+                            System.out.println("Line Number: " + alloc.getLineNo());
+                            System.out.println("Aisle: " + alloc.getAisle());
+                            System.out.println("Bay Number: " + alloc.getBayNumber());
+                            System.out.println("Box ID: " + alloc.getBoxID());
+                            System.out.println("SKU: " + alloc.getSku());
+                            System.out.print("Quantity: " + alloc.getQuantityAllocated());
+                            if (entry.isPartial) {
+                                System.out.printf(" (PARTIAL: %d/%d)",
+                                        alloc.getQuantityAllocated(), entry.originalQuantity);
+                            }
+                            System.out.println("\n");
+                        }
+                        System.out.println();
+                    }
                 }
 
                 case 4 -> {
