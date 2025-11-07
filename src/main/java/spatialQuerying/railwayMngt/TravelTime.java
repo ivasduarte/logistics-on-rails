@@ -86,6 +86,7 @@ public class TravelTime {
      * @return the travel time in hours as a double
      */
     public double calculateTravelTime(int distance) {
-        return (double) distance / locomotive.getMaxSpeed();
+        final double speedConversion = 3.6;
+        return (double) distance / ( (double) locomotive.getMaxSpeed() / speedConversion);
     }
 }

@@ -48,6 +48,6 @@ public class LaprMain {
 
         // Output of travel distance and time
         System.out.printf("Travel distance: %d meters%n", distance);
-        System.out.printf("Estimated travel time: %.2f hours%n", time);
+        System.out.printf("Estimated travel time: %.2f seconds%n", time);
     }
 }
