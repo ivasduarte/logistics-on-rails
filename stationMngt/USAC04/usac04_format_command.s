@@ -47,6 +47,40 @@ format_command:
 	mv a0, s0 # put string in a0 for to_uppercase function
 	jal to_uppercase # call to_uppercase function
 	
+	# Compare it to "RE", "YE", "GE", "RB", "GTH"
+	# Check if it's "RE"
+    	mv a0, s0 # a0 = trimmed/uppercase string
+    	la a1, re_str # a1 = "RE"
+    	jal strcmp # Compare them
+    	beqz a0, handle_re # If a0 == 0, strings match!
+    
+    	# Check if it's "YE"
+    	mv a0, s0
+    	la a1, ye_str
+    	jal strcmp
+    	beqz a0, handle_ye
+    
+    	# Check if it's "GE"
+    	mv a0, s0
+    	la a1, ge_str
+    	jal strcmp
+    	beqz a0, handle_ge
+    
+    	# Check if it's "RB"
+    	mv a0, s0
+    	la a1, rb_str
+    	jal strcmp
+    	beqz a0, handle_rb
+    
+    	# Check if it's "GTH"
+    	mv a0, s0
+    	la a1, gth_str
+    	jal strcmp
+    	beqz a0, handle_gth
+    
+    	# If none matched, it's an unknown command
+    	j failure
+	
 # ===== TRIM FUNCTION =====
 # trim leading and trailing whitespaces from string
 # Input: a0 = pointer to string
@@ -126,6 +160,130 @@ upper_done:
 	ret
 
 # ==== END OF TO UPPERCASE FUNCTION ====
+
+# ==== COMPARE STRINGS FUNCTION ====
+# compares two strings
+# Input: a0 = string1, a1 = string2
+# Returns a0 = 0 if equal, non zero if different
+
+strcmp:
+	mv t0, a0 # t0 = pointer to string1
+	mv t1, a1 # t1 = pointer to string2
+
+strcmp_loop:
+	lb t2, 0(t0) # load char from string1
+	lb t3, 0(t1) # load char from string2
+
+	bne t2, t3, strcmp_not_equal # if chars are different, not equal
+	beqz t2, strcmp_equal # if null terminator, equal
+
+	addi t0, t0, 1 # move to next char in string1
+	addi t1, t1, 1 # move to next char in string2
+	j strcmp_loop
+
+strcmp_equal:
+	li a0, 0
+	ret
+
+strcmp_not_equal:
+	sub a0, t2, t3
+	ret
+
+# ==== END OF COMPARE STRINGS FUNCTION ====
+
+# ==== FORMAT STRINGS WITH TWO DIGIT NUMBER FUNCTIONS ====
+
+handle_re:
+	la a0, re_str
+	mv a1, s2
+	jal strcpy # Copy "RE" to output
+	li t0, ','
+	sb t0, 2(s2) # writes ',' in position 2
+	mv a0, s1 # Get the number
+	addi a1, s2, 3 # Point to position after "RE,"
+	jal append_two_digits # Append number
+	j success
+
+handle_ye:
+	la a0, ye_str
+	mv a1, s2
+	jal strcpy
+	li t0, ','
+	sb t0, 2(s2) # writes ',' in position 2
+	mv a0, s1
+	addi a1, s2, 3
+	jal append_two_digits
+	j success
+
+handle_ge:
+	la a0, ge_str
+	mv a1, s2
+	jal strcpy
+	li t0, ','
+	sb t0, 2(s2) # writes ',' in position 2
+	mv a0, s1
+	addi a1, s2, 3
+	jal append_two_digits
+	j success
+
+handle_rb:
+	la a0, rb_str
+	mv a1, s2
+	jal strcpy
+	li t0, ','
+	sb t0, 2(s2) # writes ',' in position 2
+	mv a0, s1
+	addi a1, s2, 3
+	jal append_two_digits
+	j success
+
+handle_gth:
+	la a0, gth_str
+	mv a1, s2
+	jal strcpy # Just copy "GTH", no number
+	j success
+
+# ==== END OF FORMAT STRINGS WITH TWO DIGIT NUMBER FUNCTIONS ====
+
+# ==== STRING COPY FUNCTION ====
+# copies source string to destination
+# Input: a0 = source, a1 = destination
+
+strcpy:
+	mv t0, a0 # t0 = source pointer
+	mv t1, a1 # t1 = destination pointer
+
+strcpy_loop:
+	lb t2, 0(t0) # Load byte from source
+	sb t2, 0(t1) # Store to destination
+	beqz t2, strcpy_done  # If null, done
+	addi t0, t0, 1 # Move source forward
+	addi t1, t1, 1 # Move destination forward
+	j strcpy_loop
+
+strcpy_done:
+	ret
+
+# ==== END OF STRING COPY FUNCTION ====
+
+# ==== APPEND TWO DIGITS FUNCTION ====
+# appends two-digit number to buffer
+# Input: a0 = number (0-99), a1 = buffer pointer
+
+append_two_digits:
+	li t0, 10
+	div t1, a0, t0 # t1 = tens digit
+	rem t2, a0, t0 # t2 = ones digit
+	
+	addi t1, t1, '0' # Convert to ASCII
+	addi t2, t2, '0'
+	
+	sb t1, 0(a1) # Store tens
+	sb t2, 1(a1) # Store ones
+	sb zero, 2(a1) # Null terminator
+	ret
+
+# ==== END OF APPEND TWO DIGITS FUNCTION ====
 
 success:
 	li a0, 1
