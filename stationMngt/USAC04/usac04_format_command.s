@@ -42,6 +42,10 @@ format_command:
 	mv a0, s0 # put string in a0 for trim function
 	jal trim # call trim
 	mv s0, a0 # save trimmed string pointer back to s0
+
+	# Convert s0 (trimmed string) to uppercase
+	mv a0, s0 # put string in a0 for to_uppercase function
+	jal to_uppercase # call to_uppercase function
 	
 # ===== TRIM FUNCTION =====
 # trim leading and trailing whitespaces from string
@@ -92,6 +96,36 @@ empty_string:
 	ret
 
 # ===== END OF TRIM FUNCTION =====
+
+# ==== TO UPPERCASE FUNCTION =====
+# converts string to uppercase
+# Input: a0 = pointer to string
+# Output: string is modified in place
+
+to_uppercase:
+	mv t0, a0 # t0 = current position in the string
+
+upper_loop:
+	lb t1, 0(t0) # load current character
+	beqz t1, upper_done # if null terminator, done
+
+	li t2, 'a'
+	blt t1, t2, upper_next # if char < 'a', not lowercase
+
+	li t2, 'z'
+	bgt t1, t2, upper_next # if char > 'z', not lowercase
+
+	addi t1, t1, -32 # converts lowercase character to uppercase
+	sb t1, 0(t0)
+
+upper_next:
+	addi t0, t0, 1 # move to next character
+	j upper_loop
+
+upper_done:
+	ret
+
+# ==== END OF TO UPPERCASE FUNCTION ====
 
 success:
 	li a0, 1
