@@ -1,6 +1,6 @@
 package esinf;
 
-import domain.order.AllocationWeight;
+import warehouseMngt.order.AllocationWeight;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;

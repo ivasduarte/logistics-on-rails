@@ -1,6 +1,6 @@
 package app;
 
-import domain.service.LoadData;
+import warehouseMngt.service.LoadData;
 
 import java.io.IOException;
 import java.util.Scanner;

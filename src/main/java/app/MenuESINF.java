@@ -1,12 +1,14 @@
 package app;
 
-import controller.ReturnsController;
-import controller.WarehouseController;
-import domain.order.*;
-import domain.picking.*;
-import domain.returns.*;
-import domain.service.LoadData;
-import domain.warehouse.Warehouse;
+import warehouseMngt.controller.ReturnsController;
+import warehouseMngt.controller.WarehouseController;
+import warehouseMngt.order.Allocation;
+import warehouseMngt.order.Order;
+import warehouseMngt.order.OrderAllocationResult;
+import warehouseMngt.picking.*;
+import warehouseMngt.returns.Returns;
+import warehouseMngt.service.LoadData;
+import warehouseMngt.warehouse.Warehouse;
 
 import java.io.IOException;
 import java.util.*;

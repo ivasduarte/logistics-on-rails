@@ -1,7 +1,7 @@
 package esinf;
 
-import domain.order.Allocation;
-import domain.picking.Trolley;
+import warehouseMngt.order.Allocation;
+import warehouseMngt.picking.Trolley;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
