@@ -1,11 +1,11 @@
 package esinf;
 
-import domain.order.Allocation;
+import warehouseMngt.order.Allocation;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import domain.picking.PickingPlan;
-import domain.picking.PackingHeuristic;
-import domain.picking.Trolley;
+import warehouseMngt.picking.PickingPlan;
+import warehouseMngt.picking.PackingHeuristic;
+import warehouseMngt.picking.Trolley;
 
 import java.util.ArrayList;
 import java.util.List;

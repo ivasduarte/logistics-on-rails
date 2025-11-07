@@ -1,9 +1,9 @@
 package esinf;
 
-import controller.PickingPathController;
-import domain.order.Allocation;
-import domain.picking.PickingPlan;
-import domain.picking.Trolley;
+import warehouseMngt.controller.PickingPathController;
+import warehouseMngt.order.Allocation;
+import warehouseMngt.picking.PickingPlan;
+import warehouseMngt.picking.Trolley;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

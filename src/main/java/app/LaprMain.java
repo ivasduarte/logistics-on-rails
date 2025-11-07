@@ -1,6 +1,6 @@
 package app;
 
-import domain.railway.*;
+import spatialQuerying.railwayMngt.*;
 
 import java.util.ArrayList;
 import java.util.List;
