@@ -50,8 +50,8 @@ public class TravelTime {
      * @throws IllegalArgumentException if no direct line connects the start and end stations
      */
     private Line findConnectingLine(List<Line> lines) {
-        int startStationId = stations.get(0).getStationID();
-        int endStationId = stations.get(1).getStationID();
+        int startStationId = Integer.parseInt(stations.get(0).getStationName());
+        int endStationId = Integer.parseInt(stations.get(1).getStationName());
 
         return lines.stream()
                 .filter(l -> (l.getStartStationID() == startStationId && l.getEndStationID() == endStationId) ||

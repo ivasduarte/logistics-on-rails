@@ -17,8 +17,10 @@ public class LaprMain {
     public static void main(String[] args) {
 
         // Creation of example stations
-        Station startStation = new Station(1, "Start Station");
-        Station endStation = new Station(2, "End Station");
+        Station startStation = new Station("Lisboa Oriente", "PT", "WET", "WET/GMT",
+                38.71387, -9.122271, true, true, false);
+        Station endStation = new Station("Porto Campanhã", "PT", "WET", "WET/GMT",
+                41.14961, -8.58519, true, true, false);
 
         // Creation of example locomotive
         Locomotive locomotive = new Locomotive(1, "Express 1", "Siemens", "Vectron",
