@@ -59,6 +59,28 @@ public class LongitudeTree {
         }
     }
 
+    public List<Station> findInLongitudeRange(double minLon, double maxLon) {
+        List<Station> results = new ArrayList<>();
+        findInRange(root, minLon, maxLon, results);
+        return results;
+    }
+
+    private void findInRange(LongitudeNode node, double minLon, double maxLon, List<Station> results) {
+        if (node == null) {
+            return;
+        }
+
+        if (node.getLongitude() > minLon) {
+            findInRange(node.getLeft(), minLon, maxLon, results);
+        }
+        if (node.getLongitude() < maxLon) {
+            findInRange(node.getRight(), minLon, maxLon, results);
+        }
+        if (node.getLongitude() >= minLon && node.getLongitude() <= maxLon) {
+            results.addAll(node.getStationList());
+        }
+    }
+
     // Util Methods
     private int getHeight(LongitudeNode node) {
         return node == null ? 0 : node.getHeight();
@@ -130,5 +152,19 @@ public class LongitudeTree {
     public int totalStations(LongitudeNode node) {
         if (node == null) return 0;
         return node.getStationList().size() + totalStations(node.getLeft()) + totalStations(node.getRight());
+    }
+
+    public List<Station> inOrderTraversal() {
+        List<Station> results = new ArrayList<>();
+        inOrder(root, results);
+        return results;
+    }
+
+    private void inOrder(LongitudeNode node, List<Station> results) {
+        if (node != null) {
+            inOrder(node.getLeft(), results);
+            results.addAll(node.getStationList());
+            inOrder(node.getRight(), results);
+        }
     }
 }
