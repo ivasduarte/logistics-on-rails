@@ -1,4 +1,4 @@
-package spatialQuerying.railwayMngt.controller;
+package spatialQuerying.controller;
 
 import spatialQuerying.railwayMngt.Station;
 
@@ -61,33 +61,29 @@ public class StationController {
     private List<String> parseCsvValues(String line) {
         List<String> values = new ArrayList<>();
         StringBuilder currentValue = new StringBuilder();
-        boolean timeZone = false;
+        boolean inQuotes = false;
 
         for (int i = 0; i < line.length(); i++) {
             char c = line.charAt(i);
 
             if (c == '"') {
-                timeZone = true;
-                currentValue.append(c);
-            } else if (c == ',' && !timeZone) {
+                inQuotes = !inQuotes;
+            } else if (c == ',' && !inQuotes) {
                 values.add(currentValue.toString());
-                currentValue = new StringBuilder();
+                currentValue.setLength(0);
             } else {
                 currentValue.append(c);
             }
         }
 
-        // This line adds the last value, not included in the previous cycle
         values.add(currentValue.toString());
 
         for (int i = 0; i < values.size(); i++) {
             String value = values.get(i).trim();
-
             if (value.startsWith("\"") && value.endsWith("\"") && value.length() >= 2) {
-                values.set(i, value.substring(1, value.length() - 1));
-            } else {
-                values.set(i, value);
+                value = value.substring(1, value.length() - 1);
             }
+            values.set(i, value);
         }
 
         return values;
