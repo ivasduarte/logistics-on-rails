@@ -141,4 +141,48 @@ public class KDTree2D {
 
         return newNode;
     }
+
+    /**
+     * This method sorts points by their appropriate dimension using AVL.
+     *
+     * @param points
+     * @param latTree
+     * @param lonTree
+     * @param devideByLatitude
+     * @return sorted list of points
+     */
+    private List<Point2D> sortPoints(List<Point2D> points, LatitudeTree latTree, LongitudeTree lonTree, boolean devideByLatitude) {
+        Set<Point2D> toInclude = new HashSet<>(points);
+
+        List<Point2D> sortedPoints = new ArrayList<>();
+        Set<Point2D> added = new HashSet<>();   // avoid duplicates
+
+        if (devideByLatitude) {
+            // go through latitude's AVL in order
+            List<Station> stations = latTree.inOrderTraversal();
+
+            for (Station station : stations) {
+                Point2D coords = new Point2D(station.getStationLatitude(), station.getStationLongitude());
+
+                // if this point is in the list, it hasn't been added yet
+                if (toInclude.contains(coords) && !added.contains(coords)) {
+                    sortedPoints.add(coords);
+                    added.add(coords);
+                }
+            }
+        } else {
+            // go through longitude's AVL in order
+            List<Station> stations = lonTree.inOrderTraversal();
+
+            for (Station station : stations) {
+                Point2D coords = new Point2D(station.getStationLatitude(), station.getStationLongitude());
+                if (toInclude.contains(coords) && !added.contains(coords)) {
+                    sortedPoints.add(coords);
+                    added.add(coords);
+                }
+            }
+        }
+        return sortedPoints;
+    }
+
 }
