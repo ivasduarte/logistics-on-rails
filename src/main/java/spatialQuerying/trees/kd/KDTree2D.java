@@ -63,6 +63,15 @@ public class KDTree2D {
 
         List<Point2D> byLongitude = new ArrayList<>(uniquePoints);
         byLongitude.sort(Comparator.comparingDouble(Point2D::getStationLongitude));
+
+
+        // build the tree
+        this.root = buildBalancedTree(uniquePoints.size() - 1,
+                groupedStations,
+                byLatitude,
+                byLongitude,
+                true // starts by dividing by latitude
+        );
     }
 
     /**
@@ -85,5 +94,51 @@ public class KDTree2D {
         groupedStations.values().forEach(stations -> stations.sort(Comparator.comparing(Station::getStationName)));
 
         return groupedStations;
+    }
+
+    /**
+     * Builds a balanced KD tree from a list of unique points by recursively splitting the points
+     * based on median positions, alternating between latitude and longitude dimensions.
+     *
+     * @return the root node of the balanced KD tree
+     */
+    public KDNode buildBalancedTree(int uniquePoints,
+                                    Map<Point2D, List<Station>> groupedStations,
+                                    List<Point2D> latList,
+                                    List<Point2D> lonList,
+                                    boolean devideByLatitude) {
+
+        if (uniquePoints < 0) return null;
+
+        // choose median
+        int medianIndex = uniquePoints / 2;
+        Point2D medianPoint = devideByLatitude ? latList.get(medianIndex) : lonList.get(medianIndex);
+
+        KDNode newNode = new KDNode(medianPoint, groupedStations.get(medianPoint));
+
+        // part both lists in O(n)
+        List<Point2D> leftLat = new ArrayList<>();
+        List<Point2D> leftLon = new ArrayList<>();
+
+        List<Point2D> rightLat = new ArrayList<>();
+        List<Point2D> rightLon = new ArrayList<>();
+
+        for (int i = 0; i <= uniquePoints; i++) {
+            Point2D point = devideByLatitude ? latList.get(i) : lonList.get(i);
+
+            if(point.equals(medianPoint)) continue;
+
+            if (devideByLatitude ? point.getStationLatitude() < medianPoint.getStationLatitude() : point.getStationLongitude() < medianPoint.getStationLongitude()) {
+                leftLat.add(point);
+                leftLon.add(point);
+            } else {
+                rightLat.add(point);
+                rightLon.add(point);
+            }
+        }
+        newNode.setLeft(buildBalancedTree(leftLat.size() - 1, groupedStations, leftLat, leftLon, !devideByLatitude));
+        newNode.setRight(buildBalancedTree(rightLat.size() - 1, groupedStations, rightLat, rightLon, !devideByLatitude));
+
+        return newNode;
     }
 }
