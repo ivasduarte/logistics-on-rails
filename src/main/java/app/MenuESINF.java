@@ -416,6 +416,67 @@ public class MenuESINF {
                         e.printStackTrace();
                     }
                 }
+
+                case 7 -> {
+                    System.out.println("\nExecuting USEI07 - Build Balanced 2D-Tree on Latitude/Longitude...");
+
+                    try {
+                        if (stationList == null || latTree == null || lonTree == null) {
+                            System.out.println("Please run USEI06 first to load stations and build AVL trees!");
+                            break;
+                        }
+
+                        System.out.println("Building 2D-Tree from " + stationList.size() + " stations...");
+
+                        kdTree = new KDTree2D();
+                        kdTree.buildBalancedTree(stationList, latTree, lonTree);
+
+                        System.out.println("\n=== 2D-TREE SUCCESSFULLY BUILT ===");
+                        System.out.println("\n=== TREE METRICS ===");
+                        System.out.println("Total Unique Points (Size): " + kdTree.getSize());
+                        System.out.println("Tree Height: " + kdTree.getHeight());
+
+                        System.out.println("\n=== BUCKET SIZE DISTRIBUTION ===");
+                        System.out.println("(Number of stations sharing the same coordinates)");
+                        System.out.println();
+
+                        Map<Integer, Integer> bucketSizes = kdTree.getBucketSizes();
+                        if (bucketSizes.isEmpty()) {
+                            System.out.println("No buckets found.");
+                        } else {
+                            System.out.println("Bucket Size | Frequency");
+                            System.out.println("------------|----------");
+                            bucketSizes.forEach((size, count) ->
+                                    System.out.printf("%11d | %d node(s)%n", size, count));
+
+                            // aditional statistics
+                            int totalNodes = bucketSizes.values().stream().mapToInt(Integer::intValue).sum();
+                            int maxBucketSize = Collections.max(bucketSizes.keySet());
+                            int minBucketSize = Collections.min(bucketSizes.keySet());
+
+                            System.out.println("\n=== STATISTICS ===");
+                            System.out.println("Total nodes: " + totalNodes);
+                            System.out.println("Max bucket size: " + maxBucketSize + " station(s) per coordinate");
+                            System.out.println("Min bucket size: " + minBucketSize + " station(s) per coordinate");
+                        }
+
+                        System.out.println("\n=== TEMPORAL COMPLEXITY ANALYSIS ===");
+                        System.out.println("Building the 2D-Tree:");
+                        System.out.println("1. Grouping stations by coordinates: O(n)");
+                        System.out.println("2. Sorting using AVL in-order traversal: O(n)");
+                        System.out.println("3. Recursive balanced tree construction: O(n log n)");
+                        System.out.println("   - Each level processes all n points");
+                        System.out.println("   - Tree has log(n) levels due to median splitting");
+                        System.out.println("\nOverall Time Complexity: O(n log n)");
+                        System.out.println("Space Complexity: O(n)");
+                        System.out.println("where n = " + stationList.size() + " stations");
+
+
+                    } catch (Exception e) {
+                        System.out.println("Error building 2D-Tree: " + e.getMessage());
+                        e.printStackTrace();
+                    }
+                }
                 case 0 -> System.out.println("Returning to Main Menu...");
                 default -> System.out.println("Invalid option.");
             }
