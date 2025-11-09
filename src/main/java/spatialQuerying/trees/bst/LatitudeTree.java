@@ -1,32 +1,29 @@
-package spatialQuerying.railwayMngt.trees.bst;
+package spatialQuerying.trees.bst;
 
 import spatialQuerying.railwayMngt.Station;
-import spatialQuerying.railwayMngt.trees.nodes.LongitudeNode;
+import spatialQuerying.trees.nodes.LatitudeNode;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class LongitudeTree {
-    private LongitudeNode root;
+public class LatitudeTree {
+    private LatitudeNode root;
     private static final double EPSILON = 1e-6;
 
     public void insert(Station station) {
         root = insert(root, station);
     }
 
-    private LongitudeNode insert(LongitudeNode node, Station station) {
+    private LatitudeNode insert(LatitudeNode node, Station station) {
         if (node == null) {
-            LongitudeNode newNode = new LongitudeNode(station.getStationLongitude());
+            LatitudeNode newNode = new LatitudeNode(station.getStationLatitude());
             newNode.addStation(station);
             return newNode;
         }
 
-        double lonDiff = station.getStationLongitude() - node.getLongitude();
+        double latDiff = station.getStationLatitude() - node.getLat();
 
-        if (Math.abs(lonDiff) < EPSILON) {
-            node.addStation(station);
-            return node;
-        } else if (lonDiff < 0) {
+        if (Math.abs(latDiff) < EPSILON) {
             node.setLeft(insert(node.getLeft(), station));
         } else {
             node.setRight(insert(node.getRight(), station));
@@ -37,60 +34,60 @@ public class LongitudeTree {
         return balance(node);
     }
 
-    // Finding Methods
-    public List<Station> findByLongitude(double lon) {
-        LongitudeNode node = findNode(root, lon);
+    // Finding methods
+    public List<Station> findByLatitude(double lat) {
+        LatitudeNode node = findNode(root, lat);
         return node != null ? new ArrayList<>(node.getStationList()) : new ArrayList<>();
     }
 
-    private LongitudeNode findNode(LongitudeNode node, double lon) {
+    private LatitudeNode findNode(LatitudeNode node, double lat) {
         if (node == null) {
             return null;
         }
 
-        double diff = lon - node.getLongitude();
+        double diff = lat - node.getLat();
 
         if (Math.abs(diff) < EPSILON) {
             return node;
         } else if (diff < 0) {
-            return findNode(node.getLeft(), lon);
+            return findNode(node.getLeft(), lat);
         } else {
-            return findNode(node.getRight(), lon);
+            return findNode(node.getRight(), lat);
         }
     }
 
-    public List<Station> findInLongitudeRange(double minLon, double maxLon) {
+    public List<Station> findInLatitudeRange(double minLat, double maxLat) {
         List<Station> results = new ArrayList<>();
-        findInRange(root, minLon, maxLon, results);
+        findInRange(root, minLat, maxLat, results);
         return results;
     }
 
-    private void findInRange(LongitudeNode node, double minLon, double maxLon, List<Station> results) {
+    private void findInRange(LatitudeNode node, double minLat, double maxLat, List<Station> results) {
         if (node == null) {
             return;
         }
 
-        if (node.getLongitude() > minLon) {
-            findInRange(node.getLeft(), minLon, maxLon, results);
+        if (node.getLat() > minLat) {
+            findInRange(node.getLeft(), minLat, maxLat, results);
         }
-        if (node.getLongitude() >= minLon && node.getLongitude() <= maxLon) {
+        if (node.getLat() >= minLat && node.getLat() <= maxLat) {
             results.addAll(node.getStationList());
         }
-        if (node.getLongitude() < maxLon) {
-            findInRange(node.getRight(), minLon, maxLon, results);
+        if (node.getLat() < maxLat) {
+            findInRange(node.getRight(), minLat, maxLat, results);
         }
     }
 
     // Util Methods
-    private int getHeight(LongitudeNode node) {
+    private int getHeight(LatitudeNode node) {
         return node == null ? 0 : node.getHeight();
     }
 
-    private int getBalance(LongitudeNode node) {
+    private int getBalance(LatitudeNode node) {
         return node == null ? 0 : getHeight(node.getLeft()) - getHeight(node.getRight());
     }
 
-    private LongitudeNode balance(LongitudeNode node) {
+    private LatitudeNode balance(LatitudeNode node) {
         int balance = getBalance(node);
 
         if (balance > 1) {
@@ -110,9 +107,9 @@ public class LongitudeTree {
         return node;
     }
 
-    private LongitudeNode rotateLeft(LongitudeNode node) {
-        LongitudeNode rightNode = node.getRight();
-        LongitudeNode T2 = rightNode.getLeft();
+    private LatitudeNode rotateLeft(LatitudeNode node) {
+        LatitudeNode rightNode = node.getRight();
+        LatitudeNode T2 = rightNode.getLeft();
 
         rightNode.setLeft(node);
         node.setRight(T2);
@@ -123,9 +120,9 @@ public class LongitudeTree {
         return rightNode;
     }
 
-    private LongitudeNode rotateRight(LongitudeNode node) {
-        LongitudeNode leftNode = node.getLeft();
-        LongitudeNode T2 = leftNode.getRight();
+    private LatitudeNode rotateRight(LatitudeNode node) {
+        LatitudeNode leftNode = node.getLeft();
+        LatitudeNode T2 = leftNode.getRight();
 
         leftNode.setRight(node);
         node.setLeft(T2);
@@ -140,7 +137,7 @@ public class LongitudeTree {
         return size(root);
     }
 
-    private int size(LongitudeNode node) {
+    private int size(LatitudeNode node) {
         if (node == null) return 0;
         return 1 + size(node.getLeft()) + size(node.getRight());
     }
@@ -149,7 +146,7 @@ public class LongitudeTree {
         return totalStations(root);
     }
 
-    public int totalStations(LongitudeNode node) {
+    public int totalStations(LatitudeNode node) {
         if (node == null) return 0;
         return node.getStationList().size() + totalStations(node.getLeft()) + totalStations(node.getRight());
     }
@@ -160,7 +157,7 @@ public class LongitudeTree {
         return results;
     }
 
-    private void inOrder(LongitudeNode node, List<Station> results) {
+    private void inOrder(LatitudeNode node, List<Station> results) {
         if (node != null) {
             inOrder(node.getLeft(), results);
             results.addAll(node.getStationList());

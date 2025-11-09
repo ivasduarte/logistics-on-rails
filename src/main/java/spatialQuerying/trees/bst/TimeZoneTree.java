@@ -1,7 +1,7 @@
-package spatialQuerying.railwayMngt.trees.bst;
+package spatialQuerying.trees.bst;
 
 import spatialQuerying.railwayMngt.Station;
-import spatialQuerying.railwayMngt.trees.nodes.TimeZoneNode;
+import spatialQuerying.trees.nodes.TimeZoneNode;
 
 import java.util.ArrayList;
 import java.util.HashSet;

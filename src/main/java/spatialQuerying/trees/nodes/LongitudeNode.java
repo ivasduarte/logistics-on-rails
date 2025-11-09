@@ -1,7 +1,6 @@
-package spatialQuerying.railwayMngt.trees.nodes;
+package spatialQuerying.trees.nodes;
 
 import spatialQuerying.railwayMngt.Station;
-import spatialQuerying.railwayMngt.trees.bst.LongitudeTree;
 
 import java.util.ArrayList;
 import java.util.Comparator;
