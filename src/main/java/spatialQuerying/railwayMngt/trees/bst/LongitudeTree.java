@@ -73,11 +73,11 @@ public class LongitudeTree {
         if (node.getLongitude() > minLon) {
             findInRange(node.getLeft(), minLon, maxLon, results);
         }
-        if (node.getLongitude() < maxLon) {
-            findInRange(node.getRight(), minLon, maxLon, results);
-        }
         if (node.getLongitude() >= minLon && node.getLongitude() <= maxLon) {
             results.addAll(node.getStationList());
+        }
+        if (node.getLongitude() < maxLon) {
+            findInRange(node.getRight(), minLon, maxLon, results);
         }
     }
 

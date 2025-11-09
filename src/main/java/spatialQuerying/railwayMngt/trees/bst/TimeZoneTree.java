@@ -79,11 +79,11 @@ public class TimeZoneTree {
         if (node.getTimeZoneGroup().compareTo(minTimeZoneGroup) > 0) {
             findInRange(node.getLeft(), minTimeZoneGroup, maxTimeZoneGroup, results);
         }
-        if (node.getTimeZoneGroup().compareTo(minTimeZoneGroup) < 0) {
-            findInRange(node.getRight(), minTimeZoneGroup, maxTimeZoneGroup, results);
-        }
         if (node.getTimeZoneGroup().compareTo(minTimeZoneGroup) >= 0 && node.getTimeZoneGroup().compareTo(maxTimeZoneGroup) <= 0) {
             results.addAll(node.getStationsByTimeZoneGroup(null));
+        }
+        if (node.getTimeZoneGroup().compareTo(minTimeZoneGroup) < 0) {
+            findInRange(node.getRight(), minTimeZoneGroup, maxTimeZoneGroup, results);
         }
     }
 

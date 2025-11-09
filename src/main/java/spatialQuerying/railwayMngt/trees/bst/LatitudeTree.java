@@ -3,6 +3,7 @@ package spatialQuerying.railwayMngt.trees.bst;
 import spatialQuerying.railwayMngt.Station;
 import spatialQuerying.railwayMngt.trees.nodes.LatitudeNode;
 
+import javax.print.DocFlavor;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -53,6 +54,28 @@ public class LatitudeTree {
             return findNode(node.getLeft(), lat);
         } else {
             return findNode(node.getRight(), lat);
+        }
+    }
+
+    public List<Station> findInLatitudeRange(double minLat, double maxLat) {
+        List<Station> results = new ArrayList<>();
+        findInRange(root, minLat, maxLat, results);
+        return results;
+    }
+
+    private void findInRange(LatitudeNode node, double minLat, double maxLat, List<Station> results) {
+        if (node == null) {
+            return;
+        }
+
+        if (node.getLat() > minLat) {
+            findInRange(node.getLeft(), minLat, maxLat, results);
+        }
+        if (node.getLat() >= minLat && node.getLat() <= maxLat) {
+            results.addAll(node.getStationList());
+        }
+        if (node.getLat() < maxLat) {
+            findInRange(node.getRight(), minLat, maxLat, results);
         }
     }
 
@@ -127,5 +150,19 @@ public class LatitudeTree {
     public int totalStations(LatitudeNode node) {
         if (node == null) return 0;
         return node.getStationList().size() + totalStations(node.getLeft()) + totalStations(node.getRight());
+    }
+
+    public List<Station> inOrderTraversal() {
+        List<Station> results = new ArrayList<>();
+        inOrder(root, results);
+        return results;
+    }
+
+    private void inOrder(LatitudeNode node, List<Station> results) {
+        if (node != null) {
+            inOrder(node.getLeft(), results);
+            results.addAll(node.getStationList());
+            inOrder(node.getRight(), results);
+        }
     }
 }
