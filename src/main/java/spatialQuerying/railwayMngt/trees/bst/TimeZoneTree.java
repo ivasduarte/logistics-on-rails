@@ -4,7 +4,9 @@ import spatialQuerying.railwayMngt.Station;
 import spatialQuerying.railwayMngt.trees.nodes.TimeZoneNode;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class TimeZoneTree {
     private TimeZoneNode root;
@@ -60,6 +62,28 @@ public class TimeZoneTree {
             return findNode(node.getLeft(), timeZoneGroup);
         } else {
             return findNode(node.getRight(), timeZoneGroup);
+        }
+    }
+
+    public List<Station> findInTimeZoneRange(String minTimeZoneGroup, String maxTimeZoneGroup) {
+        List<Station> results = new ArrayList<>();
+        findInRange(root, minTimeZoneGroup, maxTimeZoneGroup, results);
+        return results;
+    }
+
+    private void findInRange(TimeZoneNode node, String minTimeZoneGroup, String maxTimeZoneGroup, List<Station> results) {
+        if (node == null) {
+            return;
+        }
+
+        if (node.getTimeZoneGroup().compareTo(minTimeZoneGroup) > 0) {
+            findInRange(node.getLeft(), minTimeZoneGroup, maxTimeZoneGroup, results);
+        }
+        if (node.getTimeZoneGroup().compareTo(minTimeZoneGroup) < 0) {
+            findInRange(node.getRight(), minTimeZoneGroup, maxTimeZoneGroup, results);
+        }
+        if (node.getTimeZoneGroup().compareTo(minTimeZoneGroup) >= 0 && node.getTimeZoneGroup().compareTo(maxTimeZoneGroup) <= 0) {
+            results.addAll(node.getStationsByTimeZoneGroup(null));
         }
     }
 
@@ -138,5 +162,38 @@ public class TimeZoneTree {
             count += stations.size();
         }
         return count + totalStations(node.getLeft()) + totalStations(node.getRight());
+    }
+
+    public List<Station> inOrderTraversal() {
+        List<Station> results = new ArrayList<>();
+        inOrder(root, results);
+        return results;
+    }
+
+    private void inOrder(TimeZoneNode node, List<Station> result) {
+        if (node != null) {
+            inOrder(node.getLeft(), result);
+            result.addAll(node.getStationsByTimeZoneGroup(null));
+            inOrder(node.getRight(), result);
+        }
+    }
+
+    public List<String> getAllTimeZoneGroups() {
+        List<String> timeZoneGroups = new ArrayList<>();
+        getAllTimeZoneGroups(root, timeZoneGroups);
+        return timeZoneGroups;
+    }
+
+    private void getAllTimeZoneGroups(TimeZoneNode node, List<String> timeZoneGroups) {
+        if (node != null) {
+            getAllTimeZoneGroups(node.getLeft(), timeZoneGroups);
+            timeZoneGroups.add(node.getTimeZoneGroup());
+            getAllTimeZoneGroups(node.getRight(), timeZoneGroups);
+        }
+    }
+
+    public Set<String> getCountriesInTimeZoneGroup(String timeZoneGroup) {
+        TimeZoneNode node = findNode(root, timeZoneGroup);
+        return node != null ? node.getCountries() : new HashSet<>();
     }
 }
