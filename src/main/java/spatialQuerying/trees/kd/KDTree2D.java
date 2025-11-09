@@ -64,7 +64,6 @@ public class KDTree2D {
         List<Point2D> byLongitude = new ArrayList<>(uniquePoints);
         byLongitude.sort(Comparator.comparingDouble(Point2D::getStationLongitude));
 
-
         // build the tree
         this.root = buildBalancedTree(uniquePoints.size() - 1,
                 groupedStations,
@@ -72,6 +71,9 @@ public class KDTree2D {
                 byLongitude,
                 true // starts by dividing by latitude
         );
+
+        // calc metrics
+        calculateMetrics();
     }
 
     /**
@@ -185,4 +187,52 @@ public class KDTree2D {
         return sortedPoints;
     }
 
+    /**
+     * This method resets internal metrics (size, height, and bucketSizes),
+     * and if a root node exists, recursively computes the tree height and counts
+     * nodes and bucket sizes using helper methods.
+     */
+    public void calculateMetrics() {
+        this.size = 0;
+        this.height = 0;
+        this.bucketSizes.clear();
+
+        if (root != null) {
+            this.height = calculateHeight(root);
+            calculateNodesAndBuckets(root);
+        }
+    }
+
+    /**
+     * This method uses a recursive approach to calculate the height of a tree.
+     *
+     * @param node
+     * @return height of a node = max path length to leaf
+     */
+    private int calculateHeight(KDNode node) {
+        if (node == null) return -1;
+
+        int leftHeight = calculateHeight(node.getLeft());
+        int rightHeight = calculateHeight(node.getRight());
+
+        return Math.max(leftHeight, rightHeight) + 1;
+    }
+
+    /**
+     * This method uses a recursive approach to count nodes and bucket sizes.
+     *
+     * @param node
+     */
+    private void calculateNodesAndBuckets(KDNode node) {
+        if (node == null) return;
+
+        size++;     // count this node
+
+        // count bucket sizes (how many stations in this point)
+        int bucketSize = node.getStationList().size();
+        bucketSizes.put(bucketSize, bucketSizes.getOrDefault(bucketSize, 0) + 1);
+
+        calculateNodesAndBuckets(node.getLeft());
+        calculateNodesAndBuckets(node.getRight());
+    }
 }
