@@ -7,6 +7,7 @@ import spatialQuerying.trees.nodes.KDNode;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class GeographicalSearch {
     private static final int LAT_MIN = -90;
@@ -14,7 +15,7 @@ public class GeographicalSearch {
     private static final int LON_MIN = -180;
     private static final int LON_MAX = 180;
 
-    private final KDTree2D kdTree;  // Add this field
+    private final KDTree2D kdTree;
 
     /**
      * Constructs a new instance of GeographicalSearch using the specified KD-Tree.
@@ -33,18 +34,57 @@ public class GeographicalSearch {
      * and searches stations by latitude and longitude.
      *
      * @param latitude the latitude of the target location, must be between -90 and 90 (inclusive)
-     * @param longitude the longitude of the*/
+     * @param longitude the longitude of the target location, must be between -180 and 180 (inclusive)
+     * @return a list of all stations at the specified coordinates, or an empty list if none found
+     */
     public List<Station> searchByCoordinates(double latitude, double longitude) {
+        return searchByCoordinates(latitude, longitude, null, null, null);
+    }
+
+    /**
+     * Searches for stations located at the specified geographical coordinates with optional filters.
+     * The search is performed in a KD-Tree structure, which efficiently organizes
+     * and searches stations by latitude and longitude.
+     *
+     * @param latitude the latitude of the target location, must be between -90 and 90 (inclusive)
+     * @param longitude the longitude of the target location, must be between -180 and 180 (inclusive)
+     * @param isCity filter by city status (true/false), or null for no filter
+     * @param isMainStation filter by main station status (true/false), or null for no filter
+     * @param country filter by country code ("PT", "ES", or "all"), or null for no filter
+     * @return a list of stations matching the coordinates and filters, or an empty list if none found
+     */
+    public List<Station> searchByCoordinates(double latitude, double longitude,
+                                             Boolean isCity, Boolean isMainStation, String country) {
         if (!isValidCoordinates(latitude, longitude)) {
             throw new IllegalArgumentException("Invalid coordinates: latitude must be between -90 and 90, longitude must be between -180 and 180");
         }
         Point2D target = new Point2D(latitude, longitude);
-        KDNode result = searchNode(kdTree.getRoot(), target, true);  // Use kdTree.getRoot()
+        KDNode result = searchNode(kdTree.getRoot(), target, true);
 
         if (result != null) {
-            return new ArrayList<>(result.getStationList());
+            List<Station> stations = new ArrayList<>(result.getStationList());
+            return applyFilters(stations, isCity, isMainStation, country);
         }
         return new ArrayList<>();
+    }
+
+    /**
+     * Applies the specified filters to a list of stations.
+     *
+     * @param stations the list of stations to filter
+     * @param isCity filter by city status (true/false), or null for no filter
+     * @param isMainStation filter by main station status (true/false), or null for no filter
+     * @param country filter by country code ("PT", "ES", or "all"), or null for no filter
+     * @return a filtered list of stations matching all specified criteria
+     */
+    private List<Station> applyFilters(List<Station> stations, Boolean isCity,
+                                       Boolean isMainStation, String country) {
+        return stations.stream()
+                .filter(station -> isCity == null || station.isCity() == isCity)
+                .filter(station -> isMainStation == null || station.isMainStation() == isMainStation)
+                .filter(station -> country == null || country.equalsIgnoreCase("all")
+                        || station.getStationCountry().equalsIgnoreCase(country))
+                .collect(Collectors.toList());
     }
 
     /**
