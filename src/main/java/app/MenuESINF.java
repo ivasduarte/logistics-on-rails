@@ -1,5 +1,6 @@
 package app;
 
+import spatialQuerying.controller.GeographicalSearch;
 import spatialQuerying.controller.StationController;
 import spatialQuerying.railwayMngt.Station;
 import spatialQuerying.trees.bst.LatitudeTree;
@@ -29,6 +30,7 @@ public class MenuESINF {
     private static LongitudeTree lonTree = null;
     private static TimeZoneTree timeZoneTree = null;
     private static KDTree2D kdTree = null;
+    private static GeographicalSearch geographicalSearch = null;
 
     public static void menuESINF() {
         Warehouse warehouse = new Warehouse(
@@ -53,6 +55,7 @@ public class MenuESINF {
             System.out.println("5. USEI05 - Returns & Quarantine");
             System.out.println("6. USEI06 - Time-Zone Index and Windowed Queries");
             System.out.println("7. USEI07 - Build Balanced 2D-Tree on Latitude/Longitude");
+            System.out.println("8. USEI08 - Search by Geographical Area");
             System.out.println("0. Return to Main Menu");
             System.out.print("Select option: ");
             op2 = sc.nextInt();
@@ -475,6 +478,50 @@ public class MenuESINF {
                     } catch (Exception e) {
                         System.out.println("Error building 2D-Tree: " + e.getMessage());
                         e.printStackTrace();
+                    }
+                }
+                case 8 -> {
+                    System.out.println("\nExecuting USEI08 - Search by Geographical Area...");
+
+                    if (kdTree == null) {
+                        System.out.println("Please run USEI07 first to build the 2D-Tree!");
+                        break;
+                    }
+
+                    if (geographicalSearch == null) {
+                        geographicalSearch = new GeographicalSearch(kdTree);
+                    }
+
+                    System.out.print("Enter latitude: ");
+                    double lat = sc.nextDouble();
+                    System.out.print("Enter longitude: ");
+                    double lon = sc.nextDouble();
+                    sc.nextLine();
+
+                    System.out.println("\n=== Optional Filters ===");
+                    System.out.print("Filter by city status (y/n/enter to skip): ");
+                    String cityInput = sc.nextLine().trim().toLowerCase();
+                    Boolean isCity = cityInput.isEmpty() ? null : cityInput.startsWith("y");
+
+                    System.out.print("Filter by main station status (y/n/enter to skip): ");
+                    String mainInput = sc.nextLine().trim().toLowerCase();
+                    Boolean isMainStation = mainInput.isEmpty() ? null : mainInput.startsWith("y");
+
+                    System.out.print("Filter by country (PT/ES/all/enter to skip): ");
+                    String countryInput = sc.nextLine().trim();
+                    String country = countryInput.isEmpty() ? null : countryInput;
+
+                    List<Station> results = geographicalSearch.searchByCoordinates(lat, lon, isCity, isMainStation, country);
+
+                    System.out.println("\n=== Results ===");
+                    if (results.isEmpty()) {
+                        System.out.println("No stations found matching the criteria.");
+                    } else {
+                        System.out.println("Found " + results.size() + " station(s):");
+                        results.forEach(s -> System.out.printf("- %s (%s)%n    City: %s | Main Station: %s%n",
+                                s.getStationName(), s.getStationCountry(),
+                                s.isCity() ? "Yes" : "No",
+                                s.isMainStation() ? "Yes" : "No"));
                     }
                 }
                 case 0 -> System.out.println("Returning to Main Menu...");
