@@ -1,0 +1,25 @@
+@startuml
+skinparam monochrome true
+skinparam packageStyle rectangle
+skinparam shadowing false
+
+autonumber
+
+actor "Planner" as plan
+participant ":System" as sys
+
+activate plan
+
+plan -> sys: requests creation of BST/AVL trees set
+activate sys
+sys -> plan: asks for stations file path
+deactivate sys
+
+plan -> sys: inputs respective path
+activate sys
+sys -> plan: returns set of BST/AVL trees
+deactivate sys
+
+deactivate plan
+
+@enduml
