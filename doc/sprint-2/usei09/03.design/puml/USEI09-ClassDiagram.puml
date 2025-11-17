@@ -1,0 +1,72 @@
+@startuml
+' Class Diagram: USEI09 - Proximity Search
+
+skinparam monochrome true
+skinparam packageStyle rectangle
+skinparam classAttributeIconSize 0
+
+hide circle
+
+package "Spatial Querying" {
+
+class KDTree2D {
+    - root: KDNode
+    + getHeight(): int
+}
+
+class KDNode {
+    - coordinates: Point2D
+    - stationList: List<Station>
+    - left: KDNode
+    - right: KDNode
+    + getCoordinates(): Point2D
+    + getStationList(): List<Station>
+}
+
+class ProximitySearchController {
+    - kdTree: KDTree2D
+    - EARTH_RADIUS_KM: double = 6371.0
+    + findNearestStations(lat, lon, N, filter): Map<String, Object>
+    + printSearchComplexityAnalysis(N): void
+    - findNearestNRecursive(...): void
+    - shouldExploreFarSide(...): boolean
+    - haversineDistance(...): double
+    - buildResponse(...): Map<String, Object>
+}
+
+class StationDistance {
+    - station: Station
+    - distance: double
+    + compareTo(other: StationDistance): int
+}
+
+
+}
+
+package "Domain" {
+class Station {
+* stationTimeZoneGroup: String
+* stationLatitude: double
+* stationLongitude: double
+}
+
+class Point2D {
+    + getStationLatitude(): double
+    + getStationLongitude(): double
+}
+
+
+}
+
+Station "1" *-- "1" Point2D : has
+
+ProximitySearchController "1" *-- "1" KDTree2D : uses
+ProximitySearchController "1" ..> Station : queries
+ProximitySearchController ..> StationDistance : creates helper
+
+KDTree2D "1" -- "0.." KDNode : contains
+
+KDNode "1" -- "1" Point2D : holds
+KDNode "1" -- "1..*" Station : holds (bucket)
+
+@enduml

@@ -1,0 +1,80 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+
+actor "Analyst" as Analyst
+participant ":ProximitySearchController" as Controller
+participant ":KDTree2D" as KDTree
+participant ":PriorityQueue<StationDistance>" as PQueue
+participant ":StationDistance" as SD
+participant ":HaversineDistance" as HD
+
+autonumber
+activate Analyst
+== 1. Search Initialization ==
+
+Analyst -> Controller : findNearestStations(lat, lon, N, filter)
+activate Controller
+
+Controller -> Controller : validateInputs()
+Controller -> PQueue : new PriorityQueue<StationDistance>(MaxHeap)
+activate PQueue
+PQueue --> Controller : queue
+deactivate PQueue
+Controller -> Controller : createTimeZoneFilter(filter)
+
+|||
+
+== 2. Recursive Search and Pruning ==
+
+Controller -> Controller : findNearestNRecursive(root, lat, lon, N, queue, filter, isLat)
+activate Controller
+note over Controller, PQueue
+Recursive Traversal Logic:
+1. Calculate distance for current node.
+2. Update PQueue (k-NN).
+3. Determine near/far side.
+4. Explore near side.
+5. Prune and potentially explore far side.
+end note
+
+loop Recursive Traversal
+Controller -> HD : haversineDistance(coords, target)
+activate HD
+HD --> Controller : distance
+deactivate HD
+
+alt station passes filter
+    Controller -> SD : new StationDistance(station, distance)
+    activate SD
+    SD --> Controller : sd
+    deactivate SD
+
+    Controller -> PQueue : offer(sd) / poll()
+    activate PQueue
+    PQueue --> Controller : updated queue
+    deactivate PQueue
+end
+
+Controller -> Controller : shouldExploreFarSide(lat, lon, nodeValue, PQueue)
+alt Far Side should be explored
+    Controller -> Controller : findNearestNRecursive(...) // Explore far side
+end
+
+
+end
+deactivate Controller
+
+|||
+
+== 3. Result Assembly and Reporting ==
+
+Controller -> Controller : extractAndSortResults(queue)
+Controller -> Controller : buildResponse(stations, distances, metrics)
+Controller -> Controller : printSearchComplexityAnalysis(N)
+
+Controller --> Analyst : Response Map {Stations, Distances, Metrics}
+deactivate Controller
+
+@enduml

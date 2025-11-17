@@ -1,6 +1,7 @@
 package app;
 
 import spatialQuerying.controller.GeographicalSearch;
+import spatialQuerying.controller.ProximitySearchController;
 import spatialQuerying.controller.StationController;
 import spatialQuerying.railwayMngt.Station;
 import spatialQuerying.trees.bst.LatitudeTree;
@@ -56,6 +57,7 @@ public class MenuESINF {
             System.out.println("6. USEI06 - Time-Zone Index and Windowed Queries");
             System.out.println("7. USEI07 - Build Balanced 2D-Tree on Latitude/Longitude");
             System.out.println("8. USEI08 - Search by Geographical Area");
+            System.out.println("9. USEI09 - Proximity Search (Nearest-N with Filters)");
             System.out.println("0. Return to Main Menu");
             System.out.print("Select option: ");
             op2 = sc.nextInt();
@@ -522,6 +524,121 @@ public class MenuESINF {
                                 s.getStationName(), s.getStationCountry(),
                                 s.isCity() ? "Yes" : "No",
                                 s.isMainStation() ? "Yes" : "No"));
+                    }
+                }
+                case 9 -> {
+                    System.out.println("\nExecuting USEI09 - Proximity Search (Nearest-N with Filters)...");
+                    try {
+                        if (kdTree == null || kdTree.getRoot() == null) {
+                            System.out.println("Please run USEI07 first to build the 2D-Tree!");
+                            break;
+                        }
+
+                        ProximitySearchController proximityController = new ProximitySearchController(kdTree);
+
+                        System.out.print("Enter target latitude: ");
+                        double targetLat = sc.nextDouble();
+
+                        System.out.print("Enter target longitude: ");
+                        double targetLon = sc.nextDouble();
+
+                        System.out.print("Enter number of nearest neighbors (N): ");
+                        int n = sc.nextInt();
+                        sc.nextLine();
+
+                        if (n <= 0) {
+                            System.out.println("N must be greater than 0.");
+                            break;
+                        }
+
+                        System.out.println("\nApply Time Zone Filter?");
+                        System.out.println("1. Yes");
+                        System.out.println("2. No");
+                        System.out.print("Option: ");
+                        int filterOption = sc.nextInt();
+                        sc.nextLine();
+
+                        String timeZoneFilter = null;
+                        if (filterOption == 1) {
+                            System.out.print("Enter time zone filter (e.g., CET, WET, EET): ");
+                            timeZoneFilter = sc.nextLine().trim();
+
+                            if (timeZoneFilter.isEmpty()) {
+                                System.out.println("Time zone filter cannot be empty. Proceeding without filter.");
+                                timeZoneFilter = null;
+                            }
+                        }
+
+
+                        Map<String, Object> response =
+                                proximityController.findNearestStations(targetLat, targetLon, n, timeZoneFilter);
+
+                        @SuppressWarnings("unchecked")
+                        List<Station> stations = (List<Station>) response.get("stations");
+
+                        @SuppressWarnings("unchecked")
+                        List<Double> distances = (List<Double>) response.get("distances");
+
+                        @SuppressWarnings("unchecked")
+                        Map<String, Double> targetCoordinates = (Map<String, Double>) response.get("targetCoordinates");
+
+                        @SuppressWarnings("unchecked")
+                        Map<String, Integer> searchParameters = (Map<String, Integer>) response.get("searchParameters");
+
+                        @SuppressWarnings("unchecked")
+                        List<String> appliedFilters = (List<String>) response.get("appliedFilters");
+
+                        System.out.println("\n=== PROXIMITY SEARCH RESULTS ===");
+                        System.out.printf("Target Location: (%.6f, %.6f)%n",
+                                targetCoordinates.get("latitude"),
+                                targetCoordinates.get("longitude"));
+                        System.out.println("Number of results requested: " + searchParameters.get("requestedNeighbors"));
+                        System.out.println("Number of results found: " + searchParameters.get("resultsFound"));
+
+                        if (!appliedFilters.isEmpty()) {
+                            System.out.println("Time Zone Filter: " + appliedFilters.get(0));
+                        } else {
+                            System.out.println("Time Zone Filter: None");
+                        }
+
+                        System.out.println("\n--- Nearest Stations ---");
+
+                        if (stations.isEmpty()) {
+                            System.out.println("No stations found matching the criteria.");
+                        } else {
+                            for (int i = 0; i < stations.size(); i++) {
+                                Station station = stations.get(i);
+                                double distance = distances.get(i);
+
+                                System.out.printf("%d. %s (%.2f km)%n",
+                                        i + 1,
+                                        station.getStationName(),
+                                        distance);
+                                System.out.printf("   Country: %s, Time Zone: %s%n",
+                                        station.getStationCountry(),
+                                        station.getStationTimeZoneGroup());
+                                System.out.printf("   Coordinates: (lat: %.6f, lon: %.6f)%n%n",
+                                        station.getStationLatitude(),
+                                        station.getStationLongitude());
+                            }
+                        }
+                        System.out.println("\n=== TEMPORAL COMPLEXITY ANALYSIS ===");
+                        System.out.println("Nearest-N Proximity Search on Balanced KD-Tree (USEI09):");
+                        System.out.println("1. Initial Traversal O(log n)");
+                        System.out.println("   - The tree is balanced, guaranteeing a height of log(n).");
+                        System.out.println("2. Priority Queue Maintenance: O(log k) per insertion");
+                        System.out.println("   - A Max Heap maintains the 'k' (or 'n' requested) nearest neighbors.");
+                        System.out.println("3. Recursive Traversal & Pruning:");
+                        System.out.println("   - Explores the most promising half first.");
+                        System.out.println("   - Pruning stops exploration if the closest boundary of the far side is farther than the k-th nearest neighbor found so far.");
+
+                        System.out.println("\nOverall Time Complexity:");
+                        System.out.println("   - Best Case: O(log n) + O(k log k)");
+                        System.out.println("   - Average Case: O(k log n)");
+                        System.out.println("   - Worst Case (Balanced Tree): O(k log n) (The search space is bounded by the balanced height)");
+                    } catch (Exception e) {
+                        System.out.println("Error during proximity search: " + e.getMessage());
+                        e.printStackTrace();
                     }
                 }
                 case 0 -> System.out.println("Returning to Main Menu...");

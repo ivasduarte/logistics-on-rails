@@ -9,7 +9,7 @@
 
 encrypt_data:
     # Validations for the inputs
-    li t0, 1
+    li t0, 0
     blt a1, t0, error
     li t0, 26
     bgt a1, t0, error
