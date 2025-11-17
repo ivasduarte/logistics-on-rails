@@ -1,14 +1,14 @@
 SELECT
-    rl.id        AS line_id,
-    rl.name      AS line_name,
-    e1.name      AS start_endpoint,
-    e2.name      AS final_endpoint,
-    COUNT(*) OVER (PARTITION BY rl.startID) AS total_lines_departing
+    e.endpointID   AS endpoint_id,
+    e.name         AS endpoint_name,
+    COUNT(*)       AS total_lines_departing
 FROM
     Rail_Line rl
-    INNER JOIN Endpoint e1 ON rl.startID = e1.endpointID
-    INNER JOIN Endpoint e2 ON rl.endID   = e2.endpointID
+    INNER JOIN Endpoint e
+        ON rl.startID = e.endpointID
 WHERE
-    rl.startID = 5
+    e.endpointID = 5
+GROUP BY
+    e.endpointID, e.name
 ORDER BY
-    rl.id;
+    e.endpointID;
