@@ -1,3 +1,8 @@
+/**
+ * ProximitySearchController.java
+ * Controller for handling proximity search operations on the KD-Tree, specifically
+ * the Nearest-N (k-NN) search algorithm with optional filters.
+ */
 package spatialQuerying.controller;
 
 import spatialQuerying.railwayMngt.Station;
@@ -12,24 +17,46 @@ public class ProximitySearchController {
     private KDTree2D kdTree;
     private static final double EARTH_RADIUS_KM = 6371.0;
 
+    /**
+     * Constructs a ProximitySearchController associated with a specific KD-Tree.
+     *
+     * @param kdTree The KDTree2D instance containing the station data.
+     */
     public ProximitySearchController(KDTree2D kdTree) {
         this.kdTree = kdTree;
     }
 
+    /**
+     * Helper class to store a {@link Station} along with its calculated distance
+     * from the target point. Used internally by the Priority Queue.
+     */
     private static class StationDistance {
         Station station;
         double distance;
 
+        /**
+         * Creates a new instance of StationDistance.
+         *
+         * @param station The {@link Station} object.
+         * @param distance The distance from the target coordinates in kilometers.
+         */
         StationDistance(Station station, double distance) {
             this.station = station;
             this.distance = distance;
         }
     }
 
-    public Map<String, Object> findNearestStations(double targetLat, double targetLon, int n) {
-        return findNearestStations(targetLat, targetLon, n, null);
-    }
-
+    /**
+     * Finds N nearest stations to a target coordinate with an optional time zone filter.
+     * The search uses a Priority Queue (Max Heap) to efficiently track the N closest stations
+     * and employs branch pruning to minimize tree traversal.
+     *
+     * @param targetLat Target latitude in degrees.
+     * @param targetLon Target longitude in degrees.
+     * @param n Number of nearest neighbors to find (k).
+     * @param timeZoneFilter Optional time zone filter (e.g., "CET", "WET"). If null or empty, no filter is applied.
+     * @return Map containing search results and metadata, including "stations", "distances", and performance metrics.
+     */
     public Map<String, Object> findNearestStations(double targetLat, double targetLon, int n, String timeZoneFilter) {
         long startTime = System.nanoTime();
 
@@ -67,7 +94,18 @@ public class ProximitySearchController {
                 timeZoneFilter, endTime - startTime);
     }
 
-
+    /**
+     * Builds the final response map containing the search results and metadata.
+     *
+     * @param stations The list of nearest stations found.
+     * @param distances The list of corresponding distances.
+     * @param targetLat The target latitude.
+     * @param targetLon The target longitude.
+     * @param n The number of neighbors requested.
+     * @param timeZoneFilter The time zone filter applied (or null).
+     * @param executionTimeNanos The time taken for the search in nanoseconds.
+     * @return A Map containing all results and metadata for display.
+     */
     private Map<String, Object> buildResponse(List<Station> stations, List<Double> distances,
                                               double targetLat, double targetLon, int n,
                                               String timeZoneFilter, long executionTimeNanos) {
@@ -100,6 +138,19 @@ public class ProximitySearchController {
         return response;
     }
 
+    /**
+     * Recursive helper method for nearest neighbor search (k-NN).
+     * Explores the KD-tree efficiently by pruning branches that cannot contain closer stations
+     * than the current k-th nearest neighbor found so far.
+     *
+     * @param node The current node being examined.
+     * @param targetLat Target latitude.
+     * @param targetLon Target longitude.
+     * @param n Number of neighbors requested (k).
+     * @param nearestStations Priority Queue (Max Heap) storing the k closest stations found.
+     * @param filter Predicate used to filter stations (e.g., by time zone).
+     * @param divideByLatitude True if the current node splits based on latitude, false for longitude.
+     */
     private void findNearestNRecursive(KDNode node,
                                        double targetLat,
                                        double targetLon,
@@ -145,6 +196,20 @@ public class ProximitySearchController {
         }
     }
 
+    /**
+     * Determines if the far side of the tree should be explored.
+     * This is the pruning step: if the perpendicular distance from the target to the
+     * dividing line is greater than the current maximum distance in the Priority Queue,
+     * the far side cannot contain any closer points.
+     *
+     * @param targetLat Target latitude.
+     * @param targetLon Target longitude.
+     * @param nodeValue The coordinate value (lat or lon) of the dividing plane.
+     * @param divideByLatitude True if the current split is along latitude, false for longitude.
+     * @param nearestStations Priority Queue of nearest stations found so far.
+     * @param n Number of neighbors requested.
+     * @return True if the far side might contain a closer point, false otherwise.
+     */
     private boolean shouldExploreFarSide(double targetLat, double targetLon,
                                          double nodeValue, boolean divideByLatitude,
                                          PriorityQueue<StationDistance> nearestStations, int n) {
@@ -163,6 +228,16 @@ public class ProximitySearchController {
         return perpendicularDistance < nearestStations.peek().distance;
     }
 
+    /**
+     * Calculates the Haversine distance between two points on Earth.
+     * This formula provides an accurate great-circle distance.
+     *
+     * @param lat1 Latitude of point 1 (degrees).
+     * @param lon1 Longitude of point 1 (degrees).
+     * @param lat2 Latitude of point 2 (degrees).
+     * @param lon2 Longitude of point 2 (degrees).
+     * @return The distance in kilometers.
+     */
     private double haversineDistance(double lat1, double lon1, double lat2, double lon2) {
         double lat1Rad = Math.toRadians(lat1);
         double lon1Rad = Math.toRadians(lon1);
