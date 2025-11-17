@@ -1,0 +1,25 @@
+@startuml
+skinparam monochrome true
+skinparam packageStyle rectangle
+skinparam classAttributeIconSize 0
+
+class Station {
+-stationName: String
+-stationCountry: String
+-stationTimeZoneGroup: String
+}
+
+class Location {
+-coordinateX: double (Latitude)
+-coordinateY: double (Longitude)
+}
+
+class ProximitySearchController {
++findNearestStations(lat, lon, N, filter): Map<String, Object>
+}
+
+Station "1" -- "1" Location : has
+ProximitySearchController "1" ..> Station : queries
+ProximitySearchController "1" ..> Location : uses
+
+@enduml
