@@ -1,0 +1,36 @@
+@startuml
+skinparam monochrome true
+skinparam packageStyle rectangle
+skinparam shadowing false
+
+autonumber
+
+actor "Analyst" as Analyst
+participant ":System" as System
+
+activate Analyst
+
+Analyst -> System : asks to find nearest N stations
+activate System
+System --> Analyst : requests target coordinates (lat, lon)
+deactivate System
+
+Analyst -> System : provides coordinates
+activate System
+System --> Analyst : asks for the number of neighbours (N)
+deactivate System
+
+Analyst -> System : provides the number N
+activate System
+System --> Analyst : asks for Time Zone criteria
+deactivate System
+
+Analyst -> System : provides the Time Zone criteria
+activate System
+
+System --> Analyst : displays proximity search results \n(Nearest Stations, Distances, Temporal Complexity)
+deactivate System
+
+deactivate Analyst
+
+@enduml
