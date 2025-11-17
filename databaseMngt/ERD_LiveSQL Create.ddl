@@ -387,7 +387,7 @@ ALTER TABLE Operator_Wagon
 ALTER TABLE Operator_Wagon
   ADD CONSTRAINT FKOperator_W424175 FOREIGN KEY (Wagonid) REFERENCES Wagon (id);
 
-TER TABLE Operator_Locomotive
+ALTER TABLE Operator_Locomotive
   ADD CONSTRAINT FKOperator_L744142 FOREIGN KEY (OperatorshortName) REFERENCES Operator (shortName);
 
 ALTER TABLE Operator_Locomotive
@@ -441,7 +441,7 @@ ALTER TABLE Terminal_Building
 ALTER TABLE Wagon
   ADD CONSTRAINT FKWagon428152 FOREIGN KEY (freightID) REFERENCES Freight (id);
 
-TER TABLE Freight
+ALTER TABLE Freight
   ADD CONSTRAINT FKFreight349314 FOREIGN KEY (origin) REFERENCES Endpoint (endpointID);
 
 ALTER TABLE Freight
