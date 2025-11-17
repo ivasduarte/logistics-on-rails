@@ -22,7 +22,7 @@ This diagram shows the full sequence of interactions between the classes involve
 
 ![Sequence Diagram - Full](svg/USEI03-FullSequenceDiagram.svg)
 
-The Full Sequence Diagram shows all interactions between the USEI01 system classes, including:
+The Full Sequence Diagram shows all interactions between the USEI03 system classes, including:
 
 #### **Main Classes:**
 
