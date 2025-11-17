@@ -14,6 +14,7 @@
 -- DROP TABLE Locomotive_Diesel CASCADE CONSTRAINTS;
 -- DROP TABLE Locomotive_Electric CASCADE CONSTRAINTS;
 -- DROP TABLE Locomotive_Model CASCADE CONSTRAINTS;
+-- DROP TABLE Locomotive_Trains CASCADE CONSTRAINTS;
 -- DROP TABLE Locomotive_Type CASCADE CONSTRAINTS;
 -- DROP TABLE Operator CASCADE CONSTRAINTS;
 -- DROP TABLE Operator_Locomotive CASCADE CONSTRAINTS;
@@ -56,9 +57,6 @@ CREATE TABLE Endpoint (
 CREATE TABLE Endpoint_Path (
   EndpointendpointID number(10) NOT NULL,
   Pathid number(10) NOT NULL,
-  "start" number(10) NOT NULL,
-  "end" number(10) NOT NULL,
-  time timestamp(7) NOT NULL,
   PRIMARY KEY (EndpointendpointID, Pathid)
 );
 
@@ -67,7 +65,7 @@ CREATE TABLE Freight (
   data date NOT NULL,
   origin number(10) NOT NULL,
   destination number(10) NOT NULL,
-  trainID number(10) NOT NULL,
+  trainID number(10),
   PRIMARY KEY (id)
 );
 
@@ -105,7 +103,6 @@ CREATE TABLE Line_Segment (
   max_weight float(10) NOT NULL,
   length number(10) NOT NULL,
   Line_TypeID number(10) NOT NULL,
-  gauge number(10) NOT NULL,
   PRIMARY KEY (id),
   CONSTRAINT RailLinePositions UNIQUE (Rail_LineId, orderPosition)
 );
@@ -133,7 +130,6 @@ CREATE TABLE Locomotive (
   modelID number(10) NOT NULL,
   entryYear number(10) NOT NULL,
   gauge number(10) NOT NULL,
-  trainID number(10) NOT NULL,
   PRIMARY KEY (id)
 );
 
@@ -167,6 +163,12 @@ CREATE TABLE Locomotive_Model (
   typeID number(10) NOT NULL,
   weight number(10) NOT NULL,
   PRIMARY KEY (id)
+);
+
+CREATE TABLE Locomotive_Trains (
+  Locomotiveid number(10) NOT NULL,
+  Trainsid number(10) NOT NULL,
+  PRIMARY KEY (Locomotiveid, Trainsid)
 );
 
 CREATE TABLE Locomotive_Type (
@@ -204,6 +206,9 @@ CREATE TABLE Owner (
 CREATE TABLE Path (
   id number(10),
   sequenceOrder varchar2(255) NOT NULL,
+  "start" number(10) NOT NULL,
+  "end" number(10) NOT NULL,
+  time timestamp(7) NOT NULL,
   PRIMARY KEY (id)
 );
 
@@ -213,6 +218,7 @@ CREATE TABLE Rail_Line (
   ownerID varchar2(255) NOT NULL,
   startID number(10) NOT NULL,
   endID number(10) NOT NULL,
+  gauge number(10) NOT NULL,
   PRIMARY KEY (id)
 );
 
@@ -260,7 +266,6 @@ CREATE TABLE Terminal_Building (
 
 CREATE TABLE Trains (
   id number(10),
-  routeId number(10) NOT NULL,
   operator varchar2(255) NOT NULL,
   "date" date NOT NULL,
   pathID number(10) NOT NULL,
@@ -278,7 +283,7 @@ CREATE TABLE Wagon (
 );
 
 CREATE TABLE Wagon_Boxcar (
-  id number(1T0),
+  id number(10),
   storedGeneralGoods number(10) NOT NULL,
   typeID number(10) NOT NULL,
   PRIMARY KEY (id)
@@ -346,146 +351,155 @@ CREATE TABLE Warehouse (
   PRIMARY KEY (id)
 );
 
-ALTER TABLE Endpoint 
+ALTER TABLE Endpoint
   ADD CONSTRAINT FKEndpoint308143 FOREIGN KEY (locationID) REFERENCES Location (id);
 
-ALTER TABLE Line_Segment 
+ALTER TABLE Line_Segment
   ADD CONSTRAINT FKLine_Segme478929 FOREIGN KEY (Line_TypeID) REFERENCES Line_Type (id);
 
-ALTER TABLE Locomotive 
+ALTER TABLE Locomotive
   ADD CONSTRAINT FKLocomotive883881 FOREIGN KEY (rollingStockID) REFERENCES Rolling_Stock (id);
 
-ALTER TABLE Wagon 
+ALTER TABLE Wagon
   ADD CONSTRAINT FKWagon514172 FOREIGN KEY (rollingStockID) REFERENCES Rolling_Stock (id);
 
-ALTER TABLE Line_Segment 
+ALTER TABLE Line_Segment
   ADD CONSTRAINT FKLine_Segme711926 FOREIGN KEY (Rail_LineId) REFERENCES Rail_Line (id);
 
-ALTER TABLE Rail_Line 
+ALTER TABLE Rail_Line
   ADD CONSTRAINT FKRail_Line180694 FOREIGN KEY (ownerID) REFERENCES Owner (shortName);
 
-ALTER TABLE Locomotive 
+ALTER TABLE Locomotive
   ADD CONSTRAINT FKLocomotive826659 FOREIGN KEY (modelID) REFERENCES Locomotive_Model (id);
 
-ALTER TABLE Wagon 
+ALTER TABLE Wagon
   ADD CONSTRAINT FKWagon943492 FOREIGN KEY (modelID) REFERENCES Wagon_Model (id);
 
-ALTER TABLE Rail_Line 
+ALTER TABLE Rail_Line
   ADD CONSTRAINT FKRail_Line37767 FOREIGN KEY (startID) REFERENCES Endpoint (endpointID);
 
-ALTER TABLE Rail_Line 
+ALTER TABLE Rail_Line
   ADD CONSTRAINT FKRail_Line801339 FOREIGN KEY (endID) REFERENCES Endpoint (endpointID);
 
-ALTER TABLE Operator_Wagon 
+ALTER TABLE Operator_Wagon
   ADD CONSTRAINT FKOperator_W58759 FOREIGN KEY (OperatorshortName) REFERENCES Operator (shortName);
 
-ALTER TABLE Operator_Wagon 
+ALTER TABLE Operator_Wagon
   ADD CONSTRAINT FKOperator_W424175 FOREIGN KEY (Wagonid) REFERENCES Wagon (id);
 
-ALTER TABLE Operator_Locomotive 
+TER TABLE Operator_Locomotive
   ADD CONSTRAINT FKOperator_L744142 FOREIGN KEY (OperatorshortName) REFERENCES Operator (shortName);
 
-ALTER TABLE Operator_Locomotive 
+ALTER TABLE Operator_Locomotive
   ADD CONSTRAINT FKOperator_L333656 FOREIGN KEY (Locomotiveid) REFERENCES Locomotive (id);
 
-ALTER TABLE Line_Segment 
-  ADD CONSTRAINT FKLine_Segme811972 FOREIGN KEY (gauge) REFERENCES Gauge (gaugeNumber);
-
-ALTER TABLE Gauge_Locomotive 
+ALTER TABLE Gauge_Locomotive
   ADD CONSTRAINT FKGauge_Loco300090 FOREIGN KEY (Gauge) REFERENCES Gauge (gaugeNumber);
 
-ALTER TABLE Gauge_Locomotive 
+ALTER TABLE Gauge_Locomotive
   ADD CONSTRAINT FKGauge_Loco514747 FOREIGN KEY (Locomotiveid) REFERENCES Locomotive (id);
 
-ALTER TABLE Wagon 
+ALTER TABLE Wagon
   ADD CONSTRAINT FKWagon204688 FOREIGN KEY (gauge) REFERENCES Gauge (gaugeNumber);
 
-ALTER TABLE Endpoint 
+ALTER TABLE Endpoint
   ADD CONSTRAINT FKEndpoint209750 FOREIGN KEY (typeID) REFERENCES FreightYard (id);
 
-ALTER TABLE Endpoint 
+ALTER TABLE Endpoint
   ADD CONSTRAINT FKEndpoint464387 FOREIGN KEY (typeID) REFERENCES Station (id);
 
-ALTER TABLE Endpoint 
+ALTER TABLE Endpoint
   ADD CONSTRAINT FKEndpoint658728 FOREIGN KEY (typeID) REFERENCES Terminal (id);
 
-ALTER TABLE Building 
+ALTER TABLE Building
   ADD CONSTRAINT FKBuilding547203 FOREIGN KEY (typeID) REFERENCES Warehouse (id);
 
-ALTER TABLE Building 
+ALTER TABLE Building
   ADD CONSTRAINT FKBuilding301549 FOREIGN KEY (typeID) REFERENCES Refrigerated_Area (id);
 
-ALTER TABLE Building 
+ALTER TABLE Building
   ADD CONSTRAINT FKBuilding264464 FOREIGN KEY (typeID) REFERENCES Grain_Silo (id);
 
-ALTER TABLE Station_Building 
+ALTER TABLE Station_Building
   ADD CONSTRAINT FKStation_Bu255491 FOREIGN KEY (Stationid) REFERENCES Station (id);
 
-ALTER TABLE Station_Building 
+ALTER TABLE Station_Building
   ADD CONSTRAINT FKStation_Bu571280 FOREIGN KEY (BuildingbuildingID) REFERENCES Building (buildingID);
 
-ALTER TABLE FreightYard_Building 
+ALTER TABLE FreightYard_Building
   ADD CONSTRAINT FKFreightYar238471 FOREIGN KEY (FreightYardid) REFERENCES FreightYard (id);
 
-ALTER TABLE FreightYard_Building 
+ALTER TABLE FreightYard_Building
   ADD CONSTRAINT FKFreightYar818103 FOREIGN KEY (BuildingbuildingID) REFERENCES Building (buildingID);
 
-ALTER TABLE Terminal_Building 
+ALTER TABLE Terminal_Building
   ADD CONSTRAINT FKTerminal_B584545 FOREIGN KEY (Terminalid) REFERENCES Terminal (id);
 
-ALTER TABLE Terminal_Building 
+ALTER TABLE Terminal_Building
   ADD CONSTRAINT FKTerminal_B837636 FOREIGN KEY (BuildingbuildingID) REFERENCES Building (buildingID);
 
-ALTER TABLE Wagon 
+ALTER TABLE Wagon
   ADD CONSTRAINT FKWagon428152 FOREIGN KEY (freightID) REFERENCES Freight (id);
 
-ALTER TABLE Freight 
+TER TABLE Freight
   ADD CONSTRAINT FKFreight349314 FOREIGN KEY (origin) REFERENCES Endpoint (endpointID);
 
-ALTER TABLE Freight 
+ALTER TABLE Freight
   ADD CONSTRAINT FKFreight878394 FOREIGN KEY (destination) REFERENCES Endpoint (endpointID);
 
-ALTER TABLE Locomotive 
-  ADD CONSTRAINT FKLocomotive679613 FOREIGN KEY (trainID) REFERENCES Trains (id);
-
-ALTER TABLE Freight 
+ALTER TABLE Freight
   ADD CONSTRAINT FKFreight78608 FOREIGN KEY (trainID) REFERENCES Trains (id);
 
-ALTER TABLE Trains 
+ALTER TABLE Trains
   ADD CONSTRAINT FKTrains246491 FOREIGN KEY (pathID) REFERENCES Path (id);
 
-ALTER TABLE Endpoint_Path 
-  ADD CONSTRAINT FKEndpoint_P396597 FOREIGN KEY (EndpointendpointID) REFERENCES Endpoint (endpointID);
-
-ALTER TABLE Endpoint_Path 
-  ADD CONSTRAINT FKEndpoint_P77142 FOREIGN KEY (Pathid) REFERENCES Path (id);
-
-ALTER TABLE Siding 
+ALTER TABLE Siding
   ADD CONSTRAINT FKSiding202536 FOREIGN KEY (segmentID) REFERENCES Line_Segment (id);
 
-ALTER TABLE Locomotive_Model 
+ALTER TABLE Locomotive_Model
   ADD CONSTRAINT FKLocomotive170194 FOREIGN KEY (typeID) REFERENCES Locomotive_Type (id);
 
-ALTER TABLE Locomotive_Diesel 
+ALTER TABLE Locomotive_Diesel
   ADD CONSTRAINT FKLocomotive941955 FOREIGN KEY (typeID) REFERENCES Locomotive_Type (id);
 
-ALTER TABLE Locomotive_Electric 
+ALTER TABLE Locomotive_Electric
   ADD CONSTRAINT FKLocomotive668716 FOREIGN KEY (typeID) REFERENCES Locomotive_Type (id);
 
-ALTER TABLE Wagon_Model 
+ALTER TABLE Wagon_Model
   ADD CONSTRAINT FKWagon_Mode208621 FOREIGN KEY (typeID) REFERENCES Wagon_Type (id);
 
-ALTER TABLE Wagon_Flatcar 
+ALTER TABLE Wagon_Flatcar
   ADD CONSTRAINT FKWagon_Flat69490 FOREIGN KEY (typeID) REFERENCES Wagon_Type (id);
 
-ALTER TABLE Wagon_Tank_Car 
+ALTER TABLE Wagon_Tank_Car
   ADD CONSTRAINT FKWagon_Tank811591 FOREIGN KEY (typeID) REFERENCES Wagon_Type (id);
 
-ALTER TABLE Wagon_Hopper_Car 
+ALTER TABLE Wagon_Hopper_Car
   ADD CONSTRAINT FKWagon_Hopp583826 FOREIGN KEY (typeID) REFERENCES Wagon_Type (id);
 
-ALTER TABLE Wagon_Boxcar 
+ALTER TABLE Wagon_Boxcar
   ADD CONSTRAINT FKWagon_Boxc480480 FOREIGN KEY (typeID) REFERENCES Wagon_Type (id);
 
-ALTER TABLE Wagon_Refrigerated_Car 
+ALTER TABLE Wagon_Refrigerated_Car
   ADD CONSTRAINT FKWagon_Refr405235 FOREIGN KEY (typeID) REFERENCES Wagon_Type (id);
+
+ALTER TABLE Rail_Line
+  ADD CONSTRAINT FKRail_Line384735 FOREIGN KEY (gauge) REFERENCES Gauge (gaugeNumber);
+
+ALTER TABLE Endpoint_Path
+  ADD CONSTRAINT FKEndpoint_P396597 FOREIGN KEY (EndpointendpointID) REFERENCES Endpoint (endpointID);
+
+ALTER TABLE Endpoint_Path
+  ADD CONSTRAINT FKEndpoint_P77142 FOREIGN KEY (Pathid) REFERENCES Path (id);
+
+ALTER TABLE Locomotive_Trains
+  ADD CONSTRAINT FKLocomotive331926 FOREIGN KEY (Locomotiveid) REFERENCES Locomotive (id);
+
+ALTER TABLE Locomotive_Trains
+  ADD CONSTRAINT FKLocomotive511663 FOREIGN KEY (Trainsid) REFERENCES Trains (id);
+
+ALTER TABLE Path
+  ADD CONSTRAINT FKPath229404 FOREIGN KEY ("start") REFERENCES Endpoint (endpointID);
+
+ALTER TABLE Path
+  ADD CONSTRAINT FKPath427672 FOREIGN KEY ("end") REFERENCES Endpoint (endpointID);
