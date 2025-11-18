@@ -1,0 +1,38 @@
+@startuml
+skinparam monochrome true
+skinparam packageStyle rectangle
+skinparam classAttributeIconSize 0
+
+hide circle
+hide methods
+
+class GeographicalSearch {
+    LAT_MIN
+    LAT_MAX
+    LON_MIN
+    LON_MAX
+}
+
+class KDTree2D {
+
+}
+
+class KDNode {
+
+}
+
+
+class Station {
+    name
+    stationCountry
+    isCity
+    isMainStation
+}
+
+' Relationships based on the Java code and Logical Structure
+GeographicalSearch ..> KDTree2D : uses
+KDTree2D "1" -- "1" KDNode : root
+KDNode "1" -- "0..2" KDNode : left/right
+KDNode "1" -- "*" Station : holds
+
+@enduml
