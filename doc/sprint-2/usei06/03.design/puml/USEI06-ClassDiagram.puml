@@ -1,0 +1,124 @@
+@startuml
+
+skinparam monochrome true
+skinparam packageStyle rectangle
+skinparam classAttributeIconSize 0
+
+hide circle
+
+package "spatialQuerying" {
+    package "controller" {
+        class StationController {
+        -stationList: List<Station>
+        +collectStationsData(filePath): List<Station>
+        +parseCsvLineToMap(line, parameters): Map<String, String>
+        +parseCsvValues(line): List<String>
+        +validateAndCreateStation(line): Station
+        +parseBoolean(value): boolean
+        }
+    }
+
+    package "trees" {
+        package "bst" {
+            class LatitudeTree {
+            -root: LatitudeNode
+            +insert(node, station): LatitudeNode
+            +findNode(node, lat): LatitudeNode
+            +findByLatitude(lat): List<Station>
+            +findInRange(node, minLat, maxLat, results): void
+            +balance(node): LatitudeNode
+            +rotateLeft(node): LatitudeNode
+            +rotateRight(node): LatitudeNode
+            +size(node): int
+            +inOrder(node, results): void
+            +totalStations(node): int
+            }
+
+            class LongitudeTree {
+            -root: LongitudeNode
+            +insert(node, station): LongitudeNode
+            +findNode(node, lon): LongitudeNode
+            +findByLongitude(lon): List<Station>
+            +findInRange(node, minLon, maxLon, results): void
+            +balance(node): LongitudeNode
+            +rotateLeft(node): LongitudeNode
+            +rotateRight(node): LongitudeNode
+            +size(node): int
+            +inOrder(node, results): void
+            +totalStations(node): int
+            }
+
+            class TimeZoneTree {
+            -root: TimeZoneNode
+            +insert(node, station): TimeZoneNode
+            +findNode(node, timeZoneGroup): TimeZoneNode
+            +findByTimeZoneGroupAndCountry(timeZoneGroup): List<Station>
+            +findInRange(node, minTimeZoneGroup, maxTimeZoneGroup, results): void
+            +balance(node): TimeZoneNode
+            +rotateLeft(node): TimeZoneNode
+            +rotateRight(node): TimeZoneNode
+            +size(node): int
+            +inOrder(node, results): void
+            +totalStations(node): int
+            +getAllTimeZoneGroups(node, timeZoneGroups): void
+            +getCountriesInTimeZoneGroup(timeZoneGroup): Set<String>
+            }
+        }
+
+        package "nodes" {
+            class LatitudeNode {
+            -lat: Double
+            -stationsList: List<Station>
+            -height: Int
+            -left: LatitudeNode
+            -right: LatitudeNode
+            }
+
+            class LongitudeNode {
+            -lon: Double
+            -stationsList: List<Station>
+            -height: Int
+            -left: LongitudeNode
+            -right: LongitudeNode
+            }
+
+            class TimeZoneNode {
+            -timeZoneGroup: String
+            -stationListByCountry: Map<String, List<Station>>
+            -height: Int
+            -left: TimeZoneNode
+            -right: TimeZoneNode
+            }
+        }
+
+        package "railwayMngt" {
+            class Station {
+            -stationName: String
+            -stationCountry: String
+            -stationTimeZone: String
+            -stationTimeZoneGroup: String
+            -stationLatitude: Double
+            -stationLongitude: Double
+            -isCity: Boolean
+            -isMainStation: Boolean
+            -isAirport: Boolean
+            }
+        }
+    }
+}
+
+StationController .> LatitudeTree: queries
+StationController .> LongitudeTree: queries
+StationController .> TimeZoneTree: queries
+
+LatitudeTree "1" -- "*" LatitudeNode: has
+LongitudeTree "1" -- "*" LongitudeNode: has
+TimeZoneTree "1" -- "*" TimeZoneNode: has
+
+StationController ..> Station: creates
+
+Station -- LatitudeNode: is
+Station -- LongitudeNode: is
+Station -- TimeZoneNode: is
+
+@enduml
