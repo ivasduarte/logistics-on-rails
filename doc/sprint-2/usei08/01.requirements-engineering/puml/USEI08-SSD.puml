@@ -1,0 +1,27 @@
+@startuml
+skinparam monochrome true
+skinparam packageStyle rectangle
+skinparam shadowing false
+
+autonumber
+
+actor "Planner" as Planner
+participant ":System" as System
+
+activate Planner
+
+Planner -> System : asks to search stations by geographical area
+    activate System
+    == Input Operation ==
+    System --> Planner : requests geographical range and optional filters
+    deactivate System
+
+Planner -> System : inputs ranges (latMin, latMax, lonMin, lonMax) \nand filters (isCity, isMainStation, country)
+    activate System
+    == Output Operation ==
+    System --> Planner : outputs the list of relevant stations
+    deactivate System
+
+deactivate Planner
+
+@enduml
