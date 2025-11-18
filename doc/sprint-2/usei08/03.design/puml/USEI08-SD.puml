@@ -1,0 +1,57 @@
+@startuml USEI08-SD
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam sequenceArrowThickness 2
+skinparam roundcorner 20
+
+actor "Planner" as P
+activate P
+
+participant "GeographicalSearch" as GS
+participant "KDTree2D" as Tree
+participant "KDNode" as Node
+
+== Search Initiation ==
+
+P -> GS : searchByCoordinates(lat, lon, isCity, isMain, country)
+activate GS
+
+GS -> GS : isValidCoordinates(lat, lon)
+
+== KD-Tree Traversal ==
+
+GS -> Tree : getRoot()
+activate Tree
+Tree --> GS : rootNode
+deactivate Tree
+
+GS -> GS : searchNode(rootNode, targetPoint, divideByLatitude)
+
+    GS -> Node : getCoordinates()
+    activate Node
+    Node --> GS : coordinates
+    deactivate Node
+
+    opt Target Found
+        GS --> GS : Returns KDNode found
+    end
+
+deactivate GS
+
+== Filtering Results ==
+
+opt Node Found
+    GS -> Node : getStationList()
+    activate Node
+    Node --> GS : stations
+    deactivate Node
+
+    GS -> GS : applyFilters(stations, isCity, isMain, country)
+end
+
+== Return Data ==
+
+GS --> P : Returns List<Station>
+deactivate GS
+
+@enduml

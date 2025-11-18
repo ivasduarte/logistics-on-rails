@@ -1,0 +1,52 @@
+@startuml
+
+class GeographicalSearch {
+    - {static} LAT_MIN: int = -90
+    - {static} LAT_MAX: int = 90
+    - {static} LON_MIN: int = -180
+    - {static} LON_MAX: int = 180
+    - kdTree: KDTree2D
+
+    + GeographicalSearch(kdTree: KDTree2D)
+    + searchByCoordinates(latitude: double, longitude: double): List<Station>
+    + searchByCoordinates(latitude: double, longitude: double, isCity: Boolean, isMainStation: Boolean, country: String): List<Station>
+
+    - applyFilters(stations: List<Station>, isCity: Boolean, isMainStation: Boolean, country: String): List<Station>
+    - isValidCoordinates(latitude: double, longitude: double): boolean
+    - searchNode(node: KDNode, target: Point2D, divideByLatitude: boolean): KDNode
+}
+
+class KDTree2D {
+    + getRoot(): KDNode
+}
+
+class KDNode {
+    - coordinates: Point2D
+    - stationList: List<Station>
+    - left: KDNode
+    - right: KDNode
+    + getCoordinates(): Point2D
+    + getStationList(): List<Station>
+    + getLeft(): KDNode
+    + getRight(): KDNode
+}
+
+class Station {
+    - name: String
+    - isCity: boolean
+    - isMainStation: boolean
+    - stationCountry: String
+    + isCity(): boolean
+    + isMainStation(): boolean
+    + getStationCountry(): String
+}
+
+' Relationships based on Java Code
+GeographicalSearch --> KDTree2D : uses
+GeographicalSearch ..> KDNode : processes
+GeographicalSearch ..> Station : filters/returns
+KDTree2D "1" -- "1" KDNode : root
+KDNode "1" -- "0..2" KDNode : children
+KDNode "1" -- "*" Station : holds
+
+@enduml
