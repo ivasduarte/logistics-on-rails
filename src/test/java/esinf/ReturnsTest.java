@@ -11,443 +11,431 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Unit tests for Returns class.
- * Tests the functionality of return item management, including getters, setters,
- * business logic methods, and object comparison methods.
+ * Each test creates complete expected results and compares them with actual results in single assertions.
  */
 public class ReturnsTest {
 
     @Test
-    void testConstructor() {
-        // Test constructor with all parameters
-        Returns returns = new Returns(
-            "RET001", 
-            "SKU123", 
-            5, 
-            ReturnReasons.REMORSE,
-            "2024-01-15T10:30:00", 
-            "2024-12-31"
-        );
+    void testConstructorAndGetters() {
+        // Input
+        String returnID = "RET001";
+        String sku = "SKU123";
+        int qty = 5;
+        ReturnReasons reason = ReturnReasons.REMORSE;
+        String timestamp = "2024-01-15T10:30:00";
+        String expiryDate = "2024-12-31";
 
-        // Verify all fields are set correctly
-        assertEquals("RET001", returns.getReturnID());
-        assertEquals("SKU123", returns.getSku());
-        assertEquals(5, returns.getQty());
-        assertEquals(ReturnReasons.REMORSE, returns.getReason());
-        assertEquals("2024-01-15T10:30:00", returns.getTimestamp());
-        assertEquals("2024-12-31", returns.getExpiryDate());
-        // No public getter for discarded flag; cannot assert its value directly
+        // Expected
+        Object[] expected = new Object[] {
+                returnID,
+                sku,
+                qty,
+                reason,
+                timestamp,
+                expiryDate
+        };
+
+        // Execute
+        Returns returns = new Returns(returnID, sku, qty, reason, timestamp, expiryDate);
+
+        // Result
+        Object[] result = new Object[] {
+                returns.getReturnID(),
+                returns.getSku(),
+                returns.getQty(),
+                returns.getReason(),
+                returns.getTimestamp(),
+                returns.getExpiryDate()
+        };
+
+        // Assert - single comparison
+        assertArrayEquals(expected, result);
     }
 
     @Test
     void testConstructorWithNullValues() {
-        // Test constructor with null values
-        Returns returns = new Returns(
-            null, 
-            null, 
-            0, 
-            null, 
-            null, 
-            null
-        );
+        // Expected
+        Object[] expected = new Object[] {
+                null,  // returnID
+                null,  // sku
+                0,     // qty
+                null,  // reason
+                null,  // timestamp
+                null   // expiryDate
+        };
 
-        // Verify null values are handled
-        assertNull(returns.getReturnID());
-        assertNull(returns.getSku());
-        assertEquals(0, returns.getQty());
-        assertNull(returns.getReason());
-        assertNull(returns.getTimestamp());
-        assertNull(returns.getExpiryDate());
+        // Execute
+        Returns returns = new Returns(null, null, 0, null, null, null);
+
+        // Result
+        Object[] result = new Object[] {
+                returns.getReturnID(),
+                returns.getSku(),
+                returns.getQty(),
+                returns.getReason(),
+                returns.getTimestamp(),
+                returns.getExpiryDate()
+        };
+
+        // Assert - single comparison
+        assertArrayEquals(expected, result);
     }
 
     @Test
     void testConstructorWithEmptyStrings() {
-        // Test constructor with empty strings
-        Returns returns = new Returns(
-            "", 
-            "", 
-            0, 
-            ReturnReasons.REMORSE, 
-            "", 
-            ""
-        );
+        // Expected
+        Object[] expected = new Object[] {
+                "",                    // returnID
+                "",                    // sku
+                0,                     // qty
+                ReturnReasons.REMORSE, // reason
+                "",                    // timestamp
+                ""                     // expiryDate
+        };
 
-        // Verify empty strings are handled
-        assertEquals("", returns.getReturnID());
-        assertEquals("", returns.getSku());
-        assertEquals("", returns.getTimestamp());
-        assertEquals("", returns.getExpiryDate());
-    }
+        // Execute
+        Returns returns = new Returns("", "", 0, ReturnReasons.REMORSE, "", "");
 
-    @Test
-    void testGetReturnID() {
-        Returns returns = new Returns("RET001", "SKU123", 5, ReturnReasons.REMORSE, "2024-01-15T10:30:00", "2024-12-31");
-        assertEquals("RET001", returns.getReturnID());
+        // Result
+        Object[] result = new Object[] {
+                returns.getReturnID(),
+                returns.getSku(),
+                returns.getQty(),
+                returns.getReason(),
+                returns.getTimestamp(),
+                returns.getExpiryDate()
+        };
+
+        // Assert - single comparison
+        assertArrayEquals(expected, result);
     }
 
     @Test
     void testSetReturnID() {
         Returns returns = new Returns("RET001", "SKU123", 5, ReturnReasons.REMORSE, "2024-01-15T10:30:00", "2024-12-31");
-        
-        // Test setting new return ID
-        returns.setReturnID("RET002");
-        assertEquals("RET002", returns.getReturnID());
-        
-        // Test setting null return ID
-        returns.setReturnID(null);
-        assertNull(returns.getReturnID());
-        
-        // Test setting empty return ID
-        returns.setReturnID("");
-        assertEquals("", returns.getReturnID());
-    }
 
-    @Test
-    void testGetSku() {
-        Returns returns = new Returns("RET001", "SKU123", 5, ReturnReasons.REMORSE, "2024-01-15T10:30:00", "2024-12-31");
-        assertEquals("SKU123", returns.getSku());
+        // Expected after multiple sets
+        Object[] expected = new Object[] {
+                "RET002",
+                null,
+                ""
+        };
+
+        // Execute
+        returns.setReturnID("RET002");
+        String result1 = returns.getReturnID();
+
+        returns.setReturnID(null);
+        String result2 = returns.getReturnID();
+
+        returns.setReturnID("");
+        String result3 = returns.getReturnID();
+
+        Object[] result = new Object[] {
+                result1,
+                result2,
+                result3
+        };
+
+        // Assert - single comparison
+        assertArrayEquals(expected, result);
     }
 
     @Test
     void testSetSku() {
         Returns returns = new Returns("RET001", "SKU123", 5, ReturnReasons.REMORSE, "2024-01-15T10:30:00", "2024-12-31");
-        
-        // Test setting new SKU
-        returns.setSku("SKU456");
-        assertEquals("SKU456", returns.getSku());
-        
-        // Test setting null SKU
-        returns.setSku(null);
-        assertNull(returns.getSku());
-        
-        // Test setting empty SKU
-        returns.setSku("");
-        assertEquals("", returns.getSku());
-    }
 
-    @Test
-    void testGetQty() {
-        Returns returns = new Returns("RET001", "SKU123", 5, ReturnReasons.REMORSE, "2024-01-15T10:30:00", "2024-12-31");
-        assertEquals(5, returns.getQty());
+        // Expected after multiple sets
+        Object[] expected = new Object[] {
+                "SKU456",
+                null,
+                ""
+        };
+
+        // Execute
+        returns.setSku("SKU456");
+        String result1 = returns.getSku();
+
+        returns.setSku(null);
+        String result2 = returns.getSku();
+
+        returns.setSku("");
+        String result3 = returns.getSku();
+
+        Object[] result = new Object[] {
+                result1,
+                result2,
+                result3
+        };
+
+        // Assert - single comparison
+        assertArrayEquals(expected, result);
     }
 
     @Test
     void testSetQty() {
         Returns returns = new Returns("RET001", "SKU123", 5, ReturnReasons.REMORSE, "2024-01-15T10:30:00", "2024-12-31");
-        
-        // Test setting new quantity
-        returns.setQty(10);
-        assertEquals(10, returns.getQty());
-        
-        // Test setting zero quantity
-        returns.setQty(0);
-        assertEquals(0, returns.getQty());
-        
-        // Test setting negative quantity
-        returns.setQty(-5);
-        assertEquals(-5, returns.getQty());
-        
-        // Test setting maximum integer value
-        returns.setQty(Integer.MAX_VALUE);
-        assertEquals(Integer.MAX_VALUE, returns.getQty());
-        
-        // Test setting minimum integer value
-        returns.setQty(Integer.MIN_VALUE);
-        assertEquals(Integer.MIN_VALUE, returns.getQty());
-    }
 
-    @Test
-    void testGetReason() {
-        Returns returns = new Returns("RET001", "SKU123", 5, ReturnReasons.REMORSE, "2024-01-15T10:30:00", "2024-12-31");
-        assertEquals(ReturnReasons.REMORSE, returns.getReason());
+        // Expected after multiple sets
+        Object[] expected = new Object[] {
+                10,
+                0,
+                -5,
+                Integer.MAX_VALUE,
+                Integer.MIN_VALUE
+        };
+
+        // Execute
+        returns.setQty(10);
+        int result1 = returns.getQty();
+
+        returns.setQty(0);
+        int result2 = returns.getQty();
+
+        returns.setQty(-5);
+        int result3 = returns.getQty();
+
+        returns.setQty(Integer.MAX_VALUE);
+        int result4 = returns.getQty();
+
+        returns.setQty(Integer.MIN_VALUE);
+        int result5 = returns.getQty();
+
+        Object[] result = new Object[] {
+                result1,
+                result2,
+                result3,
+                result4,
+                result5
+        };
+
+        // Assert - single comparison
+        assertArrayEquals(expected, result);
     }
 
     @Test
     void testSetReason() {
         Returns returns = new Returns("RET001", "SKU123", 5, ReturnReasons.REMORSE, "2024-01-15T10:30:00", "2024-12-31");
-        
-        // Test setting different reasons
-        returns.setReason(ReturnReasons.DAMAGED);
-        assertEquals(ReturnReasons.DAMAGED, returns.getReason());
-        
-        returns.setReason(ReturnReasons.EXPIRED);
-        assertEquals(ReturnReasons.EXPIRED, returns.getReason());
-        
-        returns.setReason(ReturnReasons.CYCLE_COUNT);
-        assertEquals(ReturnReasons.CYCLE_COUNT, returns.getReason());
-        
-        // Test setting null reason
-        returns.setReason(null);
-        assertNull(returns.getReason());
-    }
 
-    @Test
-    void testGetTimestamp() {
-        Returns returns = new Returns("RET001", "SKU123", 5, ReturnReasons.REMORSE, "2024-01-15T10:30:00", "2024-12-31");
-        assertEquals("2024-01-15T10:30:00", returns.getTimestamp());
+        // Expected after multiple sets
+        Object[] expected = new Object[] {
+                ReturnReasons.DAMAGED,
+                ReturnReasons.EXPIRED,
+                ReturnReasons.CYCLE_COUNT,
+                null
+        };
+
+        // Execute
+        returns.setReason(ReturnReasons.DAMAGED);
+        ReturnReasons result1 = returns.getReason();
+
+        returns.setReason(ReturnReasons.EXPIRED);
+        ReturnReasons result2 = returns.getReason();
+
+        returns.setReason(ReturnReasons.CYCLE_COUNT);
+        ReturnReasons result3 = returns.getReason();
+
+        returns.setReason(null);
+        ReturnReasons result4 = returns.getReason();
+
+        Object[] result = new Object[] {
+                result1,
+                result2,
+                result3,
+                result4
+        };
+
+        // Assert - single comparison
+        assertArrayEquals(expected, result);
     }
 
     @Test
     void testSetTimestamp() {
         Returns returns = new Returns("RET001", "SKU123", 5, ReturnReasons.REMORSE, "2024-01-15T10:30:00", "2024-12-31");
-        
-        // Test setting new timestamp
-        returns.setTimestamp("2024-01-16T11:00:00");
-        assertEquals("2024-01-16T11:00:00", returns.getTimestamp());
-        
-        // Test setting null timestamp
-        returns.setTimestamp(null);
-        assertNull(returns.getTimestamp());
-        
-        // Test setting empty timestamp
-        returns.setTimestamp("");
-        assertEquals("", returns.getTimestamp());
-    }
 
-    @Test
-    void testGetExpiryDate() {
-        Returns returns = new Returns("RET001", "SKU123", 5, ReturnReasons.REMORSE, "2024-01-15T10:30:00", "2024-12-31");
-        assertEquals("2024-12-31", returns.getExpiryDate());
+        // Expected after multiple sets
+        Object[] expected = new Object[] {
+                "2024-01-16T11:00:00",
+                null,
+                ""
+        };
+
+        // Execute
+        returns.setTimestamp("2024-01-16T11:00:00");
+        String result1 = returns.getTimestamp();
+
+        returns.setTimestamp(null);
+        String result2 = returns.getTimestamp();
+
+        returns.setTimestamp("");
+        String result3 = returns.getTimestamp();
+
+        Object[] result = new Object[] {
+                result1,
+                result2,
+                result3
+        };
+
+        // Assert - single comparison
+        assertArrayEquals(expected, result);
     }
 
     @Test
     void testSetExpiryDate() {
         Returns returns = new Returns("RET001", "SKU123", 5, ReturnReasons.REMORSE, "2024-01-15T10:30:00", "2024-12-31");
-        
-        // Test setting new expiry date
+
+        // Expected after multiple sets
+        Object[] expected = new Object[] {
+                "2025-01-01",
+                null,
+                ""
+        };
+
+        // Execute
         returns.setExpiryDate("2025-01-01");
-        assertEquals("2025-01-01", returns.getExpiryDate());
-        
-        // Test setting null expiry date
+        String result1 = returns.getExpiryDate();
+
         returns.setExpiryDate(null);
-        assertNull(returns.getExpiryDate());
-        
-        // Test setting empty expiry date
+        String result2 = returns.getExpiryDate();
+
         returns.setExpiryDate("");
-        assertEquals("", returns.getExpiryDate());
+        String result3 = returns.getExpiryDate();
+
+        Object[] result = new Object[] {
+                result1,
+                result2,
+                result3
+        };
+
+        // Assert - single comparison
+        assertArrayEquals(expected, result);
     }
 
     @Test
     void testSetDiscarded() {
         Returns returns = new Returns("RET001", "SKU123", 5, ReturnReasons.REMORSE, "2024-01-15T10:30:00", "2024-12-31");
-        
-        // Test that setting a discarded flag does not throw
-        assertDoesNotThrow(() -> returns.setDiscarded(true));
-        assertDoesNotThrow(() -> returns.setDiscarded(false));
+
+        // Test that setting discarded flag does not throw
+        assertDoesNotThrow(() -> {
+            returns.setDiscarded(true);
+            returns.setDiscarded(false);
+        });
     }
 
     @Test
     void testIsExpiredWithPastDate() {
-        // Test with expired date (past date)
         String expiredDate = LocalDate.now().minusDays(10).format(DateTimeFormatter.ISO_LOCAL_DATE);
         Returns returns = new Returns("RET001", "SKU123", 5, ReturnReasons.REMORSE, "2024-01-15T10:30:00", expiredDate);
-        
-        assertTrue(returns.isExpired());
+
+        boolean expected = true;
+        boolean result = returns.isExpired();
+
+        assertEquals(expected, result);
     }
 
     @Test
     void testIsExpiredWithFutureDate() {
-        // Test with future date (not expired)
         String futureDate = LocalDate.now().plusDays(30).format(DateTimeFormatter.ISO_LOCAL_DATE);
         Returns returns = new Returns("RET001", "SKU123", 5, ReturnReasons.REMORSE, "2024-01-15T10:30:00", futureDate);
-        
-        assertFalse(returns.isExpired());
+
+        boolean expected = false;
+        boolean result = returns.isExpired();
+
+        assertEquals(expected, result);
     }
 
     @Test
     void testIsExpiredWithTodayDate() {
-        // Test with today's date (not expired)
         String todayDate = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE);
         Returns returns = new Returns("RET001", "SKU123", 5, ReturnReasons.REMORSE, "2024-01-15T10:30:00", todayDate);
-        
-        assertFalse(returns.isExpired());
+
+        boolean expected = false;
+        boolean result = returns.isExpired();
+
+        assertEquals(expected, result);
     }
 
     @Test
     void testIsExpiredWithNullDate() {
-        // Test with null expiry date
         Returns returns = new Returns("RET001", "SKU123", 5, ReturnReasons.REMORSE, "2024-01-15T10:30:00", null);
-        
-        // Should throw exception when trying to parse null date
+
         assertThrows(NullPointerException.class, () -> returns.isExpired());
     }
 
     @Test
     void testIsExpiredWithEmptyDate() {
-        // Test with empty expiry date
         Returns returns = new Returns("RET001", "SKU123", 5, ReturnReasons.REMORSE, "2024-01-15T10:30:00", "");
-        
-        // Should throw exception when trying to parse empty date
+
         assertThrows(Exception.class, () -> returns.isExpired());
     }
 
     @Test
     void testIsExpiredWithInvalidDate() {
-        // Test with invalid date format
         Returns returns = new Returns("RET001", "SKU123", 5, ReturnReasons.REMORSE, "2024-01-15T10:30:00", "invalid-date");
-        
-        // Should throw exception when trying to parse invalid date
+
         assertThrows(Exception.class, () -> returns.isExpired());
     }
 
     @Test
-    void testIsDamagedWithDamagedReason() {
-        // Test with DAMAGED reason
-        Returns returns = new Returns("RET001", "SKU123", 5, ReturnReasons.DAMAGED, "2024-01-15T10:30:00", "2024-12-31");
-        
-        assertTrue(returns.isDamaged());
-    }
-
-    @Test
-    void testIsDamagedWithOtherReasons() {
-        // Test with other reasons (should return false)
-        Returns remorseReturn = new Returns("RET001", "SKU123", 5, ReturnReasons.REMORSE, "2024-01-15T10:30:00", "2024-12-31");
-        assertFalse(remorseReturn.isDamaged());
-        
-        Returns expiredReturn = new Returns("RET002", "SKU456", 3, ReturnReasons.EXPIRED, "2024-01-16T11:00:00", "2024-01-10");
-        assertFalse(expiredReturn.isDamaged());
-        
-        Returns cycleCountReturn = new Returns("RET003", "SKU789", 2, ReturnReasons.CYCLE_COUNT, "2024-01-17T12:00:00", "2024-12-31");
-        assertFalse(cycleCountReturn.isDamaged());
-    }
-
-    @Test
-    void testIsCustomerRemorseWithRemorseReason() {
-        // Test with REMORSE reason
-        Returns returns = new Returns("RET001", "SKU123", 5, ReturnReasons.REMORSE, "2024-01-15T10:30:00", "2024-12-31");
-        
-        assertTrue(returns.isCustomerRemorse());
-    }
-
-    @Test
-    void testIsCustomerRemorseWithOtherReasons() {
-        // Test with other reasons (should return false)
-        Returns damagedReturn = new Returns("RET001", "SKU123", 5, ReturnReasons.DAMAGED, "2024-01-15T10:30:00", "2024-12-31");
-        assertFalse(damagedReturn.isCustomerRemorse());
-        
-        Returns expiredReturn = new Returns("RET002", "SKU456", 3, ReturnReasons.EXPIRED, "2024-01-16T11:00:00", "2024-01-10");
-        assertFalse(expiredReturn.isCustomerRemorse());
-        
-        Returns cycleCountReturn = new Returns("RET003", "SKU789", 2, ReturnReasons.CYCLE_COUNT, "2024-01-17T12:00:00", "2024-12-31");
-        assertFalse(cycleCountReturn.isCustomerRemorse());
-    }
-
-    @Test
-    void testIsCycleCountWithCycleCountReason() {
-        // Test with CYCLE_COUNT reason
-        Returns returns = new Returns("RET001", "SKU123", 5, ReturnReasons.CYCLE_COUNT, "2024-01-15T10:30:00", "2024-12-31");
-        
-        assertTrue(returns.isCycleCount());
-    }
-
-    @Test
-    void testIsCycleCountWithOtherReasons() {
-        // Test with other reasons (should return false)
-        Returns remorseReturn = new Returns("RET001", "SKU123", 5, ReturnReasons.REMORSE, "2024-01-15T10:30:00", "2024-12-31");
-        assertFalse(remorseReturn.isCycleCount());
-        
-        Returns damagedReturn = new Returns("RET002", "SKU456", 3, ReturnReasons.DAMAGED, "2024-01-16T11:00:00", "2024-12-31");
-        assertFalse(damagedReturn.isCycleCount());
-        
-        Returns expiredReturn = new Returns("RET003", "SKU789", 2, ReturnReasons.EXPIRED, "2024-01-17T12:00:00", "2024-01-10");
-        assertFalse(expiredReturn.isCycleCount());
-    }
-
-    @Test
-    void testEqualsWithSameObject() {
-        Returns returns = new Returns("RET001", "SKU123", 5, ReturnReasons.REMORSE, "2024-01-15T10:30:00", "2024-12-31");
-        
-        // Test with same object reference
-        assertTrue(returns.equals(returns));
-    }
-
-    @Test
-    void testEqualsWithSameReturnID() {
+    void testEqualsAndHashCode() {
         Returns returns1 = new Returns("RET001", "SKU123", 5, ReturnReasons.REMORSE, "2024-01-15T10:30:00", "2024-12-31");
         Returns returns2 = new Returns("RET001", "SKU456", 10, ReturnReasons.DAMAGED, "2024-01-16T11:00:00", "2024-01-10");
-        
-        // Should be equal because they have the same return ID
-        assertTrue(returns1.equals(returns2));
-        assertTrue(returns2.equals(returns1));
-    }
+        Returns returns3 = new Returns("RET002", "SKU123", 5, ReturnReasons.REMORSE, "2024-01-15T10:30:00", "2024-12-31");
 
-    @Test
-    void testEqualsWithDifferentReturnID() {
-        Returns returns1 = new Returns("RET001", "SKU123", 5, ReturnReasons.REMORSE, "2024-01-15T10:30:00", "2024-12-31");
-        Returns returns2 = new Returns("RET002", "SKU123", 5, ReturnReasons.REMORSE, "2024-01-15T10:30:00", "2024-12-31");
-        
-        // Should not be equal because they have different return IDs
-        assertFalse(returns1.equals(returns2));
-        assertFalse(returns2.equals(returns1));
-    }
+        // Expected: same returnID = equal objects with same hashCode
+        Object[] expected = new Object[] {
+                true,   // returns1.equals(returns1)
+                true,   // returns1.equals(returns2)
+                true,   // returns2.equals(returns1)
+                false,  // returns1.equals(returns3)
+                false,  // returns1.equals(null)
+                false,  // returns1.equals("string")
+                true    // returns1.hashCode() == returns2.hashCode()
+        };
 
-    @Test
-    void testEqualsWithNull() {
-        Returns returns = new Returns("RET001", "SKU123", 5, ReturnReasons.REMORSE, "2024-01-15T10:30:00", "2024-12-31");
-        
-        // Should not be equal to null
-        assertFalse(returns.equals(null));
-    }
+        Object[] result = new Object[] {
+                returns1.equals(returns1),
+                returns1.equals(returns2),
+                returns2.equals(returns1),
+                returns1.equals(returns3),
+                returns1.equals(null),
+                returns1.equals("not a Returns object"),
+                returns1.hashCode() == returns2.hashCode()
+        };
 
-    @Test
-    void testEqualsWithDifferentClass() {
-        Returns returns = new Returns("RET001", "SKU123", 5, ReturnReasons.REMORSE, "2024-01-15T10:30:00", "2024-12-31");
-        String otherObject = "not a Returns object";
-        
-        // Should not be equal to different class
-        assertFalse(returns.equals(otherObject));
+        assertArrayEquals(expected, result);
     }
 
     @Test
     void testEqualsWithNullReturnID() {
         Returns returns1 = new Returns(null, "SKU123", 5, ReturnReasons.REMORSE, "2024-01-15T10:30:00", "2024-12-31");
         Returns returns2 = new Returns(null, "SKU456", 10, ReturnReasons.DAMAGED, "2024-01-16T11:00:00", "2024-01-10");
-        
-        // Should be equal because both have null return IDs
-        assertTrue(returns1.equals(returns2));
-        assertTrue(returns2.equals(returns1));
-    }
+        Returns returns3 = new Returns("RET001", "SKU123", 5, ReturnReasons.REMORSE, "2024-01-15T10:30:00", "2024-12-31");
 
-    @Test
-    void testEqualsWithOneNullReturnID() {
-        Returns returns1 = new Returns(null, "SKU123", 5, ReturnReasons.REMORSE, "2024-01-15T10:30:00", "2024-12-31");
-        Returns returns2 = new Returns("RET001", "SKU123", 5, ReturnReasons.REMORSE, "2024-01-15T10:30:00", "2024-12-31");
-        
-        // Should not be equal because one has null return ID and other doesn't
-        assertFalse(returns1.equals(returns2));
-        assertFalse(returns2.equals(returns1));
-    }
+        // Expected: both null returnIDs = equal, one null = not equal
+        Object[] expected = new Object[] {
+                true,   // returns1.equals(returns2) - both null
+                true,   // returns2.equals(returns1) - both null
+                false,  // returns1.equals(returns3) - one null
+                false,  // returns3.equals(returns1) - one null
+                true    // returns1.hashCode() == returns2.hashCode()
+        };
 
-    @Test
-    void testHashCode() {
-        Returns returns1 = new Returns("RET001", "SKU123", 5, ReturnReasons.REMORSE, "2024-01-15T10:30:00", "2024-12-31");
-        Returns returns2 = new Returns("RET001", "SKU456", 10, ReturnReasons.DAMAGED, "2024-01-16T11:00:00", "2024-01-10");
-        
-        // Should have same hash code because they have the same return ID
-        assertEquals(returns1.hashCode(), returns2.hashCode());
-    }
+        Object[] result = new Object[] {
+                returns1.equals(returns2),
+                returns2.equals(returns1),
+                returns1.equals(returns3),
+                returns3.equals(returns1),
+                returns1.hashCode() == returns2.hashCode()
+        };
 
-    @Test
-    void testHashCodeWithDifferentReturnID() {
-        Returns returns1 = new Returns("RET001", "SKU123", 5, ReturnReasons.REMORSE, "2024-01-15T10:30:00", "2024-12-31");
-        Returns returns2 = new Returns("RET002", "SKU123", 5, ReturnReasons.REMORSE, "2024-01-15T10:30:00", "2024-12-31");
-        
-        // Should have different hash codes because they have different return IDs
-        assertNotEquals(returns1.hashCode(), returns2.hashCode());
-    }
-
-    @Test
-    void testHashCodeWithNullReturnID() {
-        Returns returns1 = new Returns(null, "SKU123", 5, ReturnReasons.REMORSE, "2024-01-15T10:30:00", "2024-12-31");
-        Returns returns2 = new Returns(null, "SKU456", 10, ReturnReasons.DAMAGED, "2024-01-16T11:00:00", "2024-01-10");
-        
-        // Should have same hash code because both have null return IDs
-        assertEquals(returns1.hashCode(), returns2.hashCode());
+        assertArrayEquals(expected, result);
     }
 
     @Test
     void testToString() {
         Returns returns = new Returns("RET001", "SKU123", 5, ReturnReasons.REMORSE, "2024-01-15T10:30:00", "2024-12-31");
-        
+
         String expected = "Returns{" +
                 "returnID='RET001'" +
                 ", sku='SKU123'" +
@@ -456,14 +444,16 @@ public class ReturnsTest {
                 ", timestamp='2024-01-15T10:30:00'" +
                 ", expiryDate='2024-12-31'" +
                 '}';
-        
-        assertEquals(expected, returns.toString());
+
+        String result = returns.toString();
+
+        assertEquals(expected, result);
     }
 
     @Test
     void testToStringWithNullValues() {
         Returns returns = new Returns(null, null, 0, null, null, null);
-        
+
         String expected = "Returns{" +
                 "returnID='null'" +
                 ", sku='null'" +
@@ -472,14 +462,16 @@ public class ReturnsTest {
                 ", timestamp='null'" +
                 ", expiryDate='null'" +
                 '}';
-        
-        assertEquals(expected, returns.toString());
+
+        String result = returns.toString();
+
+        assertEquals(expected, result);
     }
 
     @Test
     void testToStringWithEmptyStrings() {
         Returns returns = new Returns("", "", 0, ReturnReasons.REMORSE, "", "");
-        
+
         String expected = "Returns{" +
                 "returnID=''" +
                 ", sku=''" +
@@ -488,14 +480,16 @@ public class ReturnsTest {
                 ", timestamp=''" +
                 ", expiryDate=''" +
                 '}';
-        
-        assertEquals(expected, returns.toString());
+
+        String result = returns.toString();
+
+        assertEquals(expected, result);
     }
 
     @Test
     void testToStringWithSpecialCharacters() {
         Returns returns = new Returns("RET-001", "SKU@123", 5, ReturnReasons.DAMAGED, "2024-01-15T10:30:00", "2024-12-31");
-        
+
         String expected = "Returns{" +
                 "returnID='RET-001'" +
                 ", sku='SKU@123'" +
@@ -504,14 +498,16 @@ public class ReturnsTest {
                 ", timestamp='2024-01-15T10:30:00'" +
                 ", expiryDate='2024-12-31'" +
                 '}';
-        
-        assertEquals(expected, returns.toString());
+
+        String result = returns.toString();
+
+        assertEquals(expected, result);
     }
 
     @Test
     void testToStringWithNegativeQuantity() {
         Returns returns = new Returns("RET001", "SKU123", -5, ReturnReasons.EXPIRED, "2024-01-15T10:30:00", "2024-12-31");
-        
+
         String expected = "Returns{" +
                 "returnID='RET001'" +
                 ", sku='SKU123'" +
@@ -520,14 +516,16 @@ public class ReturnsTest {
                 ", timestamp='2024-01-15T10:30:00'" +
                 ", expiryDate='2024-12-31'" +
                 '}';
-        
-        assertEquals(expected, returns.toString());
+
+        String result = returns.toString();
+
+        assertEquals(expected, result);
     }
 
     @Test
     void testToStringWithLargeQuantity() {
         Returns returns = new Returns("RET001", "SKU123", Integer.MAX_VALUE, ReturnReasons.CYCLE_COUNT, "2024-01-15T10:30:00", "2024-12-31");
-        
+
         String expected = "Returns{" +
                 "returnID='RET001'" +
                 ", sku='SKU123'" +
@@ -536,80 +534,107 @@ public class ReturnsTest {
                 ", timestamp='2024-01-15T10:30:00'" +
                 ", expiryDate='2024-12-31'" +
                 '}';
-        
-        assertEquals(expected, returns.toString());
-    }
 
-    @Test
-    void testBusinessLogicMethodsWithAllReasons() {
-        // Test all business logic methods with each reason type
-        Returns[] returns = {
-            new Returns("RET001", "SKU123", 5, ReturnReasons.REMORSE, "2024-01-15T10:30:00", "2024-12-31"),
-            new Returns("RET002", "SKU456", 3, ReturnReasons.DAMAGED, "2024-01-16T11:00:00", "2024-12-31"),
-            new Returns("RET003", "SKU789", 2, ReturnReasons.EXPIRED, "2024-01-17T12:00:00", "2024-01-10"),
-            new Returns("RET004", "SKU101", 1, ReturnReasons.CYCLE_COUNT, "2024-01-18T13:00:00", "2024-12-31")
-        };
+        String result = returns.toString();
 
-        // Test REMORSE reason
-        assertTrue(returns[0].isCustomerRemorse());
-        assertFalse(returns[0].isDamaged());
-        assertFalse(returns[0].isCycleCount());
-
-        // Test DAMAGED reason
-        assertFalse(returns[1].isCustomerRemorse());
-        assertTrue(returns[1].isDamaged());
-        assertFalse(returns[1].isCycleCount());
-
-        // Test EXPIRED reason
-        assertFalse(returns[2].isCustomerRemorse());
-        assertFalse(returns[2].isDamaged());
-        assertFalse(returns[2].isCycleCount());
-
-        // Test CYCLE_COUNT reason
-        assertFalse(returns[3].isCustomerRemorse());
-        assertFalse(returns[3].isDamaged());
-        assertTrue(returns[3].isCycleCount());
+        assertEquals(expected, result);
     }
 
     @Test
     void testEdgeCasesWithExtremeValues() {
-        // Test with extreme values
-        Returns extremeReturns = new Returns(
-            "RET" + "0".repeat(100), // Very long return ID
-            "SKU" + "A".repeat(50), // Very long SKU
-            Integer.MAX_VALUE, // Maximum quantity
-            ReturnReasons.REMORSE,
-            "2024-01-15T10:30:00",
-            "2024-12-31"
+        String longReturnID = "RET" + "0".repeat(100);
+        String longSKU = "SKU" + "A".repeat(50);
+
+        // Expected
+        Object[] expected = new Object[] {
+                longReturnID,
+                longSKU,
+                Integer.MAX_VALUE,
+                ReturnReasons.REMORSE,
+                "2024-01-15T10:30:00",
+                "2024-12-31"
+        };
+
+        // Execute
+        Returns returns = new Returns(
+                longReturnID,
+                longSKU,
+                Integer.MAX_VALUE,
+                ReturnReasons.REMORSE,
+                "2024-01-15T10:30:00",
+                "2024-12-31"
         );
 
-        // Verify all fields are set correctly
-        assertEquals("RET" + "0".repeat(100), extremeReturns.getReturnID());
-        assertEquals("SKU" + "A".repeat(50), extremeReturns.getSku());
-        assertEquals(Integer.MAX_VALUE, extremeReturns.getQty());
-        assertEquals(ReturnReasons.REMORSE, extremeReturns.getReason());
-        assertEquals("2024-01-15T10:30:00", extremeReturns.getTimestamp());
-        assertEquals("2024-12-31", extremeReturns.getExpiryDate());
+        // Result
+        Object[] result = new Object[] {
+                returns.getReturnID(),
+                returns.getSku(),
+                returns.getQty(),
+                returns.getReason(),
+                returns.getTimestamp(),
+                returns.getExpiryDate()
+        };
+
+        assertArrayEquals(expected, result);
     }
 
     @Test
     void testEdgeCasesWithMinimumValues() {
-        // Test with minimum values
-        Returns minimumReturns = new Returns(
-            "A", // Single character return ID
-            "B", // Single character SKU
-            Integer.MIN_VALUE, // Minimum quantity
-            ReturnReasons.DAMAGED,
-            "2024-01-15T10:30:00",
-            "2024-12-31"
+        // Expected
+        Object[] expected = new Object[] {
+                "A",
+                "B",
+                Integer.MIN_VALUE,
+                ReturnReasons.DAMAGED,
+                "2024-01-15T10:30:00",
+                "2024-12-31"
+        };
+
+        // Execute
+        Returns returns = new Returns(
+                "A",
+                "B",
+                Integer.MIN_VALUE,
+                ReturnReasons.DAMAGED,
+                "2024-01-15T10:30:00",
+                "2024-12-31"
         );
 
-        // Verify all fields are set correctly
-        assertEquals("A", minimumReturns.getReturnID());
-        assertEquals("B", minimumReturns.getSku());
-        assertEquals(Integer.MIN_VALUE, minimumReturns.getQty());
-        assertEquals(ReturnReasons.DAMAGED, minimumReturns.getReason());
-        assertEquals("2024-01-15T10:30:00", minimumReturns.getTimestamp());
-        assertEquals("2024-12-31", minimumReturns.getExpiryDate());
+        // Result
+        Object[] result = new Object[] {
+                returns.getReturnID(),
+                returns.getSku(),
+                returns.getQty(),
+                returns.getReason(),
+                returns.getTimestamp(),
+                returns.getExpiryDate()
+        };
+
+        assertArrayEquals(expected, result);
+    }
+
+    @Test
+    void testCompleteScenario_AllReasons() {
+        // Test creation and toString for all return reasons
+        Returns returns1 = new Returns("RET001", "SKU123", 5, ReturnReasons.REMORSE, "2024-01-15T10:30:00", "2024-12-31");
+        Returns returns2 = new Returns("RET002", "SKU456", 3, ReturnReasons.DAMAGED, "2024-01-16T11:00:00", "2024-12-31");
+        Returns returns3 = new Returns("RET003", "SKU789", 2, ReturnReasons.EXPIRED, "2024-01-17T12:00:00", "2024-01-10");
+        Returns returns4 = new Returns("RET004", "SKU101", 1, ReturnReasons.CYCLE_COUNT, "2024-01-18T13:00:00", "2024-12-31");
+
+        Object[] expected = new Object[] {
+                ReturnReasons.REMORSE,
+                ReturnReasons.DAMAGED,
+                ReturnReasons.EXPIRED,
+                ReturnReasons.CYCLE_COUNT
+        };
+
+        Object[] result = new Object[] {
+                returns1.getReason(),
+                returns2.getReason(),
+                returns3.getReason(),
+                returns4.getReason()
+        };
+
+        assertArrayEquals(expected, result);
     }
 }

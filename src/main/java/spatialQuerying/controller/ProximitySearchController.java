@@ -37,7 +37,7 @@ public class ProximitySearchController {
         /**
          * Creates a new instance of StationDistance.
          *
-         * @param station The {@link Station} object.
+         * @param station  The {@link Station} object.
          * @param distance The distance from the target coordinates in kilometers.
          */
         StationDistance(Station station, double distance) {
@@ -51,31 +51,28 @@ public class ProximitySearchController {
      * The search uses a Priority Queue (Max Heap) to efficiently track the N closest stations
      * and employs branch pruning to minimize tree traversal.
      *
-     * @param targetLat Target latitude in degrees.
-     * @param targetLon Target longitude in degrees.
-     * @param n Number of nearest neighbors to find (k).
+     * @param targetLat      Target latitude in degrees.
+     * @param targetLon      Target longitude in degrees.
+     * @param n              Number of nearest neighbors to find (k).
      * @param timeZoneFilter Optional time zone filter (e.g., "CET", "WET"). If null or empty, no filter is applied.
      * @return Map containing search results and metadata, including "stations", "distances", and performance metrics.
      */
     public Map<String, Object> findNearestStations(double targetLat, double targetLon, int n, String timeZoneFilter) {
-        long startTime = System.nanoTime();
-
         List<Station> resultStations = new ArrayList<>();
         List<Double> resultDistances = new ArrayList<>();
 
         if (kdTree.getRoot() == null || n <= 0) {
-            long endTime = System.nanoTime();
-            return buildResponse(resultStations, resultDistances, targetLat, targetLon, n,
-                    timeZoneFilter, endTime - startTime);
+            return buildResponse(resultStations, resultDistances, targetLat, targetLon, n, timeZoneFilter);
         }
 
-        PriorityQueue<StationDistance> nearestStations = new PriorityQueue<>(
-                (a, b) -> Double.compare(b.distance, a.distance)
-        );
+        PriorityQueue<StationDistance> nearestStations = new PriorityQueue<>((a, b) -> {
+            int distComp = Double.compare(b.distance, a.distance);
+            if (distComp != 0) return distComp;
+            // If distances are equal, sort by station name (descending for max heap)
+            return b.station.getStationName().compareTo(a.station.getStationName());
+        });
 
-        Predicate<Station> filter = timeZoneFilter == null ?
-                s -> true :
-                s -> timeZoneFilter.equalsIgnoreCase(s.getStationTimeZoneGroup());
+        Predicate<Station> filter = timeZoneFilter == null ? s -> true : s -> timeZoneFilter.equalsIgnoreCase(s.getStationTimeZoneGroup());
 
         findNearestNRecursive(kdTree.getRoot(), targetLat, targetLon, n, nearestStations, filter, true);
 
@@ -84,31 +81,33 @@ public class ProximitySearchController {
             tempList.add(0, nearestStations.poll());
         }
 
+        // Sort final results by distance, then by station name alphabetically
+        tempList.sort((a, b) -> {
+            int distComp = Double.compare(a.distance, b.distance);
+            if (distComp != 0) return distComp;
+            return a.station.getStationName().compareTo(b.station.getStationName());
+        });
+
         for (StationDistance sd : tempList) {
             resultStations.add(sd.station);
             resultDistances.add(sd.distance);
         }
 
-        long endTime = System.nanoTime();
-        return buildResponse(resultStations, resultDistances, targetLat, targetLon, n,
-                timeZoneFilter, endTime - startTime);
+        return buildResponse(resultStations, resultDistances, targetLat, targetLon, n, timeZoneFilter);
     }
 
     /**
      * Builds the final response map containing the search results and metadata.
      *
-     * @param stations The list of nearest stations found.
-     * @param distances The list of corresponding distances.
-     * @param targetLat The target latitude.
-     * @param targetLon The target longitude.
-     * @param n The number of neighbors requested.
+     * @param stations       The list of nearest stations found.
+     * @param distances      The list of corresponding distances.
+     * @param targetLat      The target latitude.
+     * @param targetLon      The target longitude.
+     * @param n              The number of neighbors requested.
      * @param timeZoneFilter The time zone filter applied (or null).
-     * @param executionTimeNanos The time taken for the search in nanoseconds.
      * @return A Map containing all results and metadata for display.
      */
-    private Map<String, Object> buildResponse(List<Station> stations, List<Double> distances,
-                                              double targetLat, double targetLon, int n,
-                                              String timeZoneFilter, long executionTimeNanos) {
+    private Map<String, Object> buildResponse(List<Station> stations, List<Double> distances, double targetLat, double targetLon, int n, String timeZoneFilter) {
         Map<String, Object> response = new HashMap<>();
 
         response.put("stations", new ArrayList<>(stations));
@@ -125,10 +124,6 @@ public class ProximitySearchController {
         searchParameters.put("resultsFound", stations.size());
         response.put("searchParameters", searchParameters);
 
-        Map<String, Long> performanceMetrics = new HashMap<>();
-        performanceMetrics.put("executionTimeNanos", executionTimeNanos);
-        response.put("performanceMetrics", performanceMetrics);
-
         List<String> appliedFilters = new ArrayList<>();
         if (timeZoneFilter != null && !timeZoneFilter.isEmpty()) {
             appliedFilters.add(timeZoneFilter);
@@ -143,42 +138,38 @@ public class ProximitySearchController {
      * Explores the KD-tree efficiently by pruning branches that cannot contain closer stations
      * than the current k-th nearest neighbor found so far.
      *
-     * @param node The current node being examined.
-     * @param targetLat Target latitude.
-     * @param targetLon Target longitude.
-     * @param n Number of neighbors requested (k).
-     * @param nearestStations Priority Queue (Max Heap) storing the k closest stations found.
-     * @param filter Predicate used to filter stations (e.g., by time zone).
+     * @param node             The current node being examined.
+     * @param targetLat        Target latitude.
+     * @param targetLon        Target longitude.
+     * @param n                Number of neighbors requested (k).
+     * @param nearestStations  Priority Queue (Max Heap) storing the k closest stations found.
+     * @param filter           Predicate used to filter stations (e.g., by time zone).
      * @param divideByLatitude True if the current node splits based on latitude, false for longitude.
      */
-    private void findNearestNRecursive(KDNode node,
-                                       double targetLat,
-                                       double targetLon,
-                                       int n,
-                                       PriorityQueue<StationDistance> nearestStations,
-                                       Predicate<Station> filter,
-                                       boolean divideByLatitude) {
+    private void findNearestNRecursive(KDNode node, double targetLat, double targetLon, int n, PriorityQueue<StationDistance> nearestStations, Predicate<Station> filter, boolean divideByLatitude) {
         if (node == null) return;
 
         Point2D coords = node.getCoordinates();
-        double distance = haversineDistance(targetLat, targetLon,
-                coords.getStationLatitude(),
-                coords.getStationLongitude());
+        double distance = haversineDistance(targetLat, targetLon, coords.getStationLatitude(), coords.getStationLongitude());
 
         for (Station station : node.getStationList()) {
             if (filter.test(station)) {
                 if (nearestStations.size() < n) {
                     nearestStations.offer(new StationDistance(station, distance));
-                } else if (distance < nearestStations.peek().distance) {
-                    nearestStations.poll();
-                    nearestStations.offer(new StationDistance(station, distance));
+                } else {
+                    StationDistance farthest = nearestStations.peek();
+                    boolean shouldReplace = distance < farthest.distance || (distance == farthest.distance && station.getStationName().compareTo(farthest.station.getStationName()) < 0);
+
+                    if (shouldReplace) {
+                        nearestStations.poll();
+                        nearestStations.offer(new StationDistance(station, distance));
+                    }
                 }
             }
         }
 
         double targetValue = divideByLatitude ? targetLat : targetLon;
-        double nodeValue = divideByLatitude ?
-                coords.getStationLatitude() : coords.getStationLongitude();
+        double nodeValue = divideByLatitude ? coords.getStationLatitude() : coords.getStationLongitude();
 
         KDNode nearSide, farSide;
         if (targetValue < nodeValue) {
@@ -202,17 +193,15 @@ public class ProximitySearchController {
      * dividing line is greater than the current maximum distance in the Priority Queue,
      * the far side cannot contain any closer points.
      *
-     * @param targetLat Target latitude.
-     * @param targetLon Target longitude.
-     * @param nodeValue The coordinate value (lat or lon) of the dividing plane.
+     * @param targetLat        Target latitude.
+     * @param targetLon        Target longitude.
+     * @param nodeValue        The coordinate value (lat or lon) of the dividing plane.
      * @param divideByLatitude True if the current split is along latitude, false for longitude.
-     * @param nearestStations Priority Queue of nearest stations found so far.
-     * @param n Number of neighbors requested.
+     * @param nearestStations  Priority Queue of nearest stations found so far.
+     * @param n                Number of neighbors requested.
      * @return True if the far side might contain a closer point, false otherwise.
      */
-    private boolean shouldExploreFarSide(double targetLat, double targetLon,
-                                         double nodeValue, boolean divideByLatitude,
-                                         PriorityQueue<StationDistance> nearestStations, int n) {
+    private boolean shouldExploreFarSide(double targetLat, double targetLon, double nodeValue, boolean divideByLatitude, PriorityQueue<StationDistance> nearestStations, int n) {
         if (nearestStations.size() < n) {
             return true;
         }
@@ -247,9 +236,7 @@ public class ProximitySearchController {
         double dLat = lat2Rad - lat1Rad;
         double dLon = lon2Rad - lon1Rad;
 
-        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                Math.cos(lat1Rad) * Math.cos(lat2Rad) *
-                        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(lat1Rad) * Math.cos(lat2Rad) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
 
         double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
