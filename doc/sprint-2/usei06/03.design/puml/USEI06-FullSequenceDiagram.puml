@@ -1,0 +1,65 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+
+autonumber
+
+actor "Planner" as plan
+
+participant ":StationController" as ctrl
+
+activate plan
+
+plan -> ctrl: request bst set creation based on given file
+activate ctrl
+
+ctrl -> ctrl: collectStationsData(filePath)
+ctrl -> ctrl: parseCsvLineToMap(line, params)
+
+create ":Station" as station
+ctrl -> station: validateAndCreateStation(csvLine)
+
+create ":LatitudeTree" as latTree
+ctrl -> latTree: initiates latitude tree based on station list
+activate latTree
+
+participant ":LatitudeNode" as latNode
+latTree -> latNode: creates node based on station latitude
+activate latNode
+latNode -> latTree: adds node to BST tree
+deactivate latNode
+
+latTree --> ctrl: returns latitude based tree
+deactivate latTree
+
+create ":LongitudeTree" as lonTree
+ctrl -> lonTree: initiates longitude tree based on station list
+activate lonTree
+
+participant ":LatitudeNode" as lonNode
+lonTree -> lonNode: creates node based on station longitude
+activate lonNode
+lonNode -> lonTree: adds node to BST tree
+deactivate lonNode
+
+lonTree --> ctrl: returns longitude based tree
+deactivate lonTree
+
+create ":TimeZoneTree" as tzTree
+ctrl -> tzTree: initiates time zone group tree based on station list
+activate tzTree
+
+participant ":LatitudeNode" as tzNode
+tzTree -> tzNode: creates node based on station time zone group
+activate tzNode
+tzNode -> tzTree: adds node to BST tree
+deactivate tzNode
+
+tzTree --> ctrl: returns time zone group based tree
+deactivate tzTree
+
+ctrl --> plan: returns set of BST trees
+deactivate ctrl
+
+@enduml
