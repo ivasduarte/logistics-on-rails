@@ -1,12 +1,12 @@
 -- DROP TABLE Building CASCADE CONSTRAINTS;
+-- DROP TABLE Building_Type CASCADE CONSTRAINTS;
 -- DROP TABLE Endpoint CASCADE CONSTRAINTS;
+-- DROP TABLE Endpoint_Building CASCADE CONSTRAINTS;
 -- DROP TABLE Endpoint_Path CASCADE CONSTRAINTS;
+-- DROP TABLE Endpoint_Type CASCADE CONSTRAINTS;
 -- DROP TABLE Freight CASCADE CONSTRAINTS;
--- DROP TABLE FreightYard CASCADE CONSTRAINTS;
--- DROP TABLE FreightYard_Building CASCADE CONSTRAINTS;
 -- DROP TABLE Gauge CASCADE CONSTRAINTS;
 -- DROP TABLE Gauge_Locomotive CASCADE CONSTRAINTS;
--- DROP TABLE Grain_Silo CASCADE CONSTRAINTS;
 -- DROP TABLE Line_Segment CASCADE CONSTRAINTS;
 -- DROP TABLE Line_Type CASCADE CONSTRAINTS;
 -- DROP TABLE Location CASCADE CONSTRAINTS;
@@ -22,13 +22,8 @@
 -- DROP TABLE Owner CASCADE CONSTRAINTS;
 -- DROP TABLE Path CASCADE CONSTRAINTS;
 -- DROP TABLE Rail_Line CASCADE CONSTRAINTS;
--- DROP TABLE Refrigerated_Area CASCADE CONSTRAINTS;
 -- DROP TABLE Rolling_Stock CASCADE CONSTRAINTS;
 -- DROP TABLE Siding CASCADE CONSTRAINTS;
--- DROP TABLE Station CASCADE CONSTRAINTS;
--- DROP TABLE Station_Building CASCADE CONSTRAINTS;
--- DROP TABLE Terminal CASCADE CONSTRAINTS;
--- DROP TABLE Terminal_Building CASCADE CONSTRAINTS;
 -- DROP TABLE Trains CASCADE CONSTRAINTS;
 -- DROP TABLE Wagon CASCADE CONSTRAINTS;
 -- DROP TABLE Wagon_Boxcar CASCADE CONSTRAINTS;
@@ -38,12 +33,17 @@
 -- DROP TABLE Wagon_Refrigerated_Car CASCADE CONSTRAINTS;
 -- DROP TABLE Wagon_Tank_Car CASCADE CONSTRAINTS;
 -- DROP TABLE Wagon_Type CASCADE CONSTRAINTS;
--- DROP TABLE Warehouse CASCADE CONSTRAINTS;
 
 CREATE TABLE Building (
   buildingID number(10),
   typeID number(10) NOT NULL,
   PRIMARY KEY (buildingID)
+);
+
+CREATE TABLE Building_Type (
+  id number(10),
+  "desc" number(10) NOT NULL,
+  PRIMARY KEY (id)
 );
 
 CREATE TABLE Endpoint (
@@ -54,10 +54,22 @@ CREATE TABLE Endpoint (
   PRIMARY KEY (endpointID)
 );
 
+CREATE TABLE Endpoint_Building (
+  EndpointendpointID number(10) NOT NULL,
+  BuildingbuildingID number(10) NOT NULL,
+  PRIMARY KEY (EndpointendpointID, BuildingbuildingID)
+);
+
 CREATE TABLE Endpoint_Path (
   EndpointendpointID number(10) NOT NULL,
   Pathid number(10) NOT NULL,
   PRIMARY KEY (EndpointendpointID, Pathid)
+);
+
+CREATE TABLE Endpoint_Type (
+  id number(10),
+  "desc" number(10) NOT NULL,
+  PRIMARY KEY (id)
 );
 
 CREATE TABLE Freight (
@@ -69,17 +81,6 @@ CREATE TABLE Freight (
   PRIMARY KEY (id)
 );
 
-CREATE TABLE FreightYard (
-  id number(10),
-  PRIMARY KEY (id)
-);
-
-CREATE TABLE FreightYard_Building (
-  FreightYardid number(10) NOT NULL,
-  BuildingbuildingID number(10) NOT NULL,
-  PRIMARY KEY (FreightYardid, BuildingbuildingID)
-);
-
 CREATE TABLE Gauge (
   gaugeNumber number(10),
   PRIMARY KEY (gaugeNumber)
@@ -89,11 +90,6 @@ CREATE TABLE Gauge_Locomotive (
   Gauge number(10) NOT NULL,
   Locomotiveid number(10) NOT NULL,
   PRIMARY KEY (Gauge, Locomotiveid)
-);
-
-CREATE TABLE Grain_Silo (
-  id number(10),
-  PRIMARY KEY (id)
 );
 
 CREATE TABLE Line_Segment (
@@ -222,11 +218,6 @@ CREATE TABLE Rail_Line (
   PRIMARY KEY (id)
 );
 
-CREATE TABLE Refrigerated_Area (
-  id number(10),
-  PRIMARY KEY (id)
-);
-
 CREATE TABLE Rolling_Stock (
   id number(10),
   name varchar2(255) NOT NULL,
@@ -239,29 +230,6 @@ CREATE TABLE Siding (
   length number(10) NOT NULL,
   segmentID number(10) NOT NULL,
   PRIMARY KEY (id)
-);
-
-CREATE TABLE Station (
-  id number(10),
-  PRIMARY KEY (id)
-);
-
-CREATE TABLE Station_Building (
-  Stationid number(10) NOT NULL,
-  BuildingbuildingID number(10) NOT NULL,
-  PRIMARY KEY (Stationid, BuildingbuildingID)
-);
-
-CREATE TABLE Terminal (
-  id number(10),
-  isIntermodal number(10) NOT NULL,
-  PRIMARY KEY (id)
-);
-
-CREATE TABLE Terminal_Building (
-  Terminalid number(10) NOT NULL,
-  BuildingbuildingID number(10) NOT NULL,
-  PRIMARY KEY (Terminalid, BuildingbuildingID)
 );
 
 CREATE TABLE Trains (
@@ -346,11 +314,6 @@ CREATE TABLE Wagon_Type (
   PRIMARY KEY (id)
 );
 
-CREATE TABLE Warehouse (
-  id number(10),
-  PRIMARY KEY (id)
-);
-
 ALTER TABLE Endpoint
   ADD CONSTRAINT FKEndpoint308143 FOREIGN KEY (locationID) REFERENCES Location (id);
 
@@ -401,42 +364,6 @@ ALTER TABLE Gauge_Locomotive
 
 ALTER TABLE Wagon
   ADD CONSTRAINT FKWagon204688 FOREIGN KEY (gauge) REFERENCES Gauge (gaugeNumber);
-
-ALTER TABLE Endpoint
-  ADD CONSTRAINT FKEndpoint209750 FOREIGN KEY (typeID) REFERENCES FreightYard (id);
-
-ALTER TABLE Endpoint
-  ADD CONSTRAINT FKEndpoint464387 FOREIGN KEY (typeID) REFERENCES Station (id);
-
-ALTER TABLE Endpoint
-  ADD CONSTRAINT FKEndpoint658728 FOREIGN KEY (typeID) REFERENCES Terminal (id);
-
-ALTER TABLE Building
-  ADD CONSTRAINT FKBuilding547203 FOREIGN KEY (typeID) REFERENCES Warehouse (id);
-
-ALTER TABLE Building
-  ADD CONSTRAINT FKBuilding301549 FOREIGN KEY (typeID) REFERENCES Refrigerated_Area (id);
-
-ALTER TABLE Building
-  ADD CONSTRAINT FKBuilding264464 FOREIGN KEY (typeID) REFERENCES Grain_Silo (id);
-
-ALTER TABLE Station_Building
-  ADD CONSTRAINT FKStation_Bu255491 FOREIGN KEY (Stationid) REFERENCES Station (id);
-
-ALTER TABLE Station_Building
-  ADD CONSTRAINT FKStation_Bu571280 FOREIGN KEY (BuildingbuildingID) REFERENCES Building (buildingID);
-
-ALTER TABLE FreightYard_Building
-  ADD CONSTRAINT FKFreightYar238471 FOREIGN KEY (FreightYardid) REFERENCES FreightYard (id);
-
-ALTER TABLE FreightYard_Building
-  ADD CONSTRAINT FKFreightYar818103 FOREIGN KEY (BuildingbuildingID) REFERENCES Building (buildingID);
-
-ALTER TABLE Terminal_Building
-  ADD CONSTRAINT FKTerminal_B584545 FOREIGN KEY (Terminalid) REFERENCES Terminal (id);
-
-ALTER TABLE Terminal_Building
-  ADD CONSTRAINT FKTerminal_B837636 FOREIGN KEY (BuildingbuildingID) REFERENCES Building (buildingID);
 
 ALTER TABLE Wagon
   ADD CONSTRAINT FKWagon428152 FOREIGN KEY (freightID) REFERENCES Freight (id);
@@ -503,3 +430,15 @@ ALTER TABLE Path
 
 ALTER TABLE Path
   ADD CONSTRAINT FKPath427672 FOREIGN KEY ("end") REFERENCES Endpoint (endpointID);
+
+ALTER TABLE Endpoint
+  ADD CONSTRAINT FKEndpoint25100 FOREIGN KEY (typeID) REFERENCES Endpoint_Type (id);
+
+ALTER TABLE Endpoint_Building
+  ADD CONSTRAINT FKEndpoint_B882802 FOREIGN KEY (EndpointendpointID) REFERENCES Endpoint (endpointID);
+
+ALTER TABLE Endpoint_Building
+  ADD CONSTRAINT FKEndpoint_B414552 FOREIGN KEY (BuildingbuildingID) REFERENCES Building (buildingID);
+
+ALTER TABLE Building
+  ADD CONSTRAINT FKBuilding722917 FOREIGN KEY (typeID) REFERENCES Building_Type (id);
