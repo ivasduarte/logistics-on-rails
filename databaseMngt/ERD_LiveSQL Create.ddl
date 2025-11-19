@@ -42,7 +42,7 @@ CREATE TABLE Building (
 
 CREATE TABLE Building_Type (
   id number(10),
-  "desc" number(10) NOT NULL,
+  "desc" varchar2(255) NOT NULL,
   PRIMARY KEY (id)
 );
 
@@ -68,7 +68,7 @@ CREATE TABLE Endpoint_Path (
 
 CREATE TABLE Endpoint_Type (
   id number(10),
-  "desc" number(10) NOT NULL,
+  "desc" varchar2(255) NOT NULL,
   PRIMARY KEY (id)
 );
 
