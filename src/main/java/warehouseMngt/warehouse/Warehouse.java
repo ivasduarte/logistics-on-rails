@@ -22,6 +22,9 @@ public class Warehouse {
     protected MovementHistory movementHistory = new MovementHistory();
     protected List<String> importErrors = new ArrayList<>();
 
+    public Warehouse() {
+    }
+
     public Warehouse(Map<Wagon, Set<Box>> wagons,
                      Map<String, Item> items,
                      Map<Order, Set<OrderLines>> order_lines,
@@ -37,13 +40,44 @@ public class Warehouse {
     }
 
     // Getters
-    public Map<Wagon, Set<Box>> getWagons() { return wagons; }
-    public Map<String, Item> getItems() { return items; }
-    public Map<Order, Set<OrderLines>> getOrderLines() { return order_lines; }
-    public Map<String, Order> getOrders() { return orders; }
-    public Map<String, Returns> getReturns() { return returns; }
-    public Map<String, Set<Bay>> getWarehouses() { return warehouses; }
+    public Map<Wagon, Set<Box>> getWagons() {
+        return wagons;
+    }
 
-    public MovementHistory getMovementHistoryObject() { return movementHistory; }
-    public List<String> getImportErrors() { return importErrors; }
+    public Map<String, Item> getItems() {
+        return items;
+    }
+
+    public Map<Order, Set<OrderLines>> getOrderLines() {
+        return order_lines;
+    }
+
+    public Map<String, Order> getOrders() {
+        return orders;
+    }
+
+    public Map<String, Returns> getReturns() {
+        return returns;
+    }
+
+    public Map<String, Set<Bay>> getWarehouses() {
+        return warehouses;
+    }
+
+    public MovementHistory getMovementHistoryObject() {
+        return movementHistory;
+    }
+
+    public List<String> getImportErrors() {
+        return importErrors;
+    }
+
+    public void saveWarehouse(Warehouse warehouse) {
+        if (warehouse != null && warehouse.getWarehouses() != null) {
+            if (this.warehouses == null) {
+                this.warehouses = new HashMap<>();
+            }
+            this.warehouses.putAll(warehouse.getWarehouses());
+        }
+    }
 }

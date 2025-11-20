@@ -331,8 +331,8 @@ public class WarehouseController {
     /**
      * Helper inner class for collecting box locations.
      */
-    private static class BoxLocation implements Comparable<BoxLocation> {
-        Box box;
+    public static class BoxLocation implements Comparable<BoxLocation> {
+        public Box box;
         Bay bay;
         String warehouseId;
 
