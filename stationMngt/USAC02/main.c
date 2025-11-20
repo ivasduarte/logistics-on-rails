@@ -32,9 +32,13 @@ int main() {
 
     printf("=== Caesar Cipher Decryption Demonstrator ===\n\n");
 
-    test_decrypt("test_None (No Op)", "", 0, "", 1);
+    test_decrypt("test_None (No Op)", "", 0, "", 0);
+
+    test_decrypt("test_None1","",13,"",1);
 
     test_decrypt("test_Error (Invalid Input)", "heu", 2, "", 0);
+
+    test_decrypt("test_Error1","HEU",62,"",0);
 
     test_decrypt("test_S1 (Basic Decrypt)", "EFGHIJKL", 4, "ABCDEFGH", 1);
 

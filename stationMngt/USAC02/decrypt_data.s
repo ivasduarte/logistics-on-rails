@@ -8,7 +8,7 @@
 #   a0 - 1 on success, 0 on failure
 
 decrypt_data:
-    li t0, 0
+    li t0, 1
     blt a1, t0, decrypt_error   # Key must be non-negative
     li t0, 26
     bgt a1, t0, decrypt_error   # Key must be <= 26

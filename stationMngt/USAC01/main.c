@@ -29,11 +29,19 @@ void test_encrypt(const char *label, const char *input_str, int key,
 }
 
 void test_None() {
-    test_encrypt("test_None (No Op)", "", 0, "", 1);
+    test_encrypt("test_None", "", 0, "", 0);
+}
+
+void test_None1() {
+    test_encrypt("teste None 1","",4,"",1);
 }
 
 void test_Error() {
     test_encrypt("test_Error (Invalid Input)", "heu", 2, "", 0);
+}
+
+void test_Error1(){
+    test_encrypt("test_Error (Invalid key)","HEU",52,"",0);
 }
 
 void test_S1() {
@@ -51,7 +59,9 @@ void test_S3() {
 int main() {
     printf("=== Caesar Cipher Encryption Demonstrator ===\n\n");
     test_None();
+    test_None1();
     test_Error();
+    test_Error1();
     test_S1();
     test_S2();
     test_S3();
