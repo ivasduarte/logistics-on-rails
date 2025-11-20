@@ -108,13 +108,13 @@ public class KDTree2D {
                                     Map<Point2D, List<Station>> groupedStations,
                                     List<Point2D> latList,
                                     List<Point2D> lonList,
-                                    boolean devideByLatitude) {
+                                    boolean divideByLatitude) {
 
         if (uniquePoints < 0) return null;
 
         // choose median
         int medianIndex = uniquePoints / 2;
-        Point2D medianPoint = devideByLatitude ? latList.get(medianIndex) : lonList.get(medianIndex);
+        Point2D medianPoint = divideByLatitude ? latList.get(medianIndex) : lonList.get(medianIndex);
 
         KDNode newNode = new KDNode(medianPoint, groupedStations.get(medianPoint));
 
@@ -126,11 +126,11 @@ public class KDTree2D {
         List<Point2D> rightLon = new ArrayList<>();
 
         for (int i = 0; i <= uniquePoints; i++) {
-            Point2D point = devideByLatitude ? latList.get(i) : lonList.get(i);
+            Point2D point = divideByLatitude ? latList.get(i) : lonList.get(i);
 
             if(point.equals(medianPoint)) continue;
 
-            if (devideByLatitude ? point.getStationLatitude() < medianPoint.getStationLatitude() : point.getStationLongitude() < medianPoint.getStationLongitude()) {
+            if (divideByLatitude ? point.getStationLatitude() < medianPoint.getStationLatitude() : point.getStationLongitude() < medianPoint.getStationLongitude()) {
                 leftLat.add(point);
                 leftLon.add(point);
             } else {
@@ -138,8 +138,8 @@ public class KDTree2D {
                 rightLon.add(point);
             }
         }
-        newNode.setLeft(buildBalancedTree(leftLat.size() - 1, groupedStations, leftLat, leftLon, !devideByLatitude));
-        newNode.setRight(buildBalancedTree(rightLat.size() - 1, groupedStations, rightLat, rightLon, !devideByLatitude));
+        newNode.setLeft(buildBalancedTree(leftLat.size() - 1, groupedStations, leftLat, leftLon, !divideByLatitude));
+        newNode.setRight(buildBalancedTree(rightLat.size() - 1, groupedStations, rightLat, rightLon, !divideByLatitude));
 
         return newNode;
     }
@@ -150,16 +150,16 @@ public class KDTree2D {
      * @param points
      * @param latTree
      * @param lonTree
-     * @param devideByLatitude
+     * @param divideByLatitude
      * @return sorted list of points
      */
-    private List<Point2D> sortPoints(List<Point2D> points, LatitudeTree latTree, LongitudeTree lonTree, boolean devideByLatitude) {
+    private List<Point2D> sortPoints(List<Point2D> points, LatitudeTree latTree, LongitudeTree lonTree, boolean divideByLatitude) {
         Set<Point2D> toInclude = new HashSet<>(points);
 
         List<Point2D> sortedPoints = new ArrayList<>();
         Set<Point2D> added = new HashSet<>();   // avoid duplicates
 
-        if (devideByLatitude) {
+        if (divideByLatitude) {
             // go through latitude's AVL in order
             List<Station> stations = latTree.inOrderTraversal();
 
