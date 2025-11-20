@@ -2,6 +2,7 @@ package app;
 
 import spatialQuerying.controller.GeographicalSearch;
 import spatialQuerying.controller.ProximitySearchController;
+import spatialQuerying.controller.RadiusSearch;
 import spatialQuerying.controller.StationController;
 import spatialQuerying.railwayMngt.Station;
 import spatialQuerying.trees.bst.LatitudeTree;
@@ -58,6 +59,7 @@ public class MenuESINF {
             System.out.println("7. USEI07 - Build Balanced 2D-Tree on Latitude/Longitude");
             System.out.println("8. USEI08 - Search by Geographical Area");
             System.out.println("9. USEI09 - Proximity Search (Nearest-N with Filters)");
+            System.out.println("10. USEI10 - Radius search and density summary");
             System.out.println("0. Return to Main Menu");
             System.out.print("Select option: ");
             op2 = sc.nextInt();
@@ -525,6 +527,21 @@ public class MenuESINF {
                                 s.isCity() ? "Yes" : "No",
                                 s.isMainStation() ? "Yes" : "No"));
                     }
+
+                    System.out.println("\n=== TEMPORAL COMPLEXITY ANALYSIS ===");
+                    System.out.println("Geographical Area Search on Balanced KD-Tree (USEI08):");
+                    System.out.println("1. Initial Search: O(log n)");
+                    System.out.println("   - Tree traversal to find target coordinate");
+                    System.out.println("2. Area Search: O(m)");
+                    System.out.println("   - m = number of points in target region");
+                    System.out.println("3. Filter Application: O(m)");
+                    System.out.println("   - One pass through found points to apply filters");
+
+                    System.out.println("\nOverall Time Complexity:");
+                    System.out.println("O(log n + m)");
+                    System.out.println("where:");
+                    System.out.println("- n is total number of points in tree");
+                    System.out.println("- m is number of points in search area");
                 }
                 case 9 -> {
                     System.out.println("\nExecuting USEI09 - Proximity Search (Nearest-N with Filters)...");
@@ -638,6 +655,88 @@ public class MenuESINF {
                         System.out.println("   - Worst Case (Balanced Tree): O(k log n) (The search space is bounded by the balanced height)");
                     } catch (Exception e) {
                         System.out.println("Error during proximity search: " + e.getMessage());
+                        e.printStackTrace();
+                    }
+                }
+                case 10 -> {
+                    System.out.println("\nExecuting USEI10 - Radius search and density summary...");
+                    try {
+                        if (kdTree == null || kdTree.getRoot() == null) {
+                            System.out.println("Please run USEI07 first to build the 2D-Tree!");
+                            break;
+                        }
+
+                        RadiusSearch radiusSearch = new RadiusSearch(kdTree);
+
+                        System.out.print("Enter target latitude: ");
+                        double targetLat = sc.nextDouble();
+
+                        System.out.print("Enter target longitude: ");
+                        double targetLon = sc.nextDouble();
+
+                        System.out.print("Enter search radius (km): ");
+                        double radius = sc.nextDouble();
+                        sc.nextLine();
+
+                        if (radius <= 0) {
+                            System.out.println("Radius must be greater than 0.");
+                            break;
+                        }
+
+                        RadiusSearch.StationResult result = radiusSearch.searchByRadius(targetLat, targetLon, radius);
+
+                        System.out.println("\n=== RADIUS SEARCH RESULTS ===");
+                        System.out.printf("Target Location: (%.6f, %.6f)%n", targetLat, targetLon);
+                        System.out.printf("Search Radius: %.2f km%n", radius);
+                        System.out.println("Number of stations found: " + result.getStations().size());
+
+                        System.out.println("\n--- Stations within radius ---");
+                        if (result.getStations().isEmpty()) {
+                            System.out.println("No stations found within the specified radius.");
+                        } else {
+                            int count = 1;
+                            for (Station station : result.getStations()) {
+                                System.out.printf("%d. %s%n", count++, station.getStationName());
+                                System.out.printf("   Country: %s, Time Zone: %s%n",
+                                        station.getStationCountry(),
+                                        station.getStationTimeZoneGroup());
+                                System.out.printf("   City: %s, Main Station: %s%n",
+                                        station.isCity() ? "Yes" : "No",
+                                        station.isMainStation() ? "Yes" : "No");
+                                System.out.printf("   Coordinates: (lat: %.6f, lon: %.6f)%n%n",
+                                        station.getStationLatitude(),
+                                        station.getStationLongitude());
+                            }
+                        }
+
+                        System.out.println("\n=== DENSITY SUMMARY ===");
+                        System.out.println("Distribution by Country and City Status:");
+                        for (Map.Entry<String, Integer> entry : result.getDensitySummary().entrySet()) {
+                            String[] parts = entry.getKey().split("_");
+                            String country = parts[0];
+                            String cityStatus = parts[1];
+                            System.out.printf("%s (%s): %d stations%n",
+                                    country,
+                                    cityStatus.equals("City") ? "City" : "Not City",
+                                    entry.getValue());
+                        }
+
+                        System.out.println("\n=== TEMPORAL COMPLEXITY ANALYSIS ===");
+                        System.out.println("Radius Search on Balanced KD-Tree (USEI10):");
+                        System.out.println("1. Initial Traversal and Pruning: O(log n)");
+                        System.out.println("2. Area Coverage: O(m), where m is number of nodes in search area");
+                        System.out.println("3. Distance Calculation: O(1) per point");
+                        System.out.println("4. Result Sorting: O(k log k), where k is number of results");
+
+                        System.out.println("\nOverall Time Complexity:");
+                        System.out.println("O(log n + m + k log k)");
+                        System.out.println("where:");
+                        System.out.println("- n is total number of points in tree");
+                        System.out.println("- m is number of points in search area");
+                        System.out.println("- k is number of results found");
+
+                    } catch (Exception e) {
+                        System.out.println("Error during radius search: " + e.getMessage());
                         e.printStackTrace();
                     }
                 }
