@@ -1,7 +1,8 @@
-package warehouseMngt.returns;
+package warehouseMngt.controller;
 
-import warehouseMngt.controller.WarehouseController;
 import warehouseMngt.logistics.StockAction;
+import warehouseMngt.returns.AuditLog;
+import warehouseMngt.returns.Returns;
 import warehouseMngt.warehouse.Box;
 import warehouseMngt.warehouse.Warehouse;
 
@@ -11,7 +12,7 @@ import java.time.LocalDateTime;
 /**
  * Handles the inspection and processing of returned items from quarantine.
  */
-public class InventoryInspection {
+public class InventoryController {
     private Warehouse warehouse;
     private AuditLog auditLog;
     private WarehouseController warehouseController;
@@ -22,7 +23,7 @@ public class InventoryInspection {
      * @param warehouse The warehouse where restocked items will be inserted
      * @param auditLog The audit log for recording all inspection actions
      */
-    public InventoryInspection(Warehouse warehouse, AuditLog auditLog) {
+    public InventoryController(Warehouse warehouse, AuditLog auditLog) {
         this.warehouse = warehouse;
         this.auditLog = auditLog;
         this.warehouseController = new WarehouseController(warehouse);
@@ -46,7 +47,7 @@ public class InventoryInspection {
      * @param returnedItem The item to inspect and process
      * @throws IOException If audit logging fails
      */
-    public void inspect(Returns returnedItem) throws IOException {
+    public void inspect(Returns returnedItem) {
         StockAction action;
 
         if (shouldBeDiscarded(returnedItem)) {

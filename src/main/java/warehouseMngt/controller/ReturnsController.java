@@ -6,13 +6,11 @@ import warehouseMngt.warehouse.Warehouse;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class ReturnsController {
     public QuarantineQueue quarantineQueue;
-    public InventoryInspection inspection;
+    public InventoryController inspection;
 
     /**
      * Initializes the return management system.
@@ -23,46 +21,7 @@ public class ReturnsController {
     public ReturnsController(Warehouse warehouse, String logFilePath) {
         this.quarantineQueue = new QuarantineQueue();
         AuditLog auditLog = new AuditLog(logFilePath);
-        this.inspection = new InventoryInspection(warehouse, auditLog);
-    }
-
-    /**
-     * Receives a returned item and places it in quarantine for inspection.
-     *
-     * @param returnItem The return to add to quarantine
-     */
-    public void receiveReturn(Returns returnItem) {
-        quarantineQueue.addReturn(returnItem);
-    }
-
-    /**
-     * Processes all returns currently in the quarantine queue.
-     * Returns a summary of actions taken.
-     *
-     * @return Map with counts of restocked and discarded items
-     * @throws IOException If audit logging fails
-     */
-    public Map<String, Integer> processAllReturns() throws IOException {
-        int restockedCount = 0;
-        int discardedCount = 0;
-
-        Returns returnedItem;
-        while ((returnedItem = quarantineQueue.getNextForInspection()) != null) {
-            inspection.inspect(returnedItem);
-
-            if (inspection.shouldBeDiscarded(returnedItem)) {
-                discardedCount++;
-            } else {
-                restockedCount++;
-            }
-        }
-
-        Map<String, Integer> summary = new HashMap<>();
-        summary.put("restocked", restockedCount);
-        summary.put("discarded", discardedCount);
-        summary.put("total", restockedCount + discardedCount);
-
-        return summary;
+        this.inspection = new InventoryController(warehouse, auditLog);
     }
 
     /**

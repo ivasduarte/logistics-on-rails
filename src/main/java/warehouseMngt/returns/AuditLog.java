@@ -18,10 +18,7 @@ import java.time.format.DateTimeFormatter;
  * - Supports root cause analysis for quality issues
  */
 public class AuditLog {
-    // Directory path where an audit log file will be stored
     private String LOG_FILE_PATH = "audit-log-file/";
-
-    // Name of the audit log file
     private String LOG_FILE_NAME = "audit-log.txt";
 
     /**
@@ -66,46 +63,28 @@ public class AuditLog {
     public void logInspection(String returnID, String sku, int quantity,
                               int qtyRestocked, int qtyDiscarded, StockAction action) {
 
-        // Try-with-resources: Automatically closes all resources when done
-        // Even if an exception occurs, resources are guaranteed to be closed
         try (FileWriter writer = new FileWriter(LOG_FILE_PATH + LOG_FILE_NAME, true); // true = append mode
-             BufferedWriter bw = new BufferedWriter(writer);  // Buffering for performance
-             PrintWriter out = new PrintWriter(bw)) {         // Convenient println() method
+             BufferedWriter bw = new BufferedWriter(writer);
+             PrintWriter out = new PrintWriter(bw)) {
 
-            // Step 1: Get the current timestamp
             LocalDateTime timestamp = LocalDateTime.now();
-
-            // Step 2: Format timestamp for human readability
-            // Pattern: yyyy-MM-dd HH:mm (e.g., "2025-10-25 14:30")
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
-
-            // Step 3: Build log entry using StringBuilder for efficiency
-            // (StringBuilder is faster than string concatenation for multiple operations)
             StringBuilder sb = new StringBuilder();
 
-            // Add required fields
-            sb.append(timestamp.format(formatter))           // When action occurred
-                    .append(" | returnID = ").append(returnID)    // Which return
-                    .append(" | SKU = ").append(sku)              // Which product
-                    .append(" | action = ").append(action)        // What was done
-                    .append(" | quantity = ").append(quantity);   // How many units
+            sb.append(timestamp.format(formatter))
+                    .append(" | returnID = ").append(returnID)
+                    .append(" | SKU = ").append(sku)
+                    .append(" | action = ").append(action)
+                    .append(" | quantity = ").append(quantity);
 
-            // Step 4: Add optional breakdown for partial operations
-            // Example: If 10 units returned, but only 7 restocked and 3 discarded,
-            // This happens when some units are good and some are damaged in the same return
             if (qtyRestocked != 0 || qtyDiscarded != 0) {
                 sb.append(" | qtyRestocked = ").append(qtyRestocked)
                         .append(" | qtyDiscarded = ").append(qtyDiscarded);
             }
 
-            // Step 5: Write log entry to file
-            // println() adds newline automatically - each entry on its own line
             out.println(sb);
 
         } catch (IOException e) {
-            // Step 6: Handle file write errors gracefully
-            // Print error but don't crash the inspection process
-            // In production: use proper logging framework, alerts, or retry logic
             System.err.println("\nError writing to audit log file: " + e.getMessage());
         }
     }

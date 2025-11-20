@@ -12,22 +12,11 @@ import java.util.Objects;
  * with ties broken by returnID in the ascending order.
  */
 public class Returns {
-    // Unique identifier for this return transaction
     private String returnID;
-
-    // Stock Keeping Unit - identifies the product type
     private String sku;
-
-    // Quantity of items being returned
     private int qty;
-
-    // Business reason for the return (determines if item should be discarded or restocked)
     private ReturnReasons reason;
-
-    // ISO timestamp when the return was received (used for LIFO ordering)
     private String timestamp;
-
-    // Product expiry date (if applicable) - used for FEFO rules when restocking
     private String expiryDate;
 
     // Flag to mark if this return has been discarded (not restocked)
@@ -53,7 +42,6 @@ public class Returns {
         this.expiryDate = expiryDate;
     }
 
-    // Standard getters and setters omitted for brevity
     public String getReturnID() { return returnID; }
     public void setReturnID(String returnID) { this.returnID = returnID; }
     public String getSku() { return sku; }
