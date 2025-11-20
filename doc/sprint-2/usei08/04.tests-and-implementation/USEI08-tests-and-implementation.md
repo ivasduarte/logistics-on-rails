@@ -31,7 +31,7 @@ void testSearchByArea_BasicRange() {
     List<Station> results = geoSearch.searchByArea(40.0, 40.5, -8.5, -3.5, null, null, null);
 
     assertNotNull(results);
-    assertEquals(4, results.size()); 
+    assertEquals(4, results.size());
     assertTrue(results.stream().anyMatch(s -> s.getStationName().contains("Lisboa")));
     assertTrue(results.stream().anyMatch(s -> s.getStationName().contains("Madrid")));
     assertFalse(results.stream().anyMatch(s -> s.getStationName().contains("Porto")));
@@ -45,7 +45,7 @@ void testSearchByArea_WithMultipleFilters() {
     List<Station> results = geoSearch.searchByArea(40.0, 42.0, -9.0, -3.0, null, true, "PT");
 
     assertNotNull(results);
-    assertEquals(3, results.size()); 
+    assertEquals(3, results.size());
     assertTrue(results.stream().allMatch(Station::isMainStation));
     assertTrue(results.stream().allMatch(s -> s.getStationCountry().equals("PT")));
 }
@@ -260,7 +260,39 @@ void testSearchByCoordinates_NullFilters() {
     assertNotNull(results);
     assertEquals(2, results.size());
 }
-```
+
+@Test
+void testCompleteSearchWorkflow_Integration() {
+    double targetLat = 40.0;
+    double targetLon = -8.0;
+    boolean filterIsCity = true;
+    boolean filterIsMain = true;
+    String filterCountry = "PT";
+
+    List<Station> results = geoSearch.searchByCoordinates(
+            targetLat,
+            targetLon,
+            filterIsCity,
+            filterIsMain,
+            filterCountry
+    );
+
+    assertNotNull(results);
+    assertEquals(2, results.size());
+
+    List<String> resultingNames = new ArrayList<>();
+    for (Station s : results) {
+        resultingNames.add(s.getStationName());
+
+        assertEquals("PT", s.getStationCountry());
+        assertTrue(s.isCity());
+        assertTrue(s.isMainStation());
+    }
+
+    assertTrue(resultingNames.contains("Lisboa Santa Apolónia"));
+    assertTrue(resultingNames.contains("Lisboa Oriente"));
+}
+````
 
 -----
 
