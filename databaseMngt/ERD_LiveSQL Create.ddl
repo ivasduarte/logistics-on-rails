@@ -14,7 +14,7 @@
 -- DROP TABLE Locomotive_Diesel CASCADE CONSTRAINTS;
 -- DROP TABLE Locomotive_Electric CASCADE CONSTRAINTS;
 -- DROP TABLE Locomotive_Model CASCADE CONSTRAINTS;
--- DROP TABLE Locomotive_Trains CASCADE CONSTRAINTS;
+-- DROP TABLE Locomotive_Train CASCADE CONSTRAINTS;
 -- DROP TABLE Locomotive_Type CASCADE CONSTRAINTS;
 -- DROP TABLE Operator CASCADE CONSTRAINTS;
 -- DROP TABLE Operator_Locomotive CASCADE CONSTRAINTS;
@@ -24,10 +24,11 @@
 -- DROP TABLE Rail_Line CASCADE CONSTRAINTS;
 -- DROP TABLE Rolling_Stock CASCADE CONSTRAINTS;
 -- DROP TABLE Siding CASCADE CONSTRAINTS;
--- DROP TABLE Trains CASCADE CONSTRAINTS;
+-- DROP TABLE Train CASCADE CONSTRAINTS;
 -- DROP TABLE Wagon CASCADE CONSTRAINTS;
 -- DROP TABLE Wagon_Boxcar CASCADE CONSTRAINTS;
 -- DROP TABLE Wagon_Flatcar CASCADE CONSTRAINTS;
+-- DROP TABLE Wagon_Freight CASCADE CONSTRAINTS;
 -- DROP TABLE Wagon_Hopper_Car CASCADE CONSTRAINTS;
 -- DROP TABLE Wagon_Model CASCADE CONSTRAINTS;
 -- DROP TABLE Wagon_Refrigerated_Car CASCADE CONSTRAINTS;
@@ -161,10 +162,10 @@ CREATE TABLE Locomotive_Model (
   PRIMARY KEY (id)
 );
 
-CREATE TABLE Locomotive_Trains (
+CREATE TABLE Locomotive_Train (
   Locomotiveid number(10) NOT NULL,
-  Trainsid number(10) NOT NULL,
-  PRIMARY KEY (Locomotiveid, Trainsid)
+  Trainid number(10) NOT NULL,
+  PRIMARY KEY (Locomotiveid, Trainid)
 );
 
 CREATE TABLE Locomotive_Type (
@@ -232,7 +233,7 @@ CREATE TABLE Siding (
   PRIMARY KEY (id)
 );
 
-CREATE TABLE Trains (
+CREATE TABLE Train (
   id number(10),
   operator varchar2(255) NOT NULL,
   "date" date NOT NULL,
@@ -246,7 +247,6 @@ CREATE TABLE Wagon (
   modelID number(10) NOT NULL,
   serviceYear number(10) NOT NULL,
   gauge number(10) NOT NULL,
-  freightID number(10) NOT NULL,
   PRIMARY KEY (id)
 );
 
@@ -264,6 +264,12 @@ CREATE TABLE Wagon_Flatcar (
   storedMachinery number(10) NOT NULL,
   typeID number(10) NOT NULL,
   PRIMARY KEY (id)
+);
+
+CREATE TABLE Wagon_Freight (
+  Wagonid number(10) NOT NULL,
+  Freightid number(10) NOT NULL,
+  PRIMARY KEY (Wagonid, Freightid)
 );
 
 CREATE TABLE Wagon_Hopper_Car (
@@ -365,9 +371,6 @@ ALTER TABLE Gauge_Locomotive
 ALTER TABLE Wagon
   ADD CONSTRAINT FKWagon204688 FOREIGN KEY (gauge) REFERENCES Gauge (gaugeNumber);
 
-ALTER TABLE Wagon
-  ADD CONSTRAINT FKWagon428152 FOREIGN KEY (freightID) REFERENCES Freight (id);
-
 ALTER TABLE Freight
   ADD CONSTRAINT FKFreight349314 FOREIGN KEY (origin) REFERENCES Endpoint (endpointID);
 
@@ -375,10 +378,10 @@ ALTER TABLE Freight
   ADD CONSTRAINT FKFreight878394 FOREIGN KEY (destination) REFERENCES Endpoint (endpointID);
 
 ALTER TABLE Freight
-  ADD CONSTRAINT FKFreight78608 FOREIGN KEY (trainID) REFERENCES Trains (id);
+  ADD CONSTRAINT FKFreight834835 FOREIGN KEY (trainID) REFERENCES Train (id);
 
-ALTER TABLE Trains
-  ADD CONSTRAINT FKTrains246491 FOREIGN KEY (pathID) REFERENCES Path (id);
+ALTER TABLE Train
+  ADD CONSTRAINT FKTrain811655 FOREIGN KEY (pathID) REFERENCES Path (id);
 
 ALTER TABLE Siding
   ADD CONSTRAINT FKSiding202536 FOREIGN KEY (segmentID) REFERENCES Line_Segment (id);
@@ -419,11 +422,11 @@ ALTER TABLE Endpoint_Path
 ALTER TABLE Endpoint_Path
   ADD CONSTRAINT FKEndpoint_P77142 FOREIGN KEY (Pathid) REFERENCES Path (id);
 
-ALTER TABLE Locomotive_Trains
-  ADD CONSTRAINT FKLocomotive331926 FOREIGN KEY (Locomotiveid) REFERENCES Locomotive (id);
+ALTER TABLE Locomotive_Train
+  ADD CONSTRAINT FKLocomotive258978 FOREIGN KEY (Locomotiveid) REFERENCES Locomotive (id);
 
-ALTER TABLE Locomotive_Trains
-  ADD CONSTRAINT FKLocomotive511663 FOREIGN KEY (Trainsid) REFERENCES Trains (id);
+ALTER TABLE Locomotive_Train
+  ADD CONSTRAINT FKLocomotive807369 FOREIGN KEY (Trainid) REFERENCES Train (id);
 
 ALTER TABLE Path
   ADD CONSTRAINT FKPath229404 FOREIGN KEY ("start") REFERENCES Endpoint (endpointID);
@@ -442,3 +445,9 @@ ALTER TABLE Endpoint_Building
 
 ALTER TABLE Building
   ADD CONSTRAINT FKBuilding722917 FOREIGN KEY (typeID) REFERENCES Building_Type (id);
+
+ALTER TABLE Wagon_Freight
+  ADD CONSTRAINT FKWagon_Frei638479 FOREIGN KEY (Wagonid) REFERENCES Wagon (id);
+
+ALTER TABLE Wagon_Freight
+  ADD CONSTRAINT FKWagon_Frei897902 FOREIGN KEY (Freightid) REFERENCES Freight (id);
