@@ -343,4 +343,36 @@ public class GeographicalSearchTest {
         assertNotNull(results);
         assertEquals(2, results.size());
     }
+
+    @Test
+    void testCompleteSearchWorkflow_Integration() {
+        double targetLat = 40.0;
+        double targetLon = -8.0;
+        boolean filterIsCity = true;
+        boolean filterIsMain = true;
+        String filterCountry = "PT";
+
+        List<Station> results = geoSearch.searchByCoordinates(
+                targetLat,
+                targetLon,
+                filterIsCity,
+                filterIsMain,
+                filterCountry
+        );
+
+        assertNotNull(results);
+        assertEquals(2, results.size());
+
+        List<String> resultingNames = new ArrayList<>();
+        for (Station s : results) {
+            resultingNames.add(s.getStationName());
+
+            assertEquals("PT", s.getStationCountry());
+            assertTrue(s.isCity());
+            assertTrue(s.isMainStation());
+        }
+
+        assertTrue(resultingNames.contains("Lisboa Santa Apolónia"));
+        assertTrue(resultingNames.contains("Lisboa Oriente"));
+    }
 }
