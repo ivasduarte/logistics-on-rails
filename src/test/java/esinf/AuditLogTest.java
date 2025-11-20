@@ -9,15 +9,18 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class AuditLogTest {
+class AuditLogTest extends AuditLog {
     private static final String TEST_DIR = "audit-log-file/";
     private static final String TEST_FILE = "audit-log.txt";
     private AuditLog auditLog;
 
+    public AuditLogTest() {
+        super("test-path/");
+    }
+
     @BeforeEach
     void setUp() throws IOException {
         Files.createDirectories(Paths.get(TEST_DIR));
-        // Files.deleteIfExists(Paths.get(TEST_DIR + TEST_FILE));
         auditLog = new AuditLog(TEST_DIR);
     }
 
@@ -38,7 +41,7 @@ class AuditLogTest {
         auditLog.logInspection("R100", "PRODUCT_A", 50, 30, 20, StockAction.RESTOCKED);
         auditLog.logInspection("R101", "PRODUCT_B", 100, 0, 100, StockAction.DISCARDED);
 
-        // Write and show content of a file
+        // Write and show the content of a file
         List<String> lines = Files.readAllLines(Paths.get(TEST_DIR + TEST_FILE));
 
         System.out.println("\n=== CONTENT OF THE FILE ===");
