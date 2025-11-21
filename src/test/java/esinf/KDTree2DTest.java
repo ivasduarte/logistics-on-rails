@@ -38,15 +38,15 @@ class KDTree2DTest {
         List<Station> stations = new ArrayList<>();
         stations.add(createStation("A", 10, 10));
         stations.add(createStation("B", 20, 20));
-        stations.add(createStation("A_DuplicateCoord", 10, 10)); // Mesma coord de A
+        stations.add(createStation("A_DuplicateCoord", 10, 10)); // Same coordinates as A
 
         Map<Point2D, List<Station>> groups = tree.groupByCoordinates(stations);
 
-        assertEquals(2, groups.size(), "Deve haver apenas 2 pontos únicos");
+        assertEquals(2, groups.size(), "Should have only 2 unique points");
 
         Point2D p10 = new Point2D(10, 10);
         assertTrue(groups.containsKey(p10));
-        assertEquals(2, groups.get(p10).size(), "O ponto (10,10) deve ter 2 estações");
+        assertEquals(2, groups.get(p10).size(), "Point (10,10) should have 2 stations");
     }
 
     @Test
@@ -69,15 +69,15 @@ class KDTree2DTest {
         KDNode root = tree.getRoot();
         assertNotNull(root);
 
-        // 1. Verifica Raiz (Divisão por Latitude)
-        // Lista ordenada Lat: 10, 20, 30. Mediana index 1 = 20.
+        // 1. Check Root (Division by Latitude)
+        // Sorted Lat list: 10, 20, 30. Median index 1 = 20.
         assertEquals(20.0, root.getCoordinates().getStationLatitude(), 0.001);
 
-        // 2. Verifica Filho Esquerdo (Latitude < 20)
+        // 2. Check Left Child (Latitude < 20)
         assertNotNull(root.getLeft());
         assertEquals(10.0, root.getLeft().getCoordinates().getStationLatitude(), 0.001);
 
-        // 3. Verifica Filho Direito (Latitude >= 20)
+        // 3. Check Right Child (Latitude >= 20)
         assertNotNull(root.getRight());
         assertEquals(30.0, root.getRight().getCoordinates().getStationLatitude(), 0.001);
     }
@@ -91,12 +91,12 @@ class KDTree2DTest {
          * B: (20, 30)
          * C: (20, 20)
          * * All Latitudes are equal (20).
-         * The median of first division (Lat) will pick one of them (e.g.: B, index 1 sorted).
-         * The next level should divide by Longitude.
+         * The median of the first division (Lat) will pick one of them (e.g.: B, index 1 sorted).
+         * Longitude should divide the next level.
          */
 
         List<Station> stations = new ArrayList<>();
-        // Inserir desordenado
+        // Insert unordered
         stations.add(createStation("C", 20, 20));
         stations.add(createStation("A", 20, 10));
         stations.add(createStation("B", 20, 30));
@@ -105,40 +105,28 @@ class KDTree2DTest {
 
         KDNode root = tree.getRoot();
 
-        // Due to stable sort, the median of 3 elements (index 1) will be the middle one
-        // Assuming your 'uniquePoints' list maintains insertion order or lat sort.
-        // If lat equal, does lat sort maintain relative order or use long?
-        // In your code: byLatitude.sort(Comparator.comparingDouble(Point2D::getStationLatitude));
-        // If latitudes are equal, the order is "arbitrary" (depends on Java's sort algorithm).
-
-        // Vamos verificar apenas métricas para garantir que a árvore foi montada
         assertEquals(3, tree.getSize());
-        // Altura deve ser 1 (raiz + filhos diretos) ou 2 dependendo da definição.
-        // A tua definição: Math.max(left, right) + 1. 
-        // Nivel 0 (raiz), Nivel 1 (filhos). Se raiz tem filhos, altura = 1. 
-        // Espera... Root(0) -> Filho(1). Height = 1.
-        // Se for Root -> Filho -> Neto. Height = 2.
         assertTrue(tree.getHeight() >= 1);
     }
 
     @Test
     void testMetrics() {
         List<Station> stations = new ArrayList<>();
-        // 3 pontos únicos
+        // 3 unique points
         stations.add(createStation("S1", 10, 10));
         stations.add(createStation("S2", 20, 20));
         stations.add(createStation("S3", 30, 30));
-        // 1 duplicado no S1
+        // 1 duplicate at S1
         stations.add(createStation("S4", 10, 10));
 
         tree.buildBalancedTree(stations, null, null);
 
-        assertEquals(3, tree.getSize(), "Size deve contar pontos únicos (KDNodes)");
+        assertEquals(3, tree.getSize(), "Size should count unique points (KDNodes)");
 
         Map<Integer, Integer> buckets = tree.getBucketSizes();
-        // Esperamos:
-        // 1 nó com 2 estações (o ponto 10,10)
-        // 2 nós com 1 estação (20,20 e 30,30)
+        // Expected:
+        // 1 node with 2 stations (point 10,10)
+        // 2 nodes with 1 station (20,20 and 30,30)
         assertTrue(buckets.containsKey(2));
         assertEquals(1, buckets.get(2));
 
@@ -152,6 +140,6 @@ class KDTree2DTest {
         assertNull(tree.getRoot());
         assertEquals(0, tree.getSize());
         assertEquals(0, tree.getHeight()); // Code returns 0 if root is null? No, metric checks root!=null.
-        // Se root null, calculateMetrics mete height=0.
+        // If root is null, calculateMetrics sets height=0.
     }
 }
