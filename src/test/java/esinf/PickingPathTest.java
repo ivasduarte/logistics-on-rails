@@ -21,10 +21,12 @@ public class PickingPathTest {
         PickingPlan plan = new PickingPlan(null, 100.0);
 
         Trolley trolley = new Trolley(1, 100.0);
+
         Allocation allocation1 = new Allocation("O1", "B1", "W1", "SKU1", 1, 1, 8, 10);
         Allocation allocation2 = new Allocation("O2", "B2", "W1", "SKU2", 1, 2, 2, 10);
-        trolley.getAllocationEntries().add(new Trolley.AllocationEntry(allocation1, 10, false, 10));
-        trolley.getAllocationEntries().add(new Trolley.AllocationEntry(allocation2, 20, false, 20));
+
+        trolley.addAllocation(allocation1, 10, false, 10);
+        trolley.addAllocation(allocation2, 20, false, 20);
 
         plan.addTrolley(trolley);
         pickingPathController = new PickingPathController(plan);
@@ -41,8 +43,13 @@ public class PickingPathTest {
     void testGetTrolleyAllocations() {
         List<Trolley> trolleys = pickingPathController.getTrolleys();
         List<Allocation> allocations = pickingPathController.getTrolleyAllocations(trolleys.getFirst());
+
         assertNotNull(allocations);
         assertEquals(2, allocations.size());
+        assertEquals("SKU1", allocations.get(0).getSku());
+        assertEquals("SKU2", allocations.get(1).getSku());
+        assertEquals(10, allocations.get(0).getQuantityAllocated());
+        assertEquals(10, allocations.get(1).getQuantityAllocated());
     }
 
     @Test
