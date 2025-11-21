@@ -1,0 +1,66 @@
+@startuml
+!theme plain
+skinparam classAttributeIconSize 0
+skinparam defaultTextAlignment center
+skinparam pakcageStyle rectangle
+skinparam Shadowing false
+skinparam ArrowFontSize 12
+skinparam nodesep 80
+skinparam ranksep 80
+
+class KDTree2D{
+    - root: KDNode
+    - size: int
+    - height: int
+    - bucketSizes: int
+}
+
+class KDNode{
+    - coordinates: Point2D
+    - stationList: List<Station>
+    - left: KDNode
+    - right: KDNode
+}
+
+class Point2D{
+    - stationLatitude: double
+    - stationLongitude: double
+}
+
+class Station{
+    - stationName: String
+    - stationLatitude: double
+    - stationLongitude: double
+}
+
+class LatitudeTree{}
+
+class LongitudeTree{}
+
+'relationships
+KDTree2D "1" *-- "0..1" KDNode : root
+KDNode "1" o-- "2" KDNode : left/right
+KDNode "1" *-- "1" Point2D : has coordinates
+KDNode "1" o-- "1..*" Station : contains
+Point2D "1" -- "1" Station : located at
+KDTree2D ..> LatitudeTree : uses for sorting
+KDTree2D ..> LongitudeTree : uses for sorting
+
+
+note left of KDTree2D
+    - manages the 2D spatial tree structure
+    - alternates between latitude and longitude
+    dimensions for partitioning
+end note
+
+note top of KDNode
+    - binary tree node representing a point
+    in 2D space with associated stations
+end note
+
+note bottom of Point2D
+    - represents unique geographical coordinates
+    (latitude, longitude)
+end note
+
+@enduml

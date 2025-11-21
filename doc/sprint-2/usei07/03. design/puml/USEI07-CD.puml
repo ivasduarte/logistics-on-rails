@@ -1,0 +1,94 @@
+@startuml
+skinparam classAttributeIconSize 0
+skinparam defaultTextAlignment center
+
+class KDTree2D{
+    - root: KDNode
+    - size: int
+    - height: int
+    - bucketSizes: Map<Integer, Integer>
+
+    - sortPoints(points, latTree, lonTree, divideByLatitude): List<Point2D>
+    - calculateHeight(node): int
+    - calculateNodesAndBuckets(node): void
+
+    + KDTree2D()
+    + getRoot(): KDNode
+    + getSize(): int
+    + getHeight(): int
+    + getBucketSizes(): Map<Integer, Integer>
+
+    + buildBalancedTree(stationList, latTree, lonTree): void
+    + groupByCoordinates(stationList): Map<Point2D, List<Station>>
+    + buildBalancedTree(uniquePoints, groupedStations, latList, lonList, divideByLatitude): KDNode
+    + calculateMetrics(): void
+}
+
+class Point2D{
+    - stationLatitude: double {final}
+    - stationLongitude: double {final}
+
+    + Point2D(latitude, longitude)
+    + getStationLatitude(): double
+    + getStationLongitude(): double
+    + equals(o): boolean
+    + hashCode(): int
+    + toString(): String
+}
+
+class KDNode{
+    - coordinates: Point2D
+    - stationList: List<Station>
+    - left: KDNode
+    - right: KDNode
+
+    + KDNode(coordinates)
+    + KDNode(coordinates, stationList)
+    + addStation(station): void
+    + getCoordinates(): Point2D
+    + setCoordinates(coordinates): void
+    + getStationList(): List<Station>
+    + setStationList(stationList): void
+    + getLeft(): KDNode
+    + setLeft(left): void
+    + getRight(): KDNode
+    + setRight(right): void
+    + toString(): String
+}
+
+class Station{
+    - stationName: String
+    - stationLatitude: double
+    - stationLongitude: double
+
+    + getStationName(): String
+    + getStationLatitude(): double
+    + getStationLongitude(): double
+}
+
+class LatitudeTree{
+    + inOrderTraversal(): List<Station>
+}
+
+class LongitudeTree{
+    + inOrderTraversal(): List<Station>
+}
+
+
+'relationships
+KDTree2D "1" *-- "0..1" KDNode : "  root"
+KDTree2D ..> LatitudeTree : "  «uses for sorting»"
+KDTree2D ..> LongitudeTree : "  «uses for sorting»"
+KDTree2D ..> Point2D : "  «creates»"
+KDTree2D ..> Station : "  «uses»"
+
+KDNode "1" *-- "1" Point2D : "  coordinates"
+KDNode "1" o-- "0..1" KDNode : "  left"
+KDNode "1" o-- "0..1" KDNode : "  right"
+KDNode "1" o-- "1..*" Station : "  stationList"
+
+Point2D "1" -- "*" Station : "  located at"
+LatitudeTree "1" o-- "*" Station : "  contains"
+LongitudeTree "1" o-- "*" Station : "  contains"
+
+@enduml

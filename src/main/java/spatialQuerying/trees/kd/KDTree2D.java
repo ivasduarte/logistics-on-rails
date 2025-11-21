@@ -115,7 +115,7 @@ public class KDTree2D {
 
         KDNode newNode = new KDNode(medianPoint, groupedStations.get(medianPoint));
 
-        // part both lists in O(n)
+        // Partition both lists in O(n) each (2n total, still O(n))
         List<Point2D> leftLat = new ArrayList<>();
         List<Point2D> rightLat = new ArrayList<>();
 
@@ -156,13 +156,15 @@ public class KDTree2D {
     }
 
     /**
-     * This method sorts points by their appropriate dimension using AVL.
+     * Sorts points by their appropriate dimension using AVL trees from USEI06.
+     * This method leverages the pre-sorted structure of the AVL trees to achieve
+     * O(n) sorting complexity instead of O(n log n).
      *
-     * @param points
-     * @param latTree
-     * @param lonTree
-     * @param divideByLatitude
-     * @return sorted list of points
+     * @param points the list of unique points to be sorted
+     * @param latTree the AVL tree sorted by latitude (from USEI06)
+     * @param lonTree the AVL tree sorted by longitude (from USEI06)
+     * @param divideByLatitude true to sort by latitude, false to sort by longitude
+     * @return a list of points sorted by the specified dimension
      */
     private List<Point2D> sortPoints(List<Point2D> points, LatitudeTree latTree, LongitudeTree lonTree, boolean divideByLatitude) {
         Set<Point2D> toInclude = new HashSet<>(points);

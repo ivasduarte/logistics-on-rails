@@ -1,0 +1,17 @@
+@startuml
+!theme plain
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+
+actor "Data Engineer" as DE
+participant ":System" as S
+
+activate DE
+
+DE -> S : request to build a balanced tree
+activate S
+
+S -> DE : balanced tree
+deactivate S
+
+@enduml

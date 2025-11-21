@@ -1,0 +1,332 @@
+@startuml
+!theme plain
+skinparam sequenceMessageAlign left
+skinparam responseMessageBelowArrow true
+skinparam maxMessageSize 250
+
+actor "Data Engineer" as DE
+participant "UI" as UI
+participant ":KDTree2D" as KD
+participant ":Map<Point2D,\nList<Station>>" as MAP
+participant ":Point2D" as POINT
+participant ":KDNode" as NODE
+participant ":Station" as ST
+participant ":LatitudeTree" as LAT
+participant ":LongitudeTree" as LON
+participant ":Set<Point2D>" as SET
+
+autonumber
+
+activate DE
+DE -> UI : choose option 7 (Build 2D-Tree)
+activate UI
+
+alt Prerequisites not met
+    UI --> DE : "Please run USEI06 first"
+else Build Balanced Tree
+
+    create KD
+    UI -> KD : new KDTree2D()
+    UI -> KD : buildBalancedTree(stationList, latTree, lonTree)
+    activate KD
+
+    == Phase 1: Group Stations by Coordinates ==
+
+    KD -> KD : groupByCoordinates(stationList)
+    activate KD
+
+    create MAP
+    KD -> MAP : new LinkedHashMap<>()
+
+    loop for each station in stationList
+        KD -> ST : getStationLatitude()
+        activate ST
+        ST --> KD : latitude
+        deactivate ST
+
+        KD -> ST : getStationLongitude()
+        activate ST
+        ST --> KD : longitude
+        deactivate ST
+
+        create POINT
+        KD -> POINT : new Point2D(latitude, longitude)
+
+        KD -> MAP : computeIfAbsent(point, k -> new ArrayList<>())
+        activate MAP
+        MAP --> KD : List<Station>
+        deactivate MAP
+
+        KD -> MAP : list.add(station)
+    end
+
+    loop for each List<Station> in groupedStations.values()
+        KD -> MAP : stations.sort(comparing(Station::getStationName))
+        activate MAP
+        note right: AC2: Sort alphabetically
+        deactivate MAP
+    end
+
+    KD --> KD : groupedStations
+    deactivate KD
+
+    == Phase 2: Sort Unique Points Using AVL Trees ==
+
+    KD -> KD : uniquePoints = new ArrayList<>(groupedStations.keySet())
+
+    ' Sort by Latitude using AVL
+    KD -> KD : sortPoints(uniquePoints, latTree, lonTree, true)
+    activate KD
+    note right: AC1: Use AVL for O(n) sorting
+
+    create SET
+    KD -> SET : toInclude = new HashSet<>(uniquePoints)
+    KD -> SET : added = new HashSet<>()
+
+    KD -> LAT : inOrderTraversal()
+    activate LAT
+    LAT --> KD : List<Station> (sorted by latitude)
+    deactivate LAT
+
+    loop for each station in sorted stations
+        KD -> ST : getStationLatitude()
+        activate ST
+        ST --> KD : latitude
+        deactivate ST
+
+        KD -> ST : getStationLongitude()
+        activate ST
+        ST --> KD : longitude
+        deactivate ST
+
+        create POINT
+        KD -> POINT : new Point2D(latitude, longitude)
+
+        KD -> SET : toInclude.contains(coords)
+        activate SET
+        SET --> KD : boolean
+        deactivate SET
+
+        KD -> SET : added.contains(coords)
+        activate SET
+        SET --> KD : boolean
+        deactivate SET
+
+        alt coords in toInclude AND not in added
+            KD -> KD : sortedPoints.add(coords)
+            KD -> SET : added.add(coords)
+        end
+    end
+
+    KD --> KD : byLatitude (sorted)
+    deactivate KD
+
+    ' Sort by Longitude using AVL
+    KD -> KD : sortPoints(uniquePoints, latTree, lonTree, false)
+    activate KD
+    note right: AC1: Use AVL for O(n) sorting
+
+    KD -> LON : inOrderTraversal()
+    activate LON
+    LON --> KD : List<Station> (sorted by longitude)
+    deactivate LON
+
+    note right: Same process as latitude sorting
+
+    KD --> KD : byLongitude (sorted)
+    deactivate KD
+
+    == Phase 3: Build Tree Recursively ==
+
+    KD -> KD : buildBalancedTree(size-1, groupedStations,\nbyLatitude, byLongitude, true)
+    activate KD
+    note right: divideByLatitude = true (start with lat)
+
+    alt uniquePoints < 0
+        KD --> KD : null (base case)
+    else uniquePoints >= 0
+
+        ' Select Median
+        KD -> KD : medianIndex = uniquePoints / 2
+
+        alt divideByLatitude == true
+            KD -> KD : medianPoint = byLatitude.get(medianIndex)
+            note right: Split by latitude dimension
+        else divideByLatitude == false
+            KD -> KD : medianPoint = byLongitude.get(medianIndex)
+            note right: Split by longitude dimension
+        end
+
+        ' Create Node
+        KD -> MAP : get(medianPoint)
+        activate MAP
+        MAP --> KD : List<Station>
+        deactivate MAP
+
+        create NODE
+        KD -> NODE : new KDNode(medianPoint, stationList)
+        activate NODE
+        NODE -> NODE : stationList.sort(comparing(Station::getStationName))
+        note right: Guarantee alphabetical order (AC2)
+        deactivate NODE
+
+        ' Partition latList
+        KD -> KD : Create leftLat, rightLat, leftLon, rightLon
+
+        loop for i = 0 to uniquePoints (iterate latList)
+            KD -> KD : point = latList.get(i)
+
+            KD -> POINT : equals(medianPoint)
+            activate POINT
+            POINT --> KD : boolean
+            deactivate POINT
+
+            alt point != medianPoint
+                alt divideByLatitude == true
+                    alt i < medianIndex
+                        KD -> KD : leftLat.add(point)
+                        note right: Use index (latList sorted by lat)
+                    else i >= medianIndex
+                        KD -> KD : rightLat.add(point)
+                    end
+                else divideByLatitude == false
+                    KD -> POINT : getStationLongitude()
+                    activate POINT
+                    POINT --> KD : longitude
+                    deactivate POINT
+
+                    alt longitude < medianPoint.longitude
+                        KD -> KD : leftLat.add(point)
+                        note right: Compare longitude (dimension changed)
+                    else
+                        KD -> KD : rightLat.add(point)
+                    end
+                end
+            end
+        end
+
+        ' Partition lonList
+        loop for i = 0 to uniquePoints (iterate lonList)
+            KD -> KD : point = lonList.get(i)
+
+            KD -> POINT : equals(medianPoint)
+            activate POINT
+            POINT --> KD : boolean
+            deactivate POINT
+
+            alt point != medianPoint
+                alt divideByLatitude == false
+                    alt i < medianIndex
+                        KD -> KD : leftLon.add(point)
+                        note right: Use index (lonList sorted by lon)
+                    else
+                        KD -> KD : rightLon.add(point)
+                    end
+                else divideByLatitude == true
+                    KD -> POINT : getStationLatitude()
+                    activate POINT
+                    POINT --> KD : latitude
+                    deactivate POINT
+
+                    alt latitude < medianPoint.latitude
+                        KD -> KD : leftLon.add(point)
+                        note right: Compare latitude (dimension changed)
+                    else
+                        KD -> KD : rightLon.add(point)
+                    end
+                end
+            end
+        end
+
+        ' Recursive Calls
+        KD -> KD : buildBalancedTree(leftLat.size()-1,\ngroupedStations, leftLat, leftLon, !divideByLatitude)
+        activate KD
+        note right: Recursive: alternate dimension
+        KD --> KD : leftSubtree
+        deactivate KD
+
+        KD -> NODE : setLeft(leftSubtree)
+        activate NODE
+        deactivate NODE
+
+        KD -> KD : buildBalancedTree(rightLat.size()-1,\ngroupedStations, rightLat, rightLon, !divideByLatitude)
+        activate KD
+        note right: Recursive: alternate dimension
+        KD --> KD : rightSubtree
+        deactivate KD
+
+        KD -> NODE : setRight(rightSubtree)
+        activate NODE
+        deactivate NODE
+
+        KD --> KD : newNode
+    end
+
+    deactivate KD
+
+    KD -> KD : root = returnedNode
+
+    == Phase 4: Calculate Metrics ==
+
+    KD -> KD : calculateMetrics()
+    activate KD
+
+    KD -> KD : size = 0, height = 0, bucketSizes.clear()
+
+    alt root != null
+        KD -> KD : height = calculateHeight(root)
+        activate KD
+        note right: Recursive: max(leftHeight, rightHeight) + 1
+        KD --> KD : height
+        deactivate KD
+
+        KD -> KD : calculateNodesAndBuckets(root)
+        activate KD
+        note right: Preorder traversal:\ncount nodes and bucket sizes
+
+        loop preorder traversal
+            KD -> KD : size++
+            KD -> NODE : getStationList()
+            activate NODE
+            NODE --> KD : List<Station>
+            deactivate NODE
+
+            KD -> KD : bucketSize = stationList.size()
+            KD -> MAP : bucketSizes.put(bucketSize, count+1)
+            activate MAP
+            deactivate MAP
+
+            KD -> KD : calculateNodesAndBuckets(left)
+            KD -> KD : calculateNodesAndBuckets(right)
+        end
+
+        deactivate KD
+    end
+
+    deactivate KD
+    deactivate KD
+
+    == Display Results ==
+
+    UI -> KD : getSize()
+    activate KD
+    KD --> UI : size
+    deactivate KD
+
+    UI -> KD : getHeight()
+    activate KD
+    KD --> UI : height
+    deactivate KD
+
+    UI -> KD : getBucketSizes()
+    activate KD
+    KD --> UI : Map<Integer, Integer>
+    deactivate KD
+
+    UI --> DE : display tree metrics\n(size, height, bucket distribution)
+end
+
+deactivate UI
+deactivate DE
+
+@enduml
