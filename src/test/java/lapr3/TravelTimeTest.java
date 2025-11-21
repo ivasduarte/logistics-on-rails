@@ -24,7 +24,7 @@ public class TravelTimeTest {
                 25000, 50, "Op1", 1435, 0);
 
         startStation = new Station(
-                "Station1",
+                "1",
                 "Portugal",
                 "Europe/Lisbon",
                 "WET",
@@ -36,7 +36,7 @@ public class TravelTimeTest {
         );
 
         endStation = new Station(
-                "Station2",
+                "2",
                 "Portugal",
                 "Europe/Lisbon",
                 "WET",
@@ -85,7 +85,7 @@ public class TravelTimeTest {
 
     @Test
     void testCalculateTravelTime() {
-        double expected = 25.0; // 3000/120
+        double expected = 90.0; // (3000/(120/3.6))
         double result = travelTime.calculateTravelTime(3000);
 
         assertEquals(expected, result);
@@ -113,7 +113,7 @@ public class TravelTimeTest {
         // Expected results
         Object[] expected = new Object[] {
                 3000,        // distance
-                25.0         // time
+                90.0         // time
         };
 
         // Actual results
