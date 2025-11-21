@@ -3,14 +3,14 @@ CFLAGS=-Wall -Wextra -fanalyzer -g
 ARCHFLAGS=-march=rv32imd -mabi=ilp32d
 LIBRV32=${HOME}/bin/bootlin/riscv32-buildroot-linux-gnu/sysroot
 
-program.elf: usac06_main.o usac06_dequeue_value.o
-	$(CC) $(CFLAGS) $(ARCHFLAGS) usac06_main.o usac06_dequeue_value.o -o program.elf
+program.elf: main.o dequeue_value.o
+	$(CC) $(CFLAGS) $(ARCHFLAGS) main.o dequeue_value.o -o program.elf
 
-usac06_main.o: usac06_main.c
-	$(CC) $(CFLAGS) $(ARCHFLAGS) -c usac06_main.c
+main.o: main.c
+	$(CC) $(CFLAGS) $(ARCHFLAGS) -c main.c
 
-usac06_dequeue_value.o: usac06_dequeue_value.s usac06_dequeue_value.h
-	$(CC) $(CFLAGS) $(ARCHFLAGS) -c usac06_dequeue_value.s
+dequeue_value.o: dequeue_value.s dequeue_value.h
+	$(CC) $(CFLAGS) $(ARCHFLAGS) -c dequeue_value.s
 
 clean:
 	rm -f *.o *.elf
