@@ -1,0 +1,300 @@
+package esinf;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import spatialQuerying.controller.RadiusSearch;
+import spatialQuerying.railwayMngt.Station;
+import spatialQuerying.trees.kd.KDTree2D;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+public class RadiusSearchTest {
+
+    private KDTree2D kdTree;
+    private RadiusSearch radiusSearch;
+    private List<Station> testStations;
+
+    @BeforeEach
+    public void setUp() {
+        // Create test stations with known coordinates
+        testStations = new ArrayList<>();
+
+        // Porto, Portugal (City)
+        testStations.add(createStation("Porto-Campanha", 41.1495, -8.5849, "PT", true));
+
+        // Nearby stations around Porto
+        testStations.add(createStation("Braga", 41.5454, -8.4265, "PT", true));
+        testStations.add(createStation("Aveiro", 40.6443, -8.6455, "PT", false));
+        testStations.add(createStation("Coimbra-B", 40.2033, -8.4103, "PT", true));
+
+        // Spain stations (further away)
+        testStations.add(createStation("Vigo-Guixar", 42.2406, -8.7207, "ES", true));
+        testStations.add(createStation("Santiago", 42.8782, -8.5448, "ES", false));
+
+        // Very close station to Porto (for sorting tests)
+        testStations.add(createStation("Avanca", 40.7539, -8.5807, "PT", false));
+        testStations.add(createStation("Espinho", 41.0078, -8.6410, "PT", false));
+
+        // Build KD-Tree using buildBalancedTree
+        kdTree = new KDTree2D();
+        kdTree.buildBalancedTree(testStations, null, null);
+
+        radiusSearch = new RadiusSearch(kdTree);
+    }
+
+    private Station createStation(String name, double lat, double lon, String country, boolean isCity) {
+        // Station constructor: (name, country, timezone, timezoneGroup, lat, lon, isCity, isMainStation, isAirport)
+        return new Station(name, country, "Europe/Lisbon", "Europe", lat, lon, isCity, false, false);
+    }
+
+    @Test
+    public void testSearchByRadius_SmallRadius() {
+        // Search with 20km radius from Porto
+        RadiusSearch.StationResult result = radiusSearch.searchByRadius(41.1495, -8.5849, 20.0);
+
+        List<Station> stations = result.getStations();
+
+        // Should find Porto-Campanha and Espinho (very close)
+        assertNotNull(stations);
+        assertTrue(stations.size() >= 1);
+        assertTrue(stations.stream().anyMatch(s -> s.getStationName().equals("Porto-Campanha")));
+    }
+
+    @Test
+    public void testSearchByRadius_MediumRadius() {
+        // Search with 100km radius from Porto
+        RadiusSearch.StationResult result = radiusSearch.searchByRadius(41.1495, -8.5849, 100.0);
+
+        List<Station> stations = result.getStations();
+
+        // Should find several stations
+        assertNotNull(stations);
+        assertTrue(stations.size() >= 3);
+        assertTrue(stations.stream().anyMatch(s -> s.getStationName().equals("Porto-Campanha")));
+        assertTrue(stations.stream().anyMatch(s -> s.getStationName().equals("Aveiro")));
+    }
+
+    @Test
+    public void testSearchByRadius_LargeRadius() {
+        // Search with 300km radius from Porto
+        RadiusSearch.StationResult result = radiusSearch.searchByRadius(41.1495, -8.5849, 300.0);
+
+        List<Station> stations = result.getStations();
+
+        // Should find most or all stations
+        assertNotNull(stations);
+        assertTrue(stations.size() >= 5);
+    }
+
+    @Test
+    public void testSearchByRadius_NoResults() {
+        // Search in middle of ocean (far from any station)
+        RadiusSearch.StationResult result = radiusSearch.searchByRadius(30.0, -20.0, 10.0);
+
+        List<Station> stations = result.getStations();
+
+        assertNotNull(stations);
+        assertEquals(0, stations.size());
+    }
+
+    @Test
+    public void testSearchByRadius_SortedByDistance() {
+        // Search from Porto with medium radius
+        RadiusSearch.StationResult result = radiusSearch.searchByRadius(41.1495, -8.5849, 100.0);
+
+        List<Station> stations = result.getStations();
+
+        // Verify stations are sorted by distance (ascending)
+        assertTrue(stations.size() >= 2);
+
+        // Porto-Campanha should be first (distance = 0)
+        assertEquals("Porto-Campanha", stations.get(0).getStationName());
+
+        // Verify distances are in ascending order
+        double previousDistance = 0.0;
+        for (int i = 1; i < stations.size(); i++) {
+            double currentDistance = calculateDistance(
+                    41.1495, -8.5849,
+                    stations.get(i).getStationLatitude(),
+                    stations.get(i).getStationLongitude()
+            );
+            assertTrue(currentDistance >= previousDistance,
+                    "Stations should be sorted by distance");
+            previousDistance = currentDistance;
+        }
+    }
+
+    @Test
+    public void testSearchByRadius_SortedByNameWhenSameDistance() {
+        // Add two stations at exactly the same location
+        List<Station> sameLocationStations = new ArrayList<>();
+        sameLocationStations.add(createStation("Zebra-Station", 41.1495, -8.5849, "PT", false));
+        sameLocationStations.add(createStation("Alpha-Station", 41.1495, -8.5849, "PT", false));
+
+        KDTree2D newTree = new KDTree2D();
+        newTree.buildBalancedTree(sameLocationStations, null, null);
+
+        RadiusSearch newSearch = new RadiusSearch(newTree);
+        RadiusSearch.StationResult result = newSearch.searchByRadius(41.1495, -8.5849, 10.0);
+
+        List<Station> stations = result.getStations();
+
+        // Both stations should be found
+        assertEquals(2, stations.size());
+
+        // Alpha should come before Zebra (alphabetical order)
+        assertEquals("Alpha-Station", stations.get(0).getStationName());
+        assertEquals("Zebra-Station", stations.get(1).getStationName());
+    }
+
+    @Test
+    public void testDensitySummary_SingleCountry() {
+        // Search near Porto (mostly PT stations)
+        RadiusSearch.StationResult result = radiusSearch.searchByRadius(41.1495, -8.5849, 80.0);
+
+        Map<String, Integer> density = result.getDensitySummary();
+
+        assertNotNull(density);
+        assertTrue(density.containsKey("PT_City") || density.containsKey("PT_NotCity"));
+    }
+
+    @Test
+    public void testDensitySummary_MultipleCountries() {
+        // Search with large radius to include both PT and ES
+        RadiusSearch.StationResult result = radiusSearch.searchByRadius(41.5, -8.5, 200.0);
+
+        Map<String, Integer> density = result.getDensitySummary();
+
+        assertNotNull(density);
+
+        // Verify format: Country_CityStatus
+        int totalCount = 0;
+        for (Map.Entry<String, Integer> entry : density.entrySet()) {
+            assertTrue(entry.getKey().contains("_"));
+            assertTrue(entry.getKey().endsWith("City") || entry.getKey().endsWith("NotCity"));
+            assertTrue(entry.getValue() > 0);
+            totalCount += entry.getValue();
+        }
+
+        // Total count should match number of stations found
+        assertEquals(result.getStations().size(), totalCount);
+    }
+
+    @Test
+    public void testDensitySummary_EmptyResults() {
+        // Search where no stations exist
+        RadiusSearch.StationResult result = radiusSearch.searchByRadius(30.0, -20.0, 10.0);
+
+        Map<String, Integer> density = result.getDensitySummary();
+
+        assertNotNull(density);
+        assertTrue(density.isEmpty());
+    }
+
+    @Test
+    public void testDensitySummary_CountAccuracy() {
+        // Search and manually verify counts
+        RadiusSearch.StationResult result = radiusSearch.searchByRadius(41.1495, -8.5849, 150.0);
+
+        List<Station> stations = result.getStations();
+        Map<String, Integer> density = result.getDensitySummary();
+
+        // Manually count by category
+        int ptCityCount = 0;
+        int ptNotCityCount = 0;
+        int esCityCount = 0;
+        int esNotCityCount = 0;
+
+        for (Station station : stations) {
+            if ("PT".equals(station.getStationCountry())) {
+                if (station.isCity()) {
+                    ptCityCount++;
+                } else {
+                    ptNotCityCount++;
+                }
+            } else if ("ES".equals(station.getStationCountry())) {
+                if (station.isCity()) {
+                    esCityCount++;
+                } else {
+                    esNotCityCount++;
+                }
+            }
+        }
+
+        // Verify counts match
+        if (ptCityCount > 0) {
+            assertEquals(ptCityCount, density.getOrDefault("PT_City", 0));
+        }
+        if (ptNotCityCount > 0) {
+            assertEquals(ptNotCityCount, density.getOrDefault("PT_NotCity", 0));
+        }
+        if (esCityCount > 0) {
+            assertEquals(esCityCount, density.getOrDefault("ES_City", 0));
+        }
+        if (esNotCityCount > 0) {
+            assertEquals(esNotCityCount, density.getOrDefault("ES_NotCity", 0));
+        }
+    }
+
+    @Test
+    public void testSearchByRadius_ExactBoundary() {
+        // Test with radius that exactly reaches a station
+        double distance = calculateDistance(41.1495, -8.5849, 41.0078, -8.6410);
+
+        RadiusSearch.StationResult result = radiusSearch.searchByRadius(
+                41.1495, -8.5849, distance
+        );
+
+        List<Station> stations = result.getStations();
+
+        // Should include stations at or within the boundary
+        assertTrue(stations.stream().anyMatch(s -> s.getStationName().equals("Espinho")));
+    }
+
+    @Test
+    public void testSearchByRadius_ZeroRadius() {
+        // Search with zero radius (should only find exact matches)
+        RadiusSearch.StationResult result = radiusSearch.searchByRadius(41.1495, -8.5849, 0.0);
+
+        List<Station> stations = result.getStations();
+
+        // Should find Porto-Campanha (exact coordinates)
+        assertNotNull(stations);
+        assertTrue(stations.size() >= 1);
+        assertEquals("Porto-Campanha", stations.get(0).getStationName());
+    }
+
+    @Test
+    public void testStationResult_GettersWork() {
+        RadiusSearch.StationResult result = radiusSearch.searchByRadius(41.1495, -8.5849, 50.0);
+
+        assertNotNull(result.getStations());
+        assertNotNull(result.getDensitySummary());
+
+        // Verify consistency between stations and density
+        int totalInDensity = result.getDensitySummary().values().stream()
+                .mapToInt(Integer::intValue)
+                .sum();
+        assertEquals(result.getStations().size(), totalInDensity);
+    }
+
+    // Helper method to calculate Haversine distance
+    private double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
+        final double EARTH_RADIUS_KM = 6371.0;
+
+        double dLat = Math.toRadians(lat2 - lat1);
+        double dLon = Math.toRadians(lon2 - lon1);
+
+        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) *
+                        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+
+        double c = 2 * Math.asin(Math.sqrt(a));
+
+        return EARTH_RADIUS_KM * c;
+    }
+}
