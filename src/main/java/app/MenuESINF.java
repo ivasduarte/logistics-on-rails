@@ -293,127 +293,88 @@ public class MenuESINF {
                             System.out.println("AVL trees built successfully!");
                         }
 
-                        int queryOption;
-                        do {
-                            System.out.println("\n=== TIME-ZONE QUERIES ===");
-                            System.out.println("1. Search by TimeZone Group");
-                            System.out.println("2. Search by TimeZone Group and Country");
-                            System.out.println("3. Search in TimeZone Range (Window)");
-                            System.out.println("4. Search by Latitude Range");
-                            System.out.println("5. Search by Longitude Range");
-                            System.out.println("0. Back to ESINF Menu");
-                            System.out.print("Select query option: ");
-                            queryOption = sc.nextInt();
-                            sc.nextLine();
+                        System.out.println("\nPerforming example searches...\n");
 
-                            switch (queryOption) {
-                                case 1 -> {
-                                    System.out.print("Enter TimeZone Group (e.g., CET, WET): ");
-                                    String tzGroup = sc.nextLine().trim();
+                        System.out.println("1. LATITUDE TREE - Range Search");
+                        System.out.println("Searching for stations between latitude 49.0 and 50.0:");
+                        long startTime = System.nanoTime();
+                        List<Station> latResults = latTree.findInLatitudeRange(49.0, 50.0);
+                        long endTime = System.nanoTime();
+                        long latSearchTime = endTime - startTime;
 
-                                    List<Station> results = timeZoneTree.findByTimeZoneGroup(tzGroup);
-
-                                    System.out.println("\n=== Results ===");
-                                    System.out.println("Found " + results.size() + " stations in " + tzGroup);
-
-                                    if (!results.isEmpty()) {
-                                        System.out.println("\nFirst 10 stations:");
-                                        results.stream().limit(10).forEach(s ->
-                                                System.out.printf("- %s (%s)%n", s.getStationName(), s.getStationCountry()));
-                                    }
-
-                                    System.out.println("\nTemporal Complexity: O(log n + k), where k = number of results");
-                                }
-
-                                case 2 -> {
-                                    System.out.print("Enter TimeZone Group: ");
-                                    String tzGroup = sc.nextLine().trim();
-                                    System.out.print("Enter Country (e.g., PT, ES, FR): ");
-                                    String country = sc.nextLine().trim();
-
-                                    List<Station> results = timeZoneTree.findByTimeZoneGroupAndCountry(tzGroup, country);
-
-                                    System.out.println("\n=== Results ===");
-                                    System.out.println("Found " + results.size() + " stations in " + tzGroup + " (" + country + ")");
-
-                                    if (!results.isEmpty()) {
-                                        System.out.println("\nStations (sorted by name):");
-                                        results.forEach(s -> System.out.println("- " + s.getStationName()));
-                                    }
-
-                                    System.out.println("\nTemporal Complexity: O(log n + k), where k = number of results");
-                                }
-
-                                case 3 -> {
-                                    System.out.print("Enter minimum TimeZone Group (e.g., CET): ");
-                                    String minTz = sc.nextLine().trim();
-                                    System.out.print("Enter maximum TimeZone Group (e.g., WET): ");
-                                    String maxTz = sc.nextLine().trim();
-
-                                    List<Station> results = timeZoneTree.findInTimeZoneRange(minTz, maxTz);
-
-                                    System.out.println("\n=== Results ===");
-                                    System.out.println("Found " + results.size() + " stations in range [" + minTz + ", " + maxTz + "]");
-
-                                    if (!results.isEmpty()) {
-                                        System.out.println("\nFirst 10 stations:");
-                                        results.stream().limit(10).forEach(s ->
-                                                System.out.printf("- %s (%s, %s)%n",
-                                                        s.getStationName(),
-                                                        s.getStationCountry(),
-                                                        s.getStationTimeZoneGroup()));
-                                    }
-
-                                    System.out.println("\nTemporal Complexity: O(log n + k), where k = number of results");
-                                }
-
-                                case 4 -> {
-                                    System.out.print("Enter minimum latitude: ");
-                                    double minLat = sc.nextDouble();
-                                    System.out.print("Enter maximum latitude: ");
-                                    double maxLat = sc.nextDouble();
-                                    sc.nextLine();
-
-                                    List<Station> results = latTree.findInLatitudeRange(minLat, maxLat);
-
-                                    System.out.println("\n=== Results ===");
-                                    System.out.println("Found " + results.size() + " stations in latitude range [" + minLat + ", " + maxLat + "]");
-
-                                    if (!results.isEmpty()) {
-                                        System.out.println("\nFirst 10 stations:");
-                                        results.stream().limit(10).forEach(s ->
-                                                System.out.printf("- %s (lat: %.6f)%n", s.getStationName(), s.getStationLatitude()));
-                                    }
-
-                                    System.out.println("\nTemporal Complexity: O(log n + k), where k = number of results");
-                                }
-
-                                case 5 -> {
-                                    System.out.print("Enter minimum longitude: ");
-                                    double minLon = sc.nextDouble();
-                                    System.out.print("Enter maximum longitude: ");
-                                    double maxLon = sc.nextDouble();
-                                    sc.nextLine();
-
-                                    List<Station> results = lonTree.findInLongitudeRange(minLon, maxLon);
-
-                                    System.out.println("\n=== Results ===");
-                                    System.out.println("Found " + results.size() + " stations in longitude range [" + minLon + ", " + maxLon + "]");
-
-                                    if (!results.isEmpty()) {
-                                        System.out.println("\nFirst 10 stations:");
-                                        results.stream().limit(10).forEach(s ->
-                                                System.out.printf("- %s (lon: %.6f)%n", s.getStationName(), s.getStationLongitude()));
-                                    }
-
-                                    System.out.println("\nTemporal Complexity: O(log n + k), where k = number of results");
-                                }
-
-                                case 0 -> System.out.println("Returning to ESINF Menu...");
-
-                                default -> System.out.println("Invalid option.");
+                        System.out.println("Found " + latResults.size() + " stations in the given range.");
+                        if (!latResults.isEmpty()) {
+                            System.out.println("Sample results (first 10):");
+                            for (int i = 0; i < Math.min(10, latResults.size()); i++) {
+                                Station s = latResults.get(i);
+                                System.out.printf("- %s (Lat: %.4f)\n", s.getStationName(), s.getStationLatitude());
                             }
-                        } while (queryOption != 0);
+                        }
+                        System.out.println();
+
+                        System.out.println("2. LONGITUDE TREE - Range Search");
+                        System.out.println("Searching for stations between longitude 2.0 and 3.0:");
+                        startTime = System.nanoTime();
+                        List<Station> lonResults = lonTree.findInLongitudeRange(2.0, 3.0);
+                        endTime = System.nanoTime();
+                        long lonSearchTime = endTime - startTime;
+
+                        System.out.println("Found " + lonResults.size() + " stations in the given range.");
+                        if (!lonResults.isEmpty()) {
+                            System.out.println("Sample results (first 10):");
+                            for (int i = 0; i < Math.min(10, lonResults.size()); i++) {
+                                Station s = lonResults.get(i);
+                                System.out.printf("- %s (Lon: %.4f)\n", s.getStationName(), s.getStationLongitude());
+                            }
+                        }
+                        System.out.println();
+
+                        System.out.println("3. TIMEZONE TREE - Exact Search");
+                        System.out.println("Searching for stations in timezone group 'CET':");
+                        startTime = System.nanoTime();
+                        List<Station> tzResults = timeZoneTree.findByTimeZoneGroup("CET");
+                        endTime = System.nanoTime();
+                        long tzSearchTime = endTime - startTime;
+
+                        System.out.println("There are " + tzResults.size() + " stations in this Time Zone.");
+                        if (!tzResults.isEmpty()) {
+                            System.out.println("Sample results (first 10):");
+                            for (int i = 0; i < Math.min(10, tzResults.size()); i++) {
+                                Station s = tzResults.get(i);
+                                System.out.printf("- %s (TimeZone: %s)\n", s.getStationName(), s.getStationTimeZone());
+                            }
+                        }
+                        System.out.println();
+
+                        System.out.println("\n=== TIME COMPLEXITY ANALYSIS ===\n");
+
+                        int n = stationList.size();
+                        int h = (int) Math.ceil(Math.log(n) / Math.log(2)); // Tree height ≈ log₂(n)
+
+                        System.out.println("Total stations in dataset: " + n);
+                        System.out.println("Estimated AVL tree height: " + h + " (≈ log₂(" + n + "))");
+                        System.out.println();
+
+                        System.out.println("Search Results:");
+                        System.out.printf("Latitude Range Search:  %,10d ns (%.3f ms) - Found %d stations\n",
+                                latSearchTime, latSearchTime / 1_000_000.0, latResults.size());
+                        System.out.printf("Longitude Range Search: %,10d ns (%.3f ms) - Found %d stations\n",
+                                lonSearchTime, lonSearchTime / 1_000_000.0, lonResults.size());
+                        System.out.printf("TimeZone Exact Search:  %,10d ns (%.3f ms) - Found %d stations\n",
+                                tzSearchTime, tzSearchTime / 1_000_000.0, tzResults.size());
+                        System.out.println();
+
+                        System.out.println("Theoretical Time Complexity:");
+                        System.out.println("• Exact Search (TimeZone):  O(log n + k) = O(" + h + " + k)");
+                        System.out.println("    where k = number of matching results");
+                        System.out.println("• Range Search (Lat/Lon):   O(log n + k) = O(" + h + " + k)");
+                        System.out.println("    where k = number of results in range");
+                        System.out.println();
+                        System.out.println("Explanation:");
+                        System.out.println("- AVL trees maintain O(log n) height for balanced searching");
+                        System.out.println("- Finding the starting point takes O(log n) time");
+                        System.out.println("- Collecting k results takes O(k) time");
+                        System.out.println("- Total: O(log n + k) where k is the result size");
 
                     } catch (IOException e) {
                         System.out.println("Error loading stations: " + e.getMessage());
