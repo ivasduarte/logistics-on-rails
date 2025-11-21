@@ -110,7 +110,7 @@ public class LatitudeNode {
 
     /**
      * Sets the height of this node.
-     * 
+     *
      * <p>
      * This method is used during tree balancing operations to update
      * the node's height after rotations.
