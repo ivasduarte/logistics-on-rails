@@ -1,0 +1,72 @@
+@startuml USEI10-SD
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam sequenceArrowThickness 2
+skinparam roundcorner 20
+
+actor "Planner" as P
+activate P
+
+participant "RadiusSearch" as RS
+participant "KDTree2D" as Tree
+participant "KDNode" as Node
+participant "StationResult" as SR
+
+== Search Initiation ==
+
+P -> RS : searchByRadius(lat, lon, radiusKm)
+activate RS
+
+RS -> Tree : getRoot()
+activate Tree
+Tree --> RS : rootNode
+deactivate Tree
+
+== KD-Tree Recursion (searchRadius) ==
+
+note right of RS: Recursive process starts
+
+RS -> RS : searchRadius(rootNode, target, radius, ...)
+
+    RS -> Node : getCoordinates()
+    activate Node
+    Node --> RS : nodeCoords
+    deactivate Node
+
+    RS -> RS : haversineDistance(target, nodeCoords)
+
+    opt distance <= radiusKm
+        RS -> Node : getStationList()
+        activate Node
+        Node --> RS : stations
+        deactivate Node
+        RS -> RS : add to candidates list
+    end
+
+    RS -> RS : calculate split logic & pruning
+
+    opt Near Side or Intersects
+        RS -> Node : getLeft() / getRight()
+        activate Node
+        Node --> RS : childNode
+        deactivate Node
+        RS -> RS : recursive call searchRadius(childNode...)
+    end
+
+== Processing Results ==
+
+RS -> RS : sort candidates (Dist ASC, Name ASC)
+
+RS -> RS : generateDensitySummary(stations)
+
+RS -> SR : new StationResult(stations, summary)
+activate SR
+SR --> RS : result
+deactivate SR
+
+== Return Data ==
+
+RS --> P : returns StationResult
+deactivate RS
+
+@enduml

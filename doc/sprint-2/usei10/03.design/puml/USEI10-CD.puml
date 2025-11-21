@@ -1,0 +1,68 @@
+@startuml
+skinparam monochrome true
+skinparam packageStyle rectangle
+skinparam classAttributeIconSize 0
+
+hide circle
+hide methods
+
+class RadiusSearch {
+    - {static} EARTH_RADIUS_KM: double = 6371.0
+    - kdTree: KDTree2D
+
+    + RadiusSearch(kdTree: KDTree2D)
+    + searchByRadius(latitude: double, longitude: double, radiusKm: double): StationResult
+
+    - searchRadius(node: KDNode, target: Point2D, radiusKm: double, divideByLatitude: boolean, results: List<StationDistance>): void
+    - haversineDistance(lat1: double, lon1: double, lat2: double, lon2: double): double
+    - generateDensitySummary(stations: List<Station>): Map<String, Integer>
+}
+
+class KDTree2D {
+    + getRoot(): KDNode
+}
+
+class KDNode {
+    - coordinates: Point2D
+    - stationList: List<Station>
+    - left: KDNode
+    - right: KDNode
+    + getCoordinates(): Point2D
+    + getStationList(): List<Station>
+    + getLeft(): KDNode
+    + getRight(): KDNode
+}
+
+class StationResult {
+    - stations: List<Station>
+    - densitySummary: Map<String, Integer>
+    + getStations(): List<Station>
+    + getDensitySummary(): Map<String, Integer>
+}
+
+class "RadiusSearch.StationDistance" as StationDistance {
+    - station: Station
+    - distance: double
+    + getStation(): Station
+    + getDistance(): double
+}
+
+class Station {
+    - name: String
+    - isCity: boolean
+    - isMainStation: boolean
+    - stationCountry: String
+    + getStationName(): String
+}
+
+' Relationships based on Java Code
+RadiusSearch --> KDTree2D : uses
+RadiusSearch ..> KDNode : traverses
+RadiusSearch ..> StationResult : creates/returns
+RadiusSearch ..> StationDistance : uses internally
+StationResult "1" -- "*" Station : contains
+KDTree2D "1" -- "1" KDNode : root
+KDNode "1" -- "0..2" KDNode : children
+KDNode "1" -- "*" Station : holds
+
+@enduml
