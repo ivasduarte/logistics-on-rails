@@ -1,0 +1,48 @@
+@startuml
+skinparam monochrome true
+skinparam packageStyle rectangle
+skinparam classAttributeIconSize 0
+
+hide circle
+hide methods
+
+class RadiusSearch {
+    targetLatitude
+    targetLongitude
+    radiusKm
+}
+
+class KDTree2D {
+}
+
+class KDNode {
+}
+
+class Station {
+    name
+    stationCountry
+    isCity
+    isMainStation
+}
+
+class StationResult {
+    densitySummary
+}
+
+' Wrapper for the sorted tree requirement
+class StationDistance {
+    distance
+}
+
+' Relationships
+RadiusSearch ..> KDTree2D : uses
+RadiusSearch ..> StationResult : generates
+
+KDTree2D "1" -- "1" KDNode : root
+KDNode "1" -- "0..2" KDNode : left/right
+KDNode "1" -- "*" Station : holds
+
+StationResult "1" -- "*" StationDistance : contains (BST/AVL)
+StationDistance "1" -- "1" Station : refers to
+
+@enduml
