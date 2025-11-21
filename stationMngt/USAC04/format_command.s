@@ -22,30 +22,40 @@ gth_str:
 
 # int format_command(char *op, int n, char *cmd)
 format_command:
-	addi sp, sp, -16 # allocates 16 bytes on the stack
-	sw ra, 12(sp) # saves the return address at 12 offset
-	sw s0, 8(sp) # save s0
-	sw s1, 4(sp) # save s1
-	sw s2, 0(sp) # save s2
+ 	addi sp, sp, -80    # Allocate: 16 (saved regs) + 64 (local buffer)
+ 	sw ra, 12(sp)
+ 	sw s0, 8(sp)
+ 	sw s1, 4(sp)
+ 	sw s2, 0(sp)
 
-	# Save arguments to saved registers
-	mv s0, a0 # s0 = op (input string)
-	mv s1, a1 # s1 = n (number)
-	mv s2, a2 # s2 = cmd (output buffer)
+ 	# Save arguments
+ 	mv s0, a0           # s0 = original op pointer
+ 	mv s1, a1           # s1 = n
+ 	mv s2, a2           # s2 = cmd output
 
-	# Validate n is in range [0, 99]
-	blt s1, zero, failure # if n < 0
-	li t0, 99
-	bgt s1, t0, failure # if n > 99
+ 	# Validate n
+ 	blt s1, zero, failure
+ 	li t0, 99
+ 	bgt s1, t0, failure
 
-	# Trim the input string
-	mv a0, s0 # put string in a0 for trim function
-	jal trim # call trim
-	mv s0, a0 # save trimmed string pointer back to s0
+ 	# Create local buffer for mutable string (64 bytes)
+ 	addi t5, sp, 16     # t5 = local buffer start
+    
+ 	# Copy input string to local buffer
+ 	mv a0, s0           # source = original op
+ 	mv a1, t5           # dest = local buffer
+ 	jal my_strcpy_local
+    
+ 	mv s0, t5           # s0 now points to local mutable copy
 
-	# Convert s0 (trimmed string) to uppercase
-	mv a0, s0 # put string in a0 for to_uppercase function
-	jal to_uppercase # call to_uppercase function
+ 	# Trim the local copy
+ 	mv a0, s0
+	jal trim
+	mv s0, a0
+
+	# Convert to uppercase
+	mv a0, s0
+	jal to_uppercase
 	
 	# Compare it to "RE", "YE", "GE", "RB", "GTH"
 	# Check if it's "RE"
@@ -126,7 +136,6 @@ place_null:
 	ret            # return from trim
 
 empty_string:
-	sb zero, 0(a0) # makes it empty string
 	ret
 
 # ===== END OF TRIM FUNCTION =====
@@ -196,7 +205,7 @@ strcmp_not_equal:
 handle_re:
 	la a0, re_str
 	mv a1, s2
-	jal strcpy # Copy "RE" to output
+	jal my_strcpy_local # Copy "RE" to output
 	li t0, ','
 	sb t0, 2(s2) # writes ',' in position 2
 	mv a0, s1 # Get the number
@@ -207,7 +216,7 @@ handle_re:
 handle_ye:
 	la a0, ye_str
 	mv a1, s2
-	jal strcpy
+	jal my_strcpy_local
 	li t0, ','
 	sb t0, 2(s2) # writes ',' in position 2
 	mv a0, s1
@@ -218,7 +227,7 @@ handle_ye:
 handle_ge:
 	la a0, ge_str
 	mv a1, s2
-	jal strcpy
+	jal my_strcpy_local
 	li t0, ','
 	sb t0, 2(s2) # writes ',' in position 2
 	mv a0, s1
@@ -229,7 +238,7 @@ handle_ge:
 handle_rb:
 	la a0, rb_str
 	mv a1, s2
-	jal strcpy
+	jal my_strcpy_local
 	li t0, ','
 	sb t0, 2(s2) # writes ',' in position 2
 	mv a0, s1
@@ -240,7 +249,7 @@ handle_rb:
 handle_gth:
 	la a0, gth_str
 	mv a1, s2
-	jal strcpy # Just copy "GTH", no number
+	jal my_strcpy_local # Just copy "GTH", no number
 	j success
 
 # ==== END OF FORMAT STRINGS WITH TWO DIGIT NUMBER FUNCTIONS ====
@@ -249,19 +258,19 @@ handle_gth:
 # copies source string to destination
 # Input: a0 = source, a1 = destination
 
-strcpy:
-	mv t0, a0 # t0 = source pointer
-	mv t1, a1 # t1 = destination pointer
+my_strcpy_local:
+	mv t0, a0
+	mv t1, a1
 
-strcpy_loop:
-	lb t2, 0(t0) # Load byte from source
-	sb t2, 0(t1) # Store to destination
-	beqz t2, strcpy_done  # If null, done
-	addi t0, t0, 1 # Move source forward
-	addi t1, t1, 1 # Move destination forward
-	j strcpy_loop
+my_strcpy_local_loop:
+	lb t2, 0(t0)
+	sb t2, 0(t1)
+	beqz t2, my_strcpy_local_done
+	addi t0, t0, 1
+	addi t1, t1, 1
+	j my_strcpy_local_loop
 
-strcpy_done:
+my_strcpy_local_done:
 	ret
 
 # ==== END OF STRING COPY FUNCTION ====
@@ -285,21 +294,22 @@ append_two_digits:
 
 # ==== END OF APPEND TWO DIGITS FUNCTION ====
 
-success:
-	li a0, 1
-	lw s2, 0(sp) # restore s2
-	lw s1, 4(sp) # restore s1
-	lw s0, 8(sp) # restore s0
-	lw ra, 12(sp) # restores the return address
-	addi sp, sp, 16 # deallocates the stack space
-	ret
-
 failure:
-	sb zero, 0(s2)
+	sb zero, 0(s2)      # Clear output buffer on failure
 	li a0, 0
 	lw s2, 0(sp)
 	lw s1, 4(sp)
 	lw s0, 8(sp)
 	lw ra, 12(sp)
-	addi sp, sp, 16
+	addi sp, sp, 80
 	ret
+
+success:
+	li a0, 1
+	lw s2, 0(sp)
+	lw s1, 4(sp)
+	lw s0, 8(sp)
+	lw ra, 12(sp)
+	addi sp, sp, 80
+	ret
+
