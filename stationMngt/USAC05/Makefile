@@ -3,14 +3,14 @@ CFLAGS=-Wall -Wextra -fanalyzer -g
 ARCHFLAGS=-march=rv32imd -mabi=ilp32d
 LIBRV32=${HOME}/bin/bootlin/riscv32-buildroot-linux-gnu/sysroot
 
-usac05.elf: usac05_main.o usac05_enqueue_value.o
-	$(CC) $(CFLAGS) $(ARCHFLAGS) usac05_main.o usac05_enqueue_value.o -o usac05.elf
+usac05.elf: main.o enqueue_value.o
+	$(CC) $(CFLAGS) $(ARCHFLAGS) main.o enqueue_value.o -o usac05.elf
 
-usac05_main.o: usac05_main.c
-	$(CC) $(CFLAGS) $(ARCHFLAGS) -c usac05_main.c
+main.o: main.c
+	$(CC) $(CFLAGS) $(ARCHFLAGS) -c main.c
 
-usac05_enqueue_value.o: usac05_enqueue_value.s usac05_enqueue_value.h
-	$(CC) $(CFLAGS) $(ARCHFLAGS) -c usac05_enqueue_value.s
+enqueue_value.o: enqueue_value.s enqueue_value.h
+	$(CC) $(CFLAGS) $(ARCHFLAGS) -c enqueue_value.s
 
 clean:
 	rm -f *.o *.elf
