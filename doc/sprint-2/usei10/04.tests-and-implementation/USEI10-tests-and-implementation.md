@@ -255,6 +255,46 @@ public void testStationResult_GettersWork() {
             .sum();
     assertEquals(result.getStations().size(), totalInDensity);
 }
+
+@Test
+public void testSearchByRadius_CompleteIntegrationScenario() {
+    List<Station> scenarioStations = new ArrayList<>();
+
+    scenarioStations.add(new Station("Porto-Campanha", "PT", "Europe/Lisbon", "Europe", 41.1496, -8.5850, true, true, false));
+    scenarioStations.add(new Station("Vila Nova de Gaia", "PT", "Europe/Lisbon", "Europe", 41.1299, -8.6042, false, false, false));
+    scenarioStations.add(new Station("Braga", "PT", "Europe/Lisbon", "Europe", 41.5503, -8.4200, true, true, false));
+    scenarioStations.add(new Station("Tui", "ES", "Europe/Madrid", "Europe", 42.0466, -8.6444, false, false, false));
+    scenarioStations.add(new Station("Vigo-Guixar", "ES", "Europe/Madrid", "Europe", 42.2396, -8.7247, true, true, false));
+    scenarioStations.add(new Station("Lisboa-Oriente", "PT", "Europe/Lisbon", "Europe", 38.7678, -9.0990, true, true, false));
+
+    KDTree2D scenarioTree = new KDTree2D();
+    scenarioTree.buildBalancedTree(scenarioStations, null, null);
+    RadiusSearch scenarioSearch = new RadiusSearch(scenarioTree);
+
+    RadiusSearch.StationResult result = scenarioSearch.searchByRadius(41.1496, -8.5850, 150.0);
+
+    List<Station> resultStations = result.getStations();
+    assertNotNull(resultStations);
+    assertEquals(5, resultStations.size());
+
+    boolean containsLisbon = resultStations.stream()
+            .anyMatch(s -> s.getStationName().equals("Lisboa-Oriente"));
+    assertFalse(containsLisbon);
+
+    assertEquals("Porto-Campanha", resultStations.get(0).getStationName());
+    assertEquals("Vila Nova de Gaia", resultStations.get(1).getStationName());
+    assertEquals("Braga", resultStations.get(2).getStationName());
+    assertEquals("Tui", resultStations.get(3).getStationName());
+    assertEquals("Vigo-Guixar", resultStations.get(4).getStationName());
+
+    Map<String, Integer> density = result.getDensitySummary();
+    assertNotNull(density);
+    assertEquals(2, density.get("PT_City"));
+    assertEquals(1, density.get("PT_NotCity"));
+    assertEquals(1, density.get("ES_City"));
+    assertEquals(1, density.get("ES_NotCity"));
+    assertEquals(4, density.size());
+}
 ```
 
 -----
