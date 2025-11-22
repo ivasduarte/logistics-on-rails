@@ -164,7 +164,7 @@ public class TimeZoneTree {
         if (node.getTimeZoneGroup().compareTo(minTimeZoneGroup) >= 0 && node.getTimeZoneGroup().compareTo(maxTimeZoneGroup) <= 0) {
             results.addAll(node.getStationsByTimeZoneGroup(null));
         }
-        if (node.getTimeZoneGroup().compareTo(minTimeZoneGroup) < 0) {
+        if (node.getTimeZoneGroup().compareTo(maxTimeZoneGroup) < 0) {
             findInRange(node.getRight(), minTimeZoneGroup, maxTimeZoneGroup, results);
         }
     }

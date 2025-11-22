@@ -167,6 +167,18 @@ public class KDTree2D {
      * @return a list of points sorted by the specified dimension
      */
     private List<Point2D> sortPoints(List<Point2D> points, LatitudeTree latTree, LongitudeTree lonTree, boolean divideByLatitude) {
+        // If AVL trees are not available, use standard sorting
+        if (latTree == null || lonTree == null) {
+            List<Point2D> sortedPoints = new ArrayList<>(points);
+            if (divideByLatitude) {
+                sortedPoints.sort(Comparator.comparingDouble(Point2D::getStationLatitude));
+            } else {
+                sortedPoints.sort(Comparator.comparingDouble(Point2D::getStationLongitude));
+            }
+            return sortedPoints;
+        }
+
+        // Use AVL trees for O(n) sorting
         Set<Point2D> toInclude = new HashSet<>(points);
 
         List<Point2D> sortedPoints = new ArrayList<>();
