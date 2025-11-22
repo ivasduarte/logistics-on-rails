@@ -49,8 +49,15 @@ public class LatitudeTree {
         double latDiff = station.getStationLatitude() - node.getLat();
 
         if (Math.abs(latDiff) < EPSILON) {
+            node.addStation(station);
+            return node;
+        }
+
+        else if (latDiff < 0) {
             node.setLeft(insert(node.getLeft(), station));
-        } else {
+        }
+
+        else {
             node.setRight(insert(node.getRight(), station));
         }
 
@@ -254,7 +261,7 @@ public class LatitudeTree {
      *
      * @return the count of nodes (unique latitudes)
      */
-    private int size() {
+    public int size() {
         return size(root);
     }
 
