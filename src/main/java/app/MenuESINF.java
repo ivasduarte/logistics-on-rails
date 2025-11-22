@@ -429,15 +429,46 @@ public class MenuESINF {
                         }
 
                         System.out.println("\n=== TEMPORAL COMPLEXITY ANALYSIS ===");
+
+                        int totalStations = stationList.size();
+                        int uniquePoints = kdTree.getSize();
+
                         System.out.println("Building the 2D-Tree:");
-                        System.out.println("1. Grouping stations by coordinates: O(n)");
-                        System.out.println("2. Sorting using AVL in-order traversal: O(n)");
-                        System.out.println("3. Recursive balanced tree construction: O(n log n)");
-                        System.out.println("   - Each level processes all n points");
-                        System.out.println("   - Tree has log(n) levels due to median splitting");
-                        System.out.println("\nOverall Time Complexity: O(n log n)");
-                        System.out.println("Space Complexity: O(n)");
-                        System.out.println("where n = " + stationList.size() + " stations");
+                        System.out.println("1. Grouping stations by coordinates: O(m)");
+                        System.out.println("   - m = " + totalStations + " total stations");
+                        System.out.println("   - Results in n = " + uniquePoints + " unique points");
+
+                        System.out.println("\n2. Sorting using AVL in-order traversal: O(m)");
+                        System.out.println("   - Called twice (latitude and longitude)");
+                        System.out.println("   - Total: O(2m) = O(m)");
+                        System.out.println("   - Advantage: avoids O(n log n) comparison-based sorting");
+
+                        System.out.println("\n3. Recursive balanced tree construction: O(n log n)");
+                        System.out.println("   - n = " + uniquePoints + " unique coordinate points");
+                        System.out.println("   - Each level processes all n points: O(n) per level");
+                        System.out.println("   - Tree has log₂(n) ≈ " + (int)Math.ceil(Math.log(uniquePoints)/Math.log(2)) + " levels");
+                        System.out.println("   - Total: O(n) × log(n) = O(n log n)");
+
+                        System.out.println("\n4. Calculate metrics: O(n)");
+                        System.out.println("   - Preorder traversal of all n nodes");
+
+                        System.out.println("\n" + "=".repeat(50));
+                        System.out.println("OVERALL COMPLEXITY:");
+                        System.out.println("Time: O(m + n log n)");
+                        System.out.println("  where m = " + totalStations + " total stations");
+                        System.out.println("        n = " + uniquePoints + " unique points");
+
+                        if (totalStations == uniquePoints) {
+                            System.out.println("  → Simplifies to O(n log n) (no duplicates)");
+                        } else {
+                            System.out.println("  → m > n due to " + (totalStations - uniquePoints) + " duplicate coordinates");
+                        }
+
+                        System.out.println("\nSpace: O(m + n)");
+                        System.out.println("  - Tree structure: O(n) nodes");
+                        System.out.println("  - Station buckets: O(m) total stations");
+                        System.out.println("  - Actual height: " + kdTree.getHeight() +
+                                " (optimal: " + (int)Math.ceil(Math.log(uniquePoints)/Math.log(2)) + ")");
 
 
                     } catch (Exception e) {
