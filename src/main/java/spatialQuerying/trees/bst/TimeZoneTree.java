@@ -283,7 +283,7 @@ public class TimeZoneTree {
      *
      * @return the count of nodes (unique time zone groups)
      */
-    private int size() {
+    public int size() {
         return size(root);
     }
 
@@ -304,7 +304,7 @@ public class TimeZoneTree {
      *
      * @return the total count of all stations across all time zone groups
      */
-    private int totalStations() {
+    public int totalStations() {
         return totalStations(root);
     }
 
