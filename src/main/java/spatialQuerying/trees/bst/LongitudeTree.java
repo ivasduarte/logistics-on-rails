@@ -261,7 +261,7 @@ public class LongitudeTree {
      *
      * @return the count of nodes (unique longitudes)
      */
-    private int size() {
+    public int size() {
         return size(root);
     }
 

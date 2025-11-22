@@ -51,13 +51,9 @@ public class LatitudeTree {
         if (Math.abs(latDiff) < EPSILON) {
             node.addStation(station);
             return node;
-        }
-
-        else if (latDiff < 0) {
+        } else if (latDiff < 0) {
             node.setLeft(insert(node.getLeft(), station));
-        }
-
-        else {
+        } else {
             node.setRight(insert(node.getRight(), station));
         }
 
