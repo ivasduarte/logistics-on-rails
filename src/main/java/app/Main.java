@@ -1,5 +1,6 @@
 package app;
 
+import scheduler.Scheduler;
 import warehouseMngt.service.LoadData;
 
 import java.io.IOException;
@@ -15,7 +16,8 @@ public class Main {
         while (true) {
             System.out.println("\n=== MAIN MENU ===");
             System.out.println("1. ESINF User Stories");
-            System.out.println("2. LAPR User Stories");
+            System.out.println("2. LAPR US03");
+            System.out.println("3. LAPR US07");
             System.out.println("0. EXIT");
             System.out.print("Select option: ");
             int option = sc.nextInt();
@@ -23,7 +25,8 @@ public class Main {
 
             switch (option) {
                 case 1 -> MenuESINF.menuESINF();
-                case 2 -> LaprMain.main(args);
+                case 2 -> LaprMain.main();
+                case 3 -> Scheduler.main(args);
                 case 0 -> {
                     System.out.println("Exiting...");
                     return;
