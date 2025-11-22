@@ -11,41 +11,44 @@ BEGIN
             JOIN Endpoint_Path ep ON ep.Pathid = p.id
             WHERE t.id = p_train_id
         ),
-        route_rail_lines AS (
-            SELECT DISTINCT rl.id, rl.startID, rl.endID
+        path_positions AS (
+            SELECT
+                TO_NUMBER(REGEXP_SUBSTR(p.sequenceOrder, '[^,]+', 1, LEVEL)) AS endpoint_id,
+                LEVEL as seq_position
             FROM Train t
             JOIN Path p ON t.pathID = p.id
-            JOIN Endpoint_Path ep1 ON ep1.Pathid = p.id
-            JOIN Endpoint_Path ep2 ON ep2.Pathid = p.id
-            JOIN Rail_Line rl ON (
-                (rl.startID = ep1.EndpointendpointID AND rl.endID = ep2.EndpointendpointID) OR
-                (rl.startID = ep2.EndpointendpointID AND rl.endID = ep1.EndpointendpointID)
-            )
             WHERE t.id = p_train_id
+            CONNECT BY LEVEL <= REGEXP_COUNT(p.sequenceOrder, ',') + 1
+                AND PRIOR t.id = t.id
+                AND PRIOR DBMS_RANDOM.VALUE IS NOT NULL
         ),
-        all_route_endpoints AS (
-            SELECT DISTINCT endpointID
-            FROM Endpoint e
-            WHERE EXISTS (
-                SELECT 1 FROM route_rail_lines rrl
-                WHERE e.endpointID = rrl.startID OR e.endpointID = rrl.endID
-            )
+        consecutive_pairs AS (
+            SELECT DISTINCT
+                pp1.endpoint_id as stop1,
+                pp2.endpoint_id as stop2
+            FROM path_positions pp1
+            JOIN path_positions pp2 ON pp2.seq_position = pp1.seq_position + 1
         )
-
-        SELECT
+        SELECT DISTINCT
             e.endpointID,
             e.name AS endpoint_name,
             et."desc" AS endpoint_type,
             l.latitude,
             l.longitude
-        FROM all_route_endpoints are
-        JOIN Endpoint e ON are.endpointID = e.endpointID
+        FROM consecutive_pairs cp
+
+        JOIN Rail_Line rl1 ON (
+            rl1.startID = cp.stop1
+        )
+        JOIN Rail_Line rl2 ON (
+            rl2.id != rl1.id
+            AND rl2.endID = cp.stop2
+            AND rl1.endID = rl2.startID
+        )
+        JOIN Endpoint e ON e.endpointID = rl1.endID
         JOIN Endpoint_Type et ON e.typeID = et.id
         JOIN Location l ON e.locationID = l.id
-        WHERE NOT EXISTS (
-            SELECT 1 FROM train_path_endpoints tpe
-            WHERE tpe.EndpointendpointID = e.endpointID
-        )
+        WHERE e.endpointID NOT IN (SELECT EndpointendpointID FROM train_path_endpoints)
         ORDER BY e.name;
 
     RETURN v_cursor;
