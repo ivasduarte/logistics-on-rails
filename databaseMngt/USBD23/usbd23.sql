@@ -31,5 +31,3 @@ BEGIN
 
     RETURN v_cursor;
 END fncGetTrainRouteSegments;
-
-here i only need Segment Id, Rail Line, Length, Electric and Tracks
