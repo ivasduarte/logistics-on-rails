@@ -1,0 +1,15 @@
+Statement processed.
+========================================
+USBD25: Non-Stop Endpoints for Train ID 5437
+========================================
+Endpoint ID: 23
+  Name: Carreço
+  Type: Station
+  Location: 2300, 2300
+----------------------------------------
+Endpoint ID: 22
+  Name: Carvalha
+  Type: Station
+  Location: 2200, 2200
+----------------------------------------
+Total non-stop endpoints: 2
