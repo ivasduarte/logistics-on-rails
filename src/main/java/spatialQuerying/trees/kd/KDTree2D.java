@@ -169,7 +169,7 @@ public class KDTree2D {
         }
 
         newNode.setLeft(buildBalancedTree(leftLat.size() - 1, groupedStations, leftLat, leftLon, !divideByLatitude));
-        newNode.setRight(buildBalancedTree(rightLat.size() - 1, groupedStations, rightLat, rightLon, !divideByLatitude));
+        newNode.setRight(buildBalancedTree(rightLon.size() - 1, groupedStations, rightLat, rightLon, !divideByLatitude));
 
         return newNode;
     }
