@@ -107,7 +107,7 @@ public class KDTree2D {
                                     List<Point2D> lonList,
                                     boolean divideByLatitude) {
 
-        if (uniquePoints < 0) return null;
+        if (uniquePoints < 0 || latList.size() <= uniquePoints || lonList.size() <= uniquePoints) return null;
 
         // choose median
         int medianIndex = uniquePoints / 2;
@@ -115,40 +115,59 @@ public class KDTree2D {
 
         KDNode newNode = new KDNode(medianPoint, groupedStations.get(medianPoint));
 
-        // Partition both lists in O(n) each (2n total, still O(n))
+        // partition both lists in O(n) each
         List<Point2D> leftLat = new ArrayList<>();
         List<Point2D> rightLat = new ArrayList<>();
-
         List<Point2D> leftLon = new ArrayList<>();
         List<Point2D> rightLon = new ArrayList<>();
 
-        for (int i = 0; i <= uniquePoints; i++) {
-            Point2D point = latList.get(i);
-
-            if(!point.equals(medianPoint)){
-                if (divideByLatitude) {
-                    if(i < medianIndex) leftLat.add(point);
-                    else rightLat.add(point);
-                } else {
-                    if(point.getStationLongitude() < medianPoint.getStationLongitude()) leftLat.add(point);
+        // partition the main list (latList or lonList)
+        if (divideByLatitude) {
+            for (int i = 0; i <= uniquePoints; i++) {
+                Point2D point = latList.get(i);
+                if (!point.equals(medianPoint)) {
+                    if (i < medianIndex) leftLat.add(point);
                     else rightLat.add(point);
                 }
             }
-        }
-
-        for (int i = 0; i <= uniquePoints; i++) {
-            Point2D point = lonList.get(i);
-            if (!point.equals(medianPoint)) {
-                if (!divideByLatitude) {
+        } else {
+            for (int i = 0; i <= uniquePoints; i++) {
+                Point2D point = lonList.get(i);
+                if (!point.equals(medianPoint)) {
                     if (i < medianIndex) leftLon.add(point);
                     else rightLon.add(point);
-                } else {
-                    // when divided by latitude, must compare with latitude
-                    if (point.getStationLatitude() < medianPoint.getStationLatitude()) leftLon.add(point);
-                    else rightLon.add(point);
                 }
             }
         }
+
+        // partition the other list based on the first partition
+        Set<Point2D> leftPoints = divideByLatitude ? new HashSet<>(leftLat) : new HashSet<>(leftLon);
+        Set<Point2D> rightPoints = divideByLatitude ? new HashSet<>(rightLat) : new HashSet<>(rightLon);
+
+        if (divideByLatitude) {
+            for (int i = 0; i <= uniquePoints; i++) {
+                Point2D point = lonList.get(i);
+                if (!point.equals(medianPoint)) {
+                    if (leftPoints.contains(point)) {
+                        leftLon.add(point);
+                    } else {
+                        rightLon.add(point);
+                    }
+                }
+            }
+        } else {
+            for (int i = 0; i <= uniquePoints; i++) {
+                Point2D point = latList.get(i);
+                if (!point.equals(medianPoint)) {
+                    if (leftPoints.contains(point)) {
+                        leftLat.add(point);
+                    } else {
+                        rightLat.add(point);
+                    }
+                }
+            }
+        }
+
         newNode.setLeft(buildBalancedTree(leftLat.size() - 1, groupedStations, leftLat, leftLon, !divideByLatitude));
         newNode.setRight(buildBalancedTree(rightLat.size() - 1, groupedStations, rightLat, rightLon, !divideByLatitude));
 
