@@ -1,38 +1,36 @@
+SET SERVEROUTPUT ON;
 DECLARE
-    v_cursor SYS_REFCURSOR;
-    v_endpoint_id NUMBER;
-    v_endpoint_name VARCHAR2(255);
-    v_endpoint_type VARCHAR2(255);
-    v_latitude VARCHAR2(255);
-    v_longitude VARCHAR2(255);
-    v_count NUMBER := 0;
+    v_cursor        SYS_REFCURSOR;
+    v_op_code       Operator.shortName%TYPE;
+    v_op_name       Operator.name%TYPE;
+    v_total         NUMBER;
+    v_electric      NUMBER;
+    v_percentage    NUMBER;
+    v_count_rows    NUMBER := 0;
 BEGIN
-    DBMS_OUTPUT.PUT_LINE('========================================');
-    DBMS_OUTPUT.PUT_LINE('USBD25: Non-Stop Endpoints for Train ID 5421');
-    DBMS_OUTPUT.PUT_LINE('========================================');
+    DBMS_OUTPUT.PUT_LINE('==============================================');
+    DBMS_OUTPUT.PUT_LINE('USBD29 - Percentage of electric locomotives');
+    DBMS_OUTPUT.PUT_LINE('Operator: Medway');
+    DBMS_OUTPUT.PUT_LINE('==============================================');
     DBMS_OUTPUT.PUT_LINE('');
-
-    v_cursor := fncGetNonStopEndpoints(5421);
-
+    v_cursor := fncGetElectricLocomotivePercentage('Medway');
     LOOP
-        FETCH v_cursor INTO v_endpoint_id, v_endpoint_name, v_endpoint_type,
-                           v_latitude, v_longitude;
+        FETCH v_cursor INTO v_op_code,
+                           v_op_name,
+                           v_total,
+                           v_electric,
+                           v_percentage;
         EXIT WHEN v_cursor%NOTFOUND;
-
-        v_count := v_count + 1;
-        DBMS_OUTPUT.PUT_LINE('Endpoint ID: ' || v_endpoint_id);
-        DBMS_OUTPUT.PUT_LINE('  Name: ' || v_endpoint_name);
-        DBMS_OUTPUT.PUT_LINE('  Type: ' || v_endpoint_type);
-        DBMS_OUTPUT.PUT_LINE('  Location: ' || v_latitude || ', ' || v_longitude);
-        DBMS_OUTPUT.PUT_LINE('----------------------------------------');
+        v_count_rows := v_count_rows + 1;
+        DBMS_OUTPUT.PUT_LINE('Operator code: ' || v_op_code);
+        DBMS_OUTPUT.PUT_LINE('Operator name: ' || v_op_name);
+        DBMS_OUTPUT.PUT_LINE('Total locomotives: ' || v_total);
+        DBMS_OUTPUT.PUT_LINE('Electric locomotives: ' || v_electric);
+        DBMS_OUTPUT.PUT_LINE('Percentage electric: ' || v_percentage || ' %');
+        DBMS_OUTPUT.PUT_LINE('----------------------------------------------');
     END LOOP;
-
     CLOSE v_cursor;
-
-    IF v_count = 0 THEN
-        DBMS_OUTPUT.PUT_LINE('No non-stop endpoints found (train stops at all endpoints on route).');
-    ELSE
-        DBMS_OUTPUT.PUT_LINE('');
-        DBMS_OUTPUT.PUT_LINE('Total non-stop endpoints: ' || v_count);
+    IF v_count_rows = 0 THEN
+        DBMS_OUTPUT.PUT_LINE('No locomotives found for this operator.');
     END IF;
 END;

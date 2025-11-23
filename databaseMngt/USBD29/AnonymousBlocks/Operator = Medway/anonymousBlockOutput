@@ -1,10 +1,11 @@
-Statement processed.
-========================================
-USBD25: Non-Stop Endpoints for Train ID 5421
-========================================
-Endpoint ID: 14
-  Name: Ermesinde
-  Type: Station
-  Location: 1400, 1400
-----------------------------------------
-Total non-stop endpoints: 1
+==============================================
+USBD29 - Percentage of electric locomotives
+Operator: Medway
+==============================================
+
+Operator code: Medway
+Operator name: Medway - Operador Ferroviário de Mercadorias, S.A
+Total locomotives: 4
+Electric locomotives: 2
+Percentage electric: 50 %
+----------------------------------------------
