@@ -46,7 +46,7 @@ interface Graph<V, E>{
     + incomingEdges(vertice: V): Iterable<Edge<V, E>>
 }
 
-class Edge{
+class Edge <V, E>{
     - weight: double
     + getWeight(): double
     + getVOrigin(): V

@@ -1,0 +1,95 @@
+@startuml
+skinparam sequenceMessageAlign left
+skinparam responseMessageBelowArrow true
+skinparam maxMessageSize 250
+
+actor "Route Planner" as RP
+participant ":RoutePlannerUI" as UI
+participant ":RoutePlanner\nController" as C
+participant ":FreightNetwork" as FN
+participant ":BellmanFord" as BF
+participant ":PathResult" as PR
+participant ":Graph" as G
+participant ":Edge" as E
+
+autonumber
+
+activate RP
+RP -> UI : requests for shortest path
+activate UI
+
+UI -> C : shortest path (originID, targetID)
+activate C
+
+    C -> FN : getStationById(originID)
+    activate FN
+    FN --> C : originStation
+    deactivate FN
+
+    C -> FN : getStationById(targetID)
+    activate FN
+    FN --> C : targetStation
+    deactivate FN
+
+    C -> FN : getShortestPath(originStation, targetStation)
+    activate FN
+
+        FN -> BF : shortestPath(graph, origin, target)
+        activate BF
+
+            BF -> G : numVertices()
+            activate G
+            G --> BF : V
+            deactivate G
+
+            BF -> BF : initialize distance[] = infinity, distance[origin] = 0
+
+            loop i from 1 to V-1
+                BF -> G : edges()
+                activate G
+                G --> BF : iterator<Edge>
+                deactivate G
+
+                loop for each edge in path
+                    BF -> E : getWeight()
+                    activate E
+                    E --> BF : cost
+                    deactivate E
+
+                    BF -> BF : relaz(u, v, cost)
+                end
+            end
+
+            BF -> G : edges()
+            activate G
+            G --> BF : iterator<Edge>
+            deactivate G
+
+            loop for each edge in graph
+                BF -> E : getWeight()
+                activate E
+                E --> BF : cost
+                deactivate E
+
+                alt distance[u] + cost < distance[v]
+                    BF -> PR **: create(hasNegativeCycle=true)
+                    BF --> FN : result
+                end
+            end
+
+            BF -> BF : reconstructPath(predecessors, target)
+            BF -> PR ** : create (path, totalCost)
+            BF --> FN : result
+
+        deactivate BF
+
+    FN --> C : result
+    deactivate FN
+
+C --> UI : formatted result string
+deactivate C
+
+UI --> RP : shows path and cost OR error message
+deactivate UI
+deactivate RP
+@enduml
