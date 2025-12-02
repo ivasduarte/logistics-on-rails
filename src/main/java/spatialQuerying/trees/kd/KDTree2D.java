@@ -101,7 +101,7 @@ public class KDTree2D {
      *
      * @return the root node of the balanced KD tree
      */
-    public KDNode buildBalancedTree(int uniquePoints,
+    private KDNode buildBalancedTree(int uniquePoints,
                                     Map<Point2D, List<Station>> groupedStations,
                                     List<Point2D> latList,
                                     List<Point2D> lonList,
