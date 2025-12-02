@@ -1,0 +1,25 @@
+@startuml
+!theme plain
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+
+actor "Route Planner" as RP
+participant "System" as S
+
+activate RP
+
+RP -> S : request risk aware shortest path
+activate S
+
+alt Negative Cycle Detected
+    S --> RP : returns error message\n"Error: Negative Cycle + [list of stations in cycle]"
+else Path Found
+    S --> RP : returns path sequence + total cost
+else No Path Exists
+    S --> RP : returns "Target Unreachable"
+end
+
+deactivate RP
+deactivate S
+
+@enduml
