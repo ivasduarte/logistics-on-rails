@@ -18,9 +18,20 @@ class FreightNetwork{
     + getStationByID(id: String)
 }
 
-class Station{}
+class Station{
+    - stationID: int
+    - stationName: String
+    - stationLatitude: double
+    - stationLongitude: double
+    + getStationID(): int
+}
 
-class Line{}
+class Line{
+    - distance: double
+    - capacity: double
+    - cost: double
+    + getCost(): double
+}
 
 class BellmanFord{
     + shortestPath(graph: Graph<V, E>, vOrigin: V , vTarget: V): LinkedList<V>
@@ -42,15 +53,22 @@ class Edge{
     + getVTarget(): V
 }
 
+class PathResult{
+    - path: List<Station>
+    - totalCost: double
+    - hasNegativeCycle: boolean
+    + toString(): String
+}
+
 'relationships
 RoutePlannerController ..> FreightNetwork : uses
 FreightNetwork "1" o-- "1" Graph: holds >
 FreightNetwork ..> BellmanFord : invokes
+FreightNetwork ..> PathResult : creates >
 BellmanFord ..> Graph : traverses
 
 Graph "1" *-- "*" Edge: contains
 Edge "1" --> "1" Line: wraps >
 Graph "1" --> "*" Station: contains vertices
-
 
 @enduml
