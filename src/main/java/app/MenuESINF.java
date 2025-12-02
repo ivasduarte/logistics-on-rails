@@ -569,7 +569,7 @@ public class MenuESINF {
 
                         String timeZoneFilter = null;
                         if (filterOption == 1) {
-                            System.out.print("Enter time zone filter (e.g., CET, WET, EET): ");
+                            System.out.print("Enter time zone filter (CET, WET, EET, etc.): ");
                             timeZoneFilter = sc.nextLine().trim();
 
                             if (timeZoneFilter.isEmpty()) {
@@ -598,17 +598,7 @@ public class MenuESINF {
                         List<String> appliedFilters = (List<String>) response.get("appliedFilters");
 
                         System.out.println("\n=== PROXIMITY SEARCH RESULTS ===");
-                        System.out.printf("Target Location: (%.6f, %.6f)%n",
-                                targetCoordinates.get("latitude"),
-                                targetCoordinates.get("longitude"));
-                        System.out.println("Number of results requested: " + searchParameters.get("requestedNeighbors"));
-                        System.out.println("Number of results found: " + searchParameters.get("resultsFound"));
-
-                        if (!appliedFilters.isEmpty()) {
-                            System.out.println("Time Zone Filter: " + appliedFilters.get(0));
-                        } else {
-                            System.out.println("Time Zone Filter: None");
-                        }
+                        System.out.println();
 
                         System.out.println("\n--- Nearest Stations ---");
 
@@ -632,19 +622,27 @@ public class MenuESINF {
                             }
                         }
                         System.out.println("\n=== TEMPORAL COMPLEXITY ANALYSIS ===");
-                        System.out.println("Nearest-N Proximity Search on Balanced KD-Tree (USEI09):");
-                        System.out.println("1. Initial Traversal O(log n)");
-                        System.out.println("   - The tree is balanced, guaranteeing a height of log(n).");
-                        System.out.println("2. Priority Queue Maintenance: O(log k) per insertion");
-                        System.out.println("   - A Max Heap maintains the 'k' (or 'n' requested) nearest neighbors.");
-                        System.out.println("3. Recursive Traversal & Pruning:");
-                        System.out.println("   - Explores the most promising half first.");
-                        System.out.println("   - Pruning stops exploration if the closest boundary of the far side is farther than the k-th nearest neighbor found so far.");
+                        System.out.println();
 
-                        System.out.println("\nOverall Time Complexity:");
-                        System.out.println("   - Best Case: O(log n) + O(k log k)");
-                        System.out.println("   - Average Case: O(k log n)");
-                        System.out.println("   - Worst Case (Balanced Tree): O(k log n) (The search space is bounded by the balanced height)");
+                        System.out.println("What does each variabe mean?");
+                        System.out.println("   • n  → total stations in the tree");
+                        System.out.println("   • k → number of neighbors we want to find");
+                        System.out.println();
+
+                        System.out.println("Step 1: Navigate the tree → O(log n)");
+                        System.out.println("   Walk down the tree to find the target area");
+                        System.out.println();
+                        System.out.println("Step 2: Track k best stations → O(log k) per station visited");
+                        System.out.println("   Keep only the k closest stations in a priority queue");
+                        System.out.println();
+                        System.out.println("Step 3: Pruning → skip branches that are too far");
+                        System.out.println("   Avoids checking stations that can't be closer");
+                        System.out.println();
+
+                        System.out.println("Time Complexity:");
+                        System.out.println("   • Best case:    O(log n + k log k) - neighbors are all in the same region");
+                        System.out.println("   • Worst case:   O(n log k) - must check all n stations");
+                        System.out.println();
                     } catch (Exception e) {
                         System.out.println("Error during proximity search: " + e.getMessage());
                         e.printStackTrace();

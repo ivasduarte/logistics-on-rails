@@ -68,7 +68,6 @@ public class ProximitySearchController {
         PriorityQueue<StationDistance> nearestStations = new PriorityQueue<>((a, b) -> {
             int distComp = Double.compare(b.distance, a.distance);
             if (distComp != 0) return distComp;
-            // If distances are equal, sort by station name (descending for max heap)
             return b.station.getStationName().compareTo(a.station.getStationName());
         });
 
@@ -81,7 +80,7 @@ public class ProximitySearchController {
             tempList.add(0, nearestStations.poll());
         }
 
-        // Sort final results by distance, then by station name alphabetically
+
         tempList.sort((a, b) -> {
             int distComp = Double.compare(a.distance, b.distance);
             if (distComp != 0) return distComp;
