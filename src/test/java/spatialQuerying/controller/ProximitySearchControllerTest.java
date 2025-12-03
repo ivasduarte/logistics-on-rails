@@ -2,10 +2,10 @@ package spatialQuerying.controller;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import spatialQuerying.railwayMngt.Station;
-import spatialQuerying.trees.kd.KDTree2D;
-import spatialQuerying.trees.kd.Point2D;
-import spatialQuerying.trees.nodes.KDNode;
+import freightMngt.domain.Station;
+import spatialQuerying.structures.kd.KDTree2D;
+import spatialQuerying.structures.kd.Point2D;
+import spatialQuerying.structures.nodes.KDNode;
 
 import java.util.*;
 

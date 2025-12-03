@@ -1,12 +1,15 @@
 package esinf;
 
+import freightMngt.domain.Wagon;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import warehouseMngt.controller.WarehouseController;
-import warehouseMngt.logistics.*;
+import warehouseMngt.domain.Bay;
+import warehouseMngt.domain.Box;
+import warehouseMngt.domain.Warehouse;
+import warehouseMngt.operations.*;
 import warehouseMngt.order.Order;
 import warehouseMngt.order.OrderLines;
-import warehouseMngt.warehouse.*;
 
 import java.time.LocalDateTime;
 import java.util.*;

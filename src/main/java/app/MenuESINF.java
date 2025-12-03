@@ -4,11 +4,12 @@ import spatialQuerying.controller.GeographicalSearch;
 import spatialQuerying.controller.ProximitySearchController;
 import spatialQuerying.controller.RadiusSearch;
 import spatialQuerying.controller.StationController;
-import spatialQuerying.railwayMngt.Station;
-import spatialQuerying.trees.bst.LatitudeTree;
-import spatialQuerying.trees.bst.LongitudeTree;
-import spatialQuerying.trees.bst.TimeZoneTree;
-import spatialQuerying.trees.kd.KDTree2D;
+import freightMngt.domain.Station;
+import spatialQuerying.structures.bst.LatitudeTree;
+import spatialQuerying.structures.bst.LongitudeTree;
+import spatialQuerying.structures.bst.TimeZoneTree;
+import spatialQuerying.structures.kd.KDTree2D;
+import ui.NetworkUI;
 import warehouseMngt.controller.ReturnsController;
 import warehouseMngt.controller.WarehouseController;
 import warehouseMngt.order.Allocation;
@@ -16,8 +17,8 @@ import warehouseMngt.order.Order;
 import warehouseMngt.order.OrderAllocationResult;
 import warehouseMngt.picking.*;
 import warehouseMngt.returns.Returns;
-import warehouseMngt.service.LoadData;
-import warehouseMngt.warehouse.Warehouse;
+import utils.LoadData;
+import warehouseMngt.domain.Warehouse;
 
 import java.io.IOException;
 import java.util.*;
@@ -60,6 +61,7 @@ public class MenuESINF {
             System.out.println("8. USEI08 - Search by Geographical Area");
             System.out.println("9. USEI09 - Proximity Search (Nearest-N with Filters)");
             System.out.println("10. USEI10 - Radius search and density summary");
+            System.out.println("11. USEI11 - Load Graph from CSV files");
             System.out.println("0. Return to Main Menu");
             System.out.print("Select option: ");
             op2 = sc.nextInt();
@@ -741,6 +743,10 @@ public class MenuESINF {
                         System.out.println("Error during radius search: " + e.getMessage());
                         e.printStackTrace();
                     }
+                }
+                case 11 -> {
+                    NetworkUI networkUI = new NetworkUI();
+                    networkUI.run();
                 }
                 case 0 -> System.out.println("Returning to Main Menu...");
                 default -> System.out.println("Invalid option.");

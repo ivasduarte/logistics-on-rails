@@ -308,10 +308,10 @@ This class implements radius-based spatial search using a KD-Tree with Haversine
 ```java
 package spatialQuerying.controller;
 
-import spatialQuerying.railwayMngt.Station;
-import spatialQuerying.trees.kd.KDTree2D;
-import spatialQuerying.trees.kd.Point2D;
-import spatialQuerying.trees.nodes.KDNode;
+import freightMngt.domain.Station;
+import kd.spatialQuerying.structures.KDTree2D;
+import kd.spatialQuerying.structures.Point2D;
+import nodes.spatialQuerying.structures.KDNode;
 
 import java.util.*;
 

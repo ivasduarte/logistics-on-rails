@@ -322,12 +322,13 @@ void testFindNearestStations_CompleteScenario() {
 ## 5. Construction (Implementation)
 
 ### Class ProximitySearchController.java
+
 ```java
 package spatialQuerying.controller;
 
-import spatialQuerying.railwayMngt.Station;
-import spatialQuerying.trees.kd.KDTree2D;
-import spatialQuerying.trees.kd.Point2D;
+import freightMngt.domain.Station;
+import kd.spatialQuerying.structures.KDTree2D;
+import kd.spatialQuerying.structures.Point2D;
 
 import java.util.*;
 
@@ -361,37 +362,37 @@ public class ProximitySearchController {
      */
     public Map<String, Object> findNearestStations(double targetLat, double targetLon, int n, String timeZoneFilter) {
         Map<String, Object> result = new HashMap<>();
-        
+
         Point2D target = new Point2D(targetLat, targetLon);
         List<Station> nearestStations = kdTree.findNearestNeighbors(target, n, timeZoneFilter);
-        
+
         List<Double> distances = new ArrayList<>();
         for (Station station : nearestStations) {
-            double distance = calculateDistance(targetLat, targetLon, 
-                                              station.getLatitude(), station.getLongitude());
+            double distance = calculateDistance(targetLat, targetLon,
+                    station.getLatitude(), station.getLongitude());
             distances.add(distance);
         }
-        
+
         result.put("stations", nearestStations);
         result.put("distances", distances);
-        
+
         Map<String, Double> targetCoords = new HashMap<>();
         targetCoords.put("latitude", targetLat);
         targetCoords.put("longitude", targetLon);
         result.put("targetCoordinates", targetCoords);
-        
+
         Map<String, Integer> searchParams = new HashMap<>();
         searchParams.put("requestedNeighbors", n);
         searchParams.put("treeHeight", kdTree.getHeight());
         searchParams.put("resultsFound", nearestStations.size());
         result.put("searchParameters", searchParams);
-        
+
         List<String> appliedFilters = new ArrayList<>();
         if (timeZoneFilter != null) {
             appliedFilters.add(timeZoneFilter);
         }
         result.put("appliedFilters", appliedFilters);
-        
+
         return result;
     }
 
@@ -468,11 +469,13 @@ public class Station {
 ```
 
 ### Class KDTree2D.java
+
 ```java
 package spatialQuerying.trees.kd;
 
-import spatialQuerying.railwayMngt.Station;
-import spatialQuerying.trees.nodes.KDNode;
+import freightMngt.domain.Station;
+import kd.spatialQuerying.structures.Point2D;
+import nodes.spatialQuerying.structures.KDNode;
 
 import java.util.*;
 
@@ -513,7 +516,7 @@ public class KDTree2D {
         }
 
         PriorityQueue<StationDistance> maxHeap = new PriorityQueue<>(
-            (a, b) -> Double.compare(b.distance, a.distance)
+                (a, b) -> Double.compare(b.distance, a.distance)
         );
 
         findNearestNeighborsHelper(root, target, n, timeZoneFilter, maxHeap, 0);
@@ -536,19 +539,19 @@ public class KDTree2D {
      * @param maxHeap priority queue maintaining the N closest stations
      * @param depth the current depth in the tree (determines split dimension)
      */
-    private void findNearestNeighborsHelper(KDNode node, Point2D target, int n, 
-                                           String timeZoneFilter, 
-                                           PriorityQueue<StationDistance> maxHeap, 
-                                           int depth) {
+    private void findNearestNeighborsHelper(KDNode node, Point2D target, int n,
+                                            String timeZoneFilter,
+                                            PriorityQueue<StationDistance> maxHeap,
+                                            int depth) {
         if (node == null) return;
 
         // Check stations at this node
         for (Station station : node.getStations()) {
-            if (timeZoneFilter == null || 
-                station.getStationTimezone().equalsIgnoreCase(timeZoneFilter)) {
-                
+            if (timeZoneFilter == null ||
+                    station.getStationTimezone().equalsIgnoreCase(timeZoneFilter)) {
+
                 double distance = target.distanceTo(node.getPoint());
-                
+
                 if (maxHeap.size() < n) {
                     maxHeap.offer(new StationDistance(station, distance));
                 } else if (distance < maxHeap.peek().distance) {
@@ -567,8 +570,8 @@ public class KDTree2D {
         findNearestNeighborsHelper(firstChild, target, n, timeZoneFilter, maxHeap, depth + 1);
 
         // Check if we need to explore the other subtree
-        if (maxHeap.size() < n || shouldExploreOtherSide(target, node.getPoint(), 
-                                                         maxHeap.peek().distance, depth)) {
+        if (maxHeap.size() < n || shouldExploreOtherSide(target, node.getPoint(),
+                maxHeap.peek().distance, depth)) {
             findNearestNeighborsHelper(secondChild, target, n, timeZoneFilter, maxHeap, depth + 1);
         }
     }
@@ -595,11 +598,11 @@ public class KDTree2D {
      * @param depth the current depth
      * @return true if the other subtree might contain closer points
      */
-    private boolean shouldExploreOtherSide(Point2D target, Point2D splitPoint, 
-                                          double maxDistance, int depth) {
+    private boolean shouldExploreOtherSide(Point2D target, Point2D splitPoint,
+                                           double maxDistance, int depth) {
         int axis = depth % 2;
-        double axisDistance = Math.abs((axis == 0 ? target.getX() : target.getY()) - 
-                                      (axis == 0 ? splitPoint.getX() : splitPoint.getY()));
+        double axisDistance = Math.abs((axis == 0 ? target.getX() : target.getY()) -
+                (axis == 0 ? splitPoint.getX() : splitPoint.getY()));
         return axisDistance < maxDistance;
     }
 
@@ -656,11 +659,12 @@ public class Point2D {
 ```
 
 ### Class KDNode.java
+
 ```java
 package spatialQuerying.trees.nodes;
 
-import spatialQuerying.railwayMngt.Station;
-import spatialQuerying.trees.kd.Point2D;
+import freightMngt.domain.Station;
+import kd.spatialQuerying.structures.Point2D;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -684,13 +688,29 @@ public class KDNode {
         this.right = null;
     }
 
-    public Point2D getPoint() { return point; }
-    public List<Station> getStations() { return stations; }
-    public KDNode getLeft() { return left; }
-    public KDNode getRight() { return right; }
+    public Point2D getPoint() {
+        return point;
+    }
 
-    public void setLeft(KDNode left) { this.left = left; }
-    public void setRight(KDNode right) { this.right = right; }
+    public List<Station> getStations() {
+        return stations;
+    }
+
+    public KDNode getLeft() {
+        return left;
+    }
+
+    public KDNode getRight() {
+        return right;
+    }
+
+    public void setLeft(KDNode left) {
+        this.left = left;
+    }
+
+    public void setRight(KDNode right) {
+        this.right = right;
+    }
 
     /**
      * Adds a station to this node.

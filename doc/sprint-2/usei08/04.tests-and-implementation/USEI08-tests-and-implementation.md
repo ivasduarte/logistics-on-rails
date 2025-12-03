@@ -305,10 +305,10 @@ This class uses the KD-Tree for spatial querying. The `rangeSearchNode` method i
 ```java
 package spatialQuerying.controller;
 
-import spatialQuerying.railwayMngt.Station;
-import spatialQuerying.trees.kd.KDTree2D;
-import spatialQuerying.trees.kd.Point2D;
-import spatialQuerying.trees.nodes.KDNode;
+import freightMngt.domain.Station;
+import kd.spatialQuerying.structures.KDTree2D;
+import kd.spatialQuerying.structures.Point2D;
+import nodes.spatialQuerying.structures.KDNode;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -342,7 +342,7 @@ public class GeographicalSearch {
         }
         return new ArrayList<>();
     }
-    
+
     // --- Area Search (Range Query) ---
 
     /**
@@ -354,7 +354,7 @@ public class GeographicalSearch {
         if (!isValidCoordinates(latMin, lonMin) || !isValidCoordinates(latMax, lonMax) || latMin > latMax || lonMin > lonMax) {
             throw new IllegalArgumentException("Invalid range coordinates or bounds.");
         }
-        
+
         List<Station> foundStations = new ArrayList<>();
         // Start search from root, splitting by Latitude (true)
         rangeSearchNode(kdTree.getRoot(), latMin, latMax, lonMin, lonMax, true, foundStations);
@@ -379,7 +379,7 @@ public class GeographicalSearch {
 
         // 1. Check if the current point is within the query range
         if (currentLat >= latMin && currentLat <= latMax &&
-            currentLon >= lonMin && currentLon <= lonMax) {
+                currentLon >= lonMin && currentLon <= lonMax) {
             results.addAll(node.getStationList());
         }
 
@@ -402,20 +402,24 @@ public class GeographicalSearch {
             }
         }
     }
-    
+
     // --- Helper Methods ---
 
     private KDNode searchNode(KDNode node, Point2D target, boolean divideByLatitude) {
-        if (node == null) { return null; }
-        if (node.getCoordinates().equals(target)) { return node; }
-        
+        if (node == null) {
+            return null;
+        }
+        if (node.getCoordinates().equals(target)) {
+            return node;
+        }
+
         boolean goLeft;
         if (divideByLatitude) {
             goLeft = target.getStationLatitude() < node.getCoordinates().getStationLatitude();
         } else {
             goLeft = target.getStationLongitude() < node.getCoordinates().getStationLongitude();
         }
-        
+
         if (goLeft) {
             return searchNode(node.getLeft(), target, !divideByLatitude);
         } else {

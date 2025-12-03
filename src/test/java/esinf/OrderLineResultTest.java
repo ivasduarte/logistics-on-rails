@@ -3,7 +3,7 @@ package esinf;
 import org.junit.jupiter.api.Test;
 import warehouseMngt.order.Allocation;
 import warehouseMngt.order.OrderLineResult;
-import warehouseMngt.service.LineStatus;
+import utils.LineStatus;
 import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 

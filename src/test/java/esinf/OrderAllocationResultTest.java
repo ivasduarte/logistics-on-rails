@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Test;
 import warehouseMngt.order.Allocation;
 import warehouseMngt.order.OrderAllocationResult;
 import warehouseMngt.order.OrderLineResult;
-import warehouseMngt.service.LineStatus;
+import utils.LineStatus;
 import java.util.List;
 import java.util.Map;
 

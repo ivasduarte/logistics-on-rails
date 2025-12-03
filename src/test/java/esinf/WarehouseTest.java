@@ -1,6 +1,6 @@
 package esinf;
 
-import warehouseMngt.warehouse.Warehouse;
+import warehouseMngt.domain.Warehouse;
 import java.util.*;
 
 public class WarehouseTest extends Warehouse {

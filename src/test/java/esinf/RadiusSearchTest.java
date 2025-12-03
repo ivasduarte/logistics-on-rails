@@ -3,8 +3,8 @@ package esinf;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import spatialQuerying.controller.RadiusSearch;
-import spatialQuerying.railwayMngt.Station;
-import spatialQuerying.trees.kd.KDTree2D;
+import freightMngt.domain.Station;
+import spatialQuerying.structures.kd.KDTree2D;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -1,6 +1,6 @@
 package warehouseMngt.returns;
 
-import warehouseMngt.logistics.StockAction;
+import warehouseMngt.operations.StockAction;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;

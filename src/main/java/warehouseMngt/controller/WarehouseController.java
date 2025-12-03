@@ -1,11 +1,12 @@
 package warehouseMngt.controller;
 
-import warehouseMngt.logistics.*;
+import freightMngt.domain.Wagon;
+import warehouseMngt.operations.*;
 import warehouseMngt.order.*;
-import warehouseMngt.warehouse.Bay;
-import warehouseMngt.warehouse.Box;
-import warehouseMngt.warehouse.Movement;
-import warehouseMngt.warehouse.Warehouse;
+import warehouseMngt.domain.Bay;
+import warehouseMngt.domain.Box;
+import warehouseMngt.operations.Movement;
+import warehouseMngt.domain.Warehouse;
 
 import java.time.LocalDateTime;
 import java.util.*;

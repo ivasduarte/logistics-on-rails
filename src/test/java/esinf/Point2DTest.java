@@ -1,7 +1,7 @@
 package esinf;
 
 import org.junit.jupiter.api.Test;
-import spatialQuerying.trees.kd.Point2D;
+import spatialQuerying.structures.kd.Point2D;
 
 import static org.junit.jupiter.api.Assertions.*;
 

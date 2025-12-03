@@ -1,7 +1,7 @@
 package app;
 
 import scheduler.Scheduler;
-import warehouseMngt.service.LoadData;
+import utils.LoadData;
 
 import java.io.IOException;
 import java.util.Scanner;

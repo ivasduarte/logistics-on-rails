@@ -1,10 +1,10 @@
 package warehouseMngt.controller;
 
-import warehouseMngt.logistics.StockAction;
+import warehouseMngt.operations.StockAction;
 import warehouseMngt.returns.AuditLog;
 import warehouseMngt.returns.Returns;
-import warehouseMngt.warehouse.Box;
-import warehouseMngt.warehouse.Warehouse;
+import warehouseMngt.domain.Box;
+import warehouseMngt.domain.Warehouse;
 
 import java.io.IOException;
 import java.time.LocalDateTime;

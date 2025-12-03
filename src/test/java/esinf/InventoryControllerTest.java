@@ -3,13 +3,13 @@ package esinf;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import warehouseMngt.controller.InventoryController;
-import warehouseMngt.logistics.StockAction;
+import warehouseMngt.operations.StockAction;
 import warehouseMngt.returns.AuditLog;
 import warehouseMngt.returns.ReturnReasons;
 import warehouseMngt.returns.Returns;
-import warehouseMngt.warehouse.Bay;
-import warehouseMngt.warehouse.Box;
-import warehouseMngt.warehouse.Warehouse;
+import warehouseMngt.domain.Bay;
+import warehouseMngt.domain.Box;
+import warehouseMngt.domain.Warehouse;
 
 import java.util.*;
 

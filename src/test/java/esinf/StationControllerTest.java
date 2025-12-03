@@ -4,7 +4,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import spatialQuerying.controller.StationController;
-import spatialQuerying.railwayMngt.Station;
+import freightMngt.domain.Station;
 
 import java.io.IOException;
 import java.nio.file.Files;

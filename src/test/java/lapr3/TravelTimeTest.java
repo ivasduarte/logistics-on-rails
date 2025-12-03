@@ -1,9 +1,10 @@
 package lapr3;
 
 
+import freightMngt.domain.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import spatialQuerying.railwayMngt.*;
+
 import java.util.ArrayList;
 import java.util.List;
 

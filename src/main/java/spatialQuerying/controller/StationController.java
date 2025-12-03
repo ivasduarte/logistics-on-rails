@@ -1,6 +1,6 @@
 package spatialQuerying.controller;
 
-import spatialQuerying.railwayMngt.Station;
+import freightMngt.domain.Station;
 
 import java.io.BufferedReader;
 import java.io.FileReader;

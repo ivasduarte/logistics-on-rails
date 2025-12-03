@@ -1,6 +1,6 @@
 package warehouseMngt.order;
 
-import warehouseMngt.service.LineStatus;
+import utils.LineStatus;
 
 import java.util.ArrayList;
 import java.util.List;

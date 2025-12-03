@@ -1,10 +1,9 @@
 package esinf;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import spatialQuerying.railwayMngt.Station;
-import spatialQuerying.trees.bst.LatitudeTree;
+import freightMngt.domain.Station;
+import spatialQuerying.structures.bst.LatitudeTree;
 
 import java.util.List;
 

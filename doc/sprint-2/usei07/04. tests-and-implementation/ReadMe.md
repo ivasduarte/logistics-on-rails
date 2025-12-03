@@ -276,8 +276,8 @@ public class Point2D {
 
 package spatialQuerying.trees.nodes;
 
-import spatialQuerying.railwayMngt.Station;
-import spatialQuerying.trees.kd.Point2D;
+import freightMngt.domain.Station;
+import kd.spatialQuerying.structures.Point2D;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -357,10 +357,11 @@ public class KDNode {
  */
 package spatialQuerying.trees.kd;
 
-import spatialQuerying.railwayMngt.Station;
-import spatialQuerying.trees.bst.LatitudeTree;
-import spatialQuerying.trees.bst.LongitudeTree;
-import spatialQuerying.trees.nodes.KDNode;
+import freightMngt.domain.Station;
+import spatialQuerying.structures.bst.LatitudeTree;
+import spatialQuerying.structures.bst.LongitudeTree;
+import kd.spatialQuerying.structures.Point2D;
+import nodes.spatialQuerying.structures.KDNode;
 
 import java.util.*;
 
@@ -479,12 +480,12 @@ public class KDTree2D {
         for (int i = 0; i <= uniquePoints; i++) {
             Point2D point = latList.get(i);
 
-            if(!point.equals(medianPoint)){
+            if (!point.equals(medianPoint)) {
                 if (divideByLatitude) {
-                    if(i < medianIndex) leftLat.add(point);
+                    if (i < medianIndex) leftLat.add(point);
                     else rightLat.add(point);
                 } else {
-                    if(point.getStationLongitude() < medianPoint.getStationLongitude()) leftLat.add(point);
+                    if (point.getStationLongitude() < medianPoint.getStationLongitude()) leftLat.add(point);
                     else rightLat.add(point);
                 }
             }

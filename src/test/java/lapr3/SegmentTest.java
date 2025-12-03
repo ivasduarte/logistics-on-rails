@@ -1,7 +1,7 @@
 package lapr3;
 
 import org.junit.jupiter.api.Test;
-import spatialQuerying.railwayMngt.Segment;
+import freightMngt.domain.Segment;
 
 import static org.junit.jupiter.api.Assertions.*;
 

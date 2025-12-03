@@ -3,10 +3,10 @@ package esinf;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import spatialQuerying.controller.StationController;
-import spatialQuerying.railwayMngt.Station;
-import spatialQuerying.trees.bst.LatitudeTree;
-import spatialQuerying.trees.bst.LongitudeTree;
-import spatialQuerying.trees.bst.TimeZoneTree;
+import freightMngt.domain.Station;
+import spatialQuerying.structures.bst.LatitudeTree;
+import spatialQuerying.structures.bst.LongitudeTree;
+import spatialQuerying.structures.bst.TimeZoneTree;
 
 import java.io.IOException;
 import java.nio.file.Files;

@@ -2,10 +2,11 @@ package esinf;
 
 import org.junit.jupiter.api.*;
 import warehouseMngt.controller.ReturnsController;
-import warehouseMngt.logistics.StockAction;
+import warehouseMngt.domain.Bay;
+import warehouseMngt.domain.Warehouse;
+import warehouseMngt.operations.StockAction;
 import warehouseMngt.returns.ReturnReasons;
 import warehouseMngt.returns.Returns;
-import warehouseMngt.warehouse.*;
 
 import java.io.IOException;
 import java.nio.file.Files;

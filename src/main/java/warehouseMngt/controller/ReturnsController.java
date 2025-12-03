@@ -1,8 +1,8 @@
 package warehouseMngt.controller;
 
-import warehouseMngt.logistics.StockAction;
+import warehouseMngt.operations.StockAction;
 import warehouseMngt.returns.*;
-import warehouseMngt.warehouse.Warehouse;
+import warehouseMngt.domain.Warehouse;
 
 import java.io.IOException;
 import java.util.ArrayList;
