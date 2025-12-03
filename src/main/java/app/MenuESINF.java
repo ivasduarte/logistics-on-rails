@@ -713,17 +713,29 @@ public class MenuESINF {
 
                         System.out.println("\n=== TEMPORAL COMPLEXITY ANALYSIS ===");
                         System.out.println("Radius Search on Balanced KD-Tree (USEI10):");
-                        System.out.println("1. Initial Traversal and Pruning: O(log n)");
-                        System.out.println("2. Area Coverage: O(m), where m is number of nodes in search area");
-                        System.out.println("3. Distance Calculation: O(1) per point");
-                        System.out.println("4. Result Sorting: O(k log k), where k is number of results");
+
+                        System.out.println("1. Tree Traversal with Pruning: O(√n)");
+                        System.out.println("   - Exploring multiple branches due to radius search");
+                        System.out.println("   - Pruning eliminates branches outside search circle");
+
+                        System.out.println("2. Collecting Results: O(k)");
+                        System.out.println("   - k = number of stations found within radius");
+
+                        System.out.println("3. Distance Calculation: O(1) per candidate");
+                        System.out.println("   - Haversine formula applied to each node visited");
+
+                        System.out.println("4. Result Sorting: O(k log k)");
+                        System.out.println("   - Sorting k stations by distance, then by name");
+
+                        System.out.println("5. Density Summary Generation: O(k)");
+                        System.out.println("   - Single pass through results to count by country/city");
 
                         System.out.println("\nOverall Time Complexity:");
-                        System.out.println("O(log n + m + k log k)");
+                        System.out.println("O(√n + k log k)");
                         System.out.println("where:");
-                        System.out.println("- n is total number of points in tree");
-                        System.out.println("- m is number of points in search area");
-                        System.out.println("- k is number of results found");
+                        System.out.println("- n is total number of nodes in the tree");
+                        System.out.println("- k is number of stations found within radius");
+                        System.out.println("\nNote: In worst case (very large radius), approaches O(n + k log k)");
 
                     } catch (Exception e) {
                         System.out.println("Error during radius search: " + e.getMessage());
