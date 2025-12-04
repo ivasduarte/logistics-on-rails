@@ -1,0 +1,21 @@
+@startuml
+skinparam monochrome true
+skinparam packageStyle rectangle
+skinparam shadowing false
+
+autonumber
+
+actor "Maintenance Planner" as Planner
+participant ":System" as System
+
+activate Planner
+
+Planner -> System : asks to compute rail hub centrality metrics
+    activate System
+    == Calculation & Output Operation ==
+    System --> Planner : outputs the list of stations ranked by HubScore \n(showing stid, stname, degree, strength, \nbetweenness, harmonic_closeness, hubscore)
+    deactivate System
+
+deactivate Planner
+
+@enduml
