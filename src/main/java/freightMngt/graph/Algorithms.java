@@ -18,33 +18,39 @@ public class Algorithms {
      */
     public static <V, E> LinkedList<V> BreadthFirstSearch(Graph<V, E> g, V vert) {
         // Validate input
+        if (g == null) {
+            throw new IllegalArgumentException("Graph is null.");
+        }
         if (!g.validVertex(vert)) {
             return null;
         }
 
         // Initialize data structures
-        LinkedList<V> result = new LinkedList<>();
-        Set<V> visited = new HashSet<>();
-        Queue<V> queue = new LinkedList<>();
+        LinkedList<V> qbfs = new LinkedList<>();
+        Queue<V> qaux = new LinkedList<>();
+        Map<V, Boolean> visited = new HashMap<>();
 
-        // Start BFS from the source vertex
-        queue.offer(vert);
-        visited.add(vert);
+        for (V vertex : g.vertices()) {
+            visited.put(vertex, false);
+        }
 
-        while (!queue.isEmpty()) {
-            V current = queue.poll();
-            result.add(current);
+        qbfs.add(vert);
+        qaux.offer(vert);
+        visited.put(vert, true);
 
-            // Visit all adjacent vertices
-            for (V adjacent : g.adjVertices(current)) {
-                if (!visited.contains(adjacent)) {
-                    visited.add(adjacent);
-                    queue.offer(adjacent);
+        while (!qaux.isEmpty()) {
+            V vOrig = qaux.poll();
+
+            for (V vAdj : g.adjVertices(vert)) {
+                if (!visited.get(vAdj)) {
+                    qbfs.add(vAdj);
+                    qaux.offer(vAdj);
+                    visited.put(vAdj, true);
                 }
             }
         }
 
-        return result;
+        return qbfs;
     }
 
     /**
@@ -65,6 +71,7 @@ public class Algorithms {
      *
      * @param g    Graph instance
      * @param vert vertex of graph g that will be the source of the search
+     *
      * @return a LinkedList with the vertices of depth-first search
      */
     public static <V, E> LinkedList<V> DepthFirstSearch(Graph<V, E> g, V vert) {
@@ -82,10 +89,31 @@ public class Algorithms {
      * @param path    stack with vertices of the current path (the path is in reverse order)
      * @param paths   ArrayList with all the paths (in correct order)
      */
-    private static <V, E> void allPaths(Graph<V, E> g, V vOrig, V vDest, boolean[] visited,
-                                        LinkedList<V> path, ArrayList<LinkedList<V>> paths) {
+    private static <V, E> void allPaths(Graph<V, E> g, V vOrig, V vDest, boolean[] visited, LinkedList<V> path, ArrayList<LinkedList<V>> paths) {
+        if (g == null) {
+            throw new IllegalArgumentException("Graph is null.");
+        }
 
-        throw new UnsupportedOperationException("Not supported yet.");
+        path.push(vOrig);
+
+        int keyVOrig = g.key(vOrig);
+        visited[keyVOrig] = true;
+
+        for (V vAdj : g.adjVertices(vOrig)) {
+            if (vAdj.equals(vDest)) {
+                path.push(vDest);
+                paths.add(new LinkedList<>(path));
+                path.pop();
+            } else {
+                int keyVAdj = g.key(vAdj);
+                if (!visited[keyVAdj]) {
+                    allPaths(g, vAdj, vDest, visited, path, paths);
+                }
+            }
+        }
+
+        path.pop();
+        visited[keyVOrig] = false;
     }
 
     /**
@@ -94,6 +122,7 @@ public class Algorithms {
      * @param g     Graph instance
      * @param vOrig information of the Vertex origin
      * @param vDest information of the Vertex destination
+     *
      * @return paths ArrayList with all paths from vOrig to vDest
      */
     public static <V, E> ArrayList<LinkedList<V>> allPaths(Graph<V, E> g, V vOrig, V vDest) {
