@@ -1,4 +1,4 @@
-package freightMngt.services;
+package freightMngt.controller;
 
 import freightMngt.domain.ConnectionData;
 import freightMngt.domain.Station;
@@ -14,11 +14,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Locale;
 
-public class NetworkService {
+public class NetworkController {
 
     private Graph<Station, ConnectionData> graph;
 
-    public NetworkService() {
+    public NetworkController() {
         this.graph = new MapGraph<>(false);
     }
 
@@ -27,7 +27,7 @@ public class NetworkService {
     public void loadNetwork(String stationsFile, String linesFile) {
         Map<String, Station> stationMap = new HashMap<>();
 
-        // read stations from file
+        // read stations from the file
         try (BufferedReader br = new BufferedReader(new FileReader(stationsFile))) {
             String line = br.readLine(); // skip header
 
@@ -127,4 +127,6 @@ public class NetworkService {
             e.printStackTrace();
         }
     }
+
+
 }

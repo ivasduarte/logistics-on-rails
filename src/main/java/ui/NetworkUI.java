@@ -3,18 +3,18 @@ package ui;
 import freightMngt.domain.ConnectionData;
 import freightMngt.domain.Station;
 import freightMngt.graph.Graph;
-import freightMngt.services.NetworkService;
+import freightMngt.controller.NetworkController;
 
 import java.util.Scanner;
 
 public class NetworkUI implements Runnable {
 
     private final Scanner scanner;
-    private NetworkService networkService;
+    private NetworkController networkController;
 
     public NetworkUI() {
         this.scanner = new Scanner(System.in);
-        this.networkService = new NetworkService();
+        this.networkController = new NetworkController();
     }
 
     @Override
@@ -31,7 +31,7 @@ public class NetworkUI implements Runnable {
                     loadNetwork();
                     break;
                 case "2":
-                    System.out.println("Not implemented yet!");
+                    exportNetworkToSVG();
                     break;
                 case "3":
                     System.out.println("Not implemented yet!");
@@ -46,7 +46,7 @@ public class NetworkUI implements Runnable {
                     System.out.println("Not implemented yet!");
                     break;
                 case "7":
-                    exportNetworkToSVG();
+
                     break;
                 case "0":
                     exit = true;
@@ -67,18 +67,18 @@ public class NetworkUI implements Runnable {
     private void showMainMenu() {
         System.out.println("\n══════════════════════ NETWORK MENU ══════════════════════");
 
-        Graph<Station, ConnectionData> graph = networkService.getGraph();
+        Graph<Station, ConnectionData> graph = networkController.getGraph();
         String status = (graph.numVertices() == 0) ? "[X] Not Loaded" : "[V] Loaded (" + graph.numVertices() + " stations)";
 
         System.out.println("Network Status: " + status);
         System.out.println("──────────────────────────────────────────────────────────");
         System.out.println("01. Load Railway Network");
-        System.out.println("02. Upgrade Picking Plan");
-        System.out.println("03. Build Backbone Network");
-        System.out.println("04. Centrality Analysis");
-        System.out.println("05. Max Throughput");
-        System.out.println("06. Shortest Path (Route Planner)");
-        System.out.println("07. Export Network to Graphviz (.dot)");
+        System.out.println("02. Export Network to Graphviz (.dot)");
+        System.out.println("03. Directed Line Upgrade Plan");
+        System.out.println("04. Minimal Backbone Network");
+        System.out.println("05. Rail Hub Centrality Analysis");
+        System.out.println("06. Maximum Throughput Between Two Hubs");
+        System.out.println("07. Risk-Aware Shortest Path");
         System.out.println(" 0. Exit");
         System.out.println("══════════════════════════════════════════════════════════");
     }
@@ -94,9 +94,9 @@ public class NetworkUI implements Runnable {
         System.out.println(" > Lines:    " + linesFile);
 
         try {
-            networkService.loadNetwork(stationsFile, linesFile);
+            networkController.loadNetwork(stationsFile, linesFile);
 
-            Graph<Station, ConnectionData> graph = networkService.getGraph();
+            Graph<Station, ConnectionData> graph = networkController.getGraph();
 
             if (graph.numVertices() > 0) {
                 showSuccess("\nNetwork loaded successfully!");
@@ -111,7 +111,7 @@ public class NetworkUI implements Runnable {
     }
 
     private void exportNetworkToSVG() {
-        if (networkService.getGraph().numVertices() == 0) {
+        if (networkController.getGraph().numVertices() == 0) {
             showError("No network loaded to export.");
             return;
         }
@@ -120,7 +120,7 @@ public class NetworkUI implements Runnable {
         String filename = "belgian_railway.dot";
 
         try {
-            networkService.exportToGraphviz(filename);
+            networkController.exportToGraphviz(filename);
             showSuccess("File generated: " + filename);
             System.out.println("To convert to SVG, run in terminal:");
             System.out.println("neato -Tsvg " + filename + " -o belgian_railway.svg");
