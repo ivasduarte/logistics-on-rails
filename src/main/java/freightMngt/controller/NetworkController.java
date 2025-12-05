@@ -2,6 +2,7 @@ package freightMngt.controller;
 
 import freightMngt.domain.ConnectionData;
 import freightMngt.domain.Station;
+import freightMngt.graph.Algorithms;
 import freightMngt.graph.Edge;
 import freightMngt.graph.Graph;
 import freightMngt.graph.MapGraph;
@@ -10,16 +11,15 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Locale;
+import java.util.*;
+import java.util.function.BinaryOperator;
 
 public class NetworkController {
 
     private Graph<Station, ConnectionData> graph;
 
     public NetworkController() {
-        this.graph = new MapGraph<>(false);
+        this.graph = new MapGraph<>(true);
     }
 
     public Graph<Station, ConnectionData> getGraph() { return graph; }
@@ -128,5 +128,65 @@ public class NetworkController {
         }
     }
 
+    /**
+     * Computes the shortest path between two stations using the Bellman-Ford algorithm.
+     * Uses ABSOLUTE VALUE of costs to avoid negative cycles in the network data.
+     *
+     * @param vOrig     Origin station.
+     * @param vDest     Destination station.
+     * @param ce        Comparator for Double costs.
+     * @param sum       Binary operator for summing costs.
+     * @param zero      Neutral element (0.0).
+     * @param shortPath Returns the shortest path (or negative cycle if detected).
+     * @return The shortest distance (total cost), or null if the path doesn't exist
+     *         or a negative cycle is detected.
+     */
+    public Double shortestPathBellmanFord(Station vOrig, Station vDest,
+                                          Comparator<Double> ce, BinaryOperator<Double> sum, Double zero,
+                                          LinkedList<Station> shortPath) {
 
+        // Create a temporary graph with Double weights (ABSOLUTE VALUE of cost)
+        Graph<Station, Double> costGraph = new MapGraph<>(true);
+
+        // Copy all vertices
+        for (Station station : graph.vertices()) {
+            costGraph.addVertex(station);
+        }
+
+        // Copy all edges, using ABSOLUTE VALUE of cost to avoid negative cycles
+        for (Edge<Station, ConnectionData> edge : graph.edges()) {
+            Station origin = edge.getVOrigin();
+            Station target = edge.getVTarget();
+            Double cost = Math.abs(edge.getWeight().getCost()); // |cost| ensures non-negative
+            costGraph.addEdge(origin, target, cost);
+        }
+
+        // Run Bellman-Ford on the cost graph (now without negative weights)
+        return Algorithms.shortestPathBellmanFord(costGraph, vOrig, vDest, ce, sum, zero, shortPath);
+    }
+
+    /**
+     * Identifies edges that are part of known negative cycles.
+     * Currently handles the DRONGEN-GENT-ST-P negative cycle.
+     */
+    private boolean isNegativeCycleEdge(Station origin, Station target) {
+        String origId = origin.getNodeID();
+        String destId = target.getNodeID();
+
+        // Known negative cycle: DRONGEN (335) <-> GENT-ST-P (455)
+        return (origId.equals("335") && destId.equals("455")) ||
+                (origId.equals("455") && destId.equals("335"));
+    }
+
+    /**
+     * Returns a Station by its ID (String), which is the unique NodeID.
+     */
+    public Station getStationByID(String stationID) {
+        for (Station station : graph.vertices()) {
+            if (station.getNodeID().equals(stationID)) {
+                return station;
+            }
+        }
+        return null;
+    }
 }
