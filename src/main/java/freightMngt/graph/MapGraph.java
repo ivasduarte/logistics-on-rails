@@ -23,7 +23,14 @@ public class MapGraph<V, E> extends CommonGraph<V, E> {
     @Override
     public Collection<V> adjVertices(V vert) {
 
-        throw new UnsupportedOperationException("Not supported yet.");
+        // return if vertex isn't valid
+        if (!validVertex(vert)) return null;
+
+        // get MapVertex associated with vert
+        MapVertex<V, E> mv = mapVertices.get(vert);
+
+        // return all adjacent vertices
+        return mv.getAllAdjVerts();
     }
 
     @Override
