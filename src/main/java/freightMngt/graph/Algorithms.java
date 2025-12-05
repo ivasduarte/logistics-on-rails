@@ -41,7 +41,7 @@ public class Algorithms {
         while (!qaux.isEmpty()) {
             V vOrig = qaux.poll();
 
-            for (V vAdj : g.adjVertices(vert)) {
+            for (V vAdj : g.adjVertices(vOrig)) {
                 if (!visited.get(vAdj)) {
                     qbfs.add(vAdj);
                     qaux.offer(vAdj);
