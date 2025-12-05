@@ -105,7 +105,21 @@ public class MatrixGraph<V,E> extends CommonGraph<V,E> {
     @Override
     public Collection<Edge<V, E>> outgoingEdges(V vert) {
 
-        throw new UnsupportedOperationException("Not supported yet.");
+        if (!validVertex(vert)) {
+            return null;
+        }
+
+        int vertKey = key(vert);
+
+        ArrayList<Edge<V, E>> le = new ArrayList<>();
+
+        for (int j = 0; j < numVerts; j++) {
+            if (edgeMatrix[vertKey][j] != null) {
+                le.add(edgeMatrix[vertKey][j]);
+            }
+        }
+
+        return le;
     }
 
     @Override
