@@ -145,7 +145,73 @@ public class Algorithms {
                                                     Comparator<E> ce, BinaryOperator<E> sum, E zero,
                                                     boolean[] visited, V[] pathKeys, E[] dist) {
 
-        throw new UnsupportedOperationException("Not supported yet.");
+        int vOriginI = g.key(vOrig); // get origin index
+
+        if (vOriginI < 0) {
+            return; // vertex doesn't exist
+        }
+
+        // initialize distances to infinity (zero) and pathKeys to null
+        for (int i = 0; i < g.numVertices(); i++) {
+            dist[i] = zero;
+            pathKeys[i] = null;
+            visited[i] = false;
+        }
+
+        pathKeys[vOriginI] = vOrig;
+
+        // get vertex with minimum distance
+        PriorityQueue<V> pq = new PriorityQueue<>((v1,v2) -> {
+            int i1 = g.key(v1);
+            int i2 = g.key(v2);
+
+            E dist1 = dist[i1];
+            E dist2 = dist[i2];
+
+            // handle null distances
+            if (dist1 == null && dist2 == null) return 0;
+            if (dist1 == null) return 1; // v1 is farther
+            if (dist2 == null) return -1; // v2 is farther
+
+            // compare vertices by their distance
+            return ce.compare(dist[i1], dist[i2]);
+        });
+
+        pq.offer(vOrig); // add origin to queue
+
+        // process vertices
+        while(!pq.isEmpty()) {
+            V v = pq.poll();
+            int vI = g.key(v);
+
+            // if visited skip
+            if (visited[vI]) continue;
+
+            // mark as visited
+            visited[vI] = true;
+
+            // if distance is null stop
+            if (dist[vI] == null) break;
+
+            // relax all adjacent edges
+            for (V vAdj : g.adjVertices(v)) {
+                int vAdjI = g.key(vAdj);
+
+                if (!visited[vAdjI]){
+                    Edge<V, E> e = g.edge(v, vAdj);
+                    E eWeight = e.getWeight();
+
+                    // calculate new distance
+                    E newDist = sum.apply(dist[vI], eWeight);
+
+                    if (dist[vAdjI] == null || ce.compare(newDist, dist[vAdjI]) < 0) {
+                        dist[vAdjI] = newDist;
+                        pathKeys[vAdjI] = v;
+                        pq.offer(vAdj); // add to queue for processing
+                    }
+                }
+            }
+        }
     }
 
 
