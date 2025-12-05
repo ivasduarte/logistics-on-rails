@@ -413,7 +413,24 @@ public class Algorithms {
     private static <V, E> void getPath(Graph<V, E> g, V vOrig, V vDest,
                                        V[] pathKeys, LinkedList<V> path) {
 
-        throw new UnsupportedOperationException("Not supported yet.");
+        // return if origin and/or destination isn't valid
+        if (!g.validVertex(vOrig) || !g.validVertex(vDest)) return;
+
+        // start path from destination and work backwards
+        V current = vDest;
+
+        // build path from destination to origin
+        while (current != null && !current.equals(vOrig)) {
+            path.addFirst(current);
+            int currentI = g.key(current);
+            current = pathKeys[currentI];
+        }
+
+        if (current != null) {
+            path.addFirst(vOrig); // add origin if path was found
+        } else {
+            path.clear(); // clear path list if no path was found
+        }
     }
 
     /**
