@@ -1,5 +1,7 @@
 package freightMngt.graph;
 
+import freightMngt.domain.ConnectionData;
+
 import java.util.*;
 import java.util.function.BinaryOperator;
 
@@ -286,9 +288,27 @@ public class Algorithms {
         return dist[vDestI];
     }
 
+    /** Shortest-path between a vertex and all other vertices
+     *
+     * @param g graph
+     * @param vOrig start vertex
+     * @param ce comparator between elements of type E
+     * @param sum sum two elements of type E
+     * @param zero neutral element of the sum in elements of type E
+     * @param paths returns all the minimum paths
+     * @param dists returns the corresponding minimum distances
+     * @return if vOrig exists in the graph true, false otherwise
+     */
+    public static <V, E> boolean shortestPaths(Graph<V, E> g, V vOrig,
+                                               Comparator<E> ce, BinaryOperator<E> sum, E zero,
+                                               ArrayList<LinkedList<V>> paths, ArrayList<E> dists) {
+
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
     /**
      * Computes the shortest-path distance from a source vertex to all reachable vertices of a graph
-     * g with no-negative-cycle edges, using Bellman-Ford algorithm.
+     * g with potentially negative edge weights, using Bellman-Ford algorithm.
      *
      * @param g         Graph instance
      * @param vOrig     Vertex that will be the source of the path
@@ -297,47 +317,53 @@ public class Algorithms {
      * @param zero      Neutral element of the sum in elements of type E
      * @param paths     ArrayList with all the paths
      * @param dists     ArrayList the corresponding minimum distances
-     * @return          If vOrig exists in the graph, true, false otherwise
+     * @return          If vOrig exists and no negative cycle is detected, true. False otherwise.
+     *                  If a negative cycle is found, paths.get(0) contains the cycle vertices.
      */
-    public static <V, E> boolean shortestPaths(Graph<V, E> g, V vOrig,
-                                               Comparator<E> ce, BinaryOperator<E> sum, E zero,
-                                               ArrayList<LinkedList<V>> paths, ArrayList<E> dists) {
+    public static <V, E> boolean bellmanFord(Graph<V, E> g, V vOrig,
+                                             Comparator<E> ce, BinaryOperator<E> sum, E zero,
+                                             ArrayList<LinkedList<V>> paths, ArrayList<E> dists) {
 
-        if(!g.validVertex(vOrig)) return false;
+        if (!g.validVertex(vOrig)) return false;
 
         int numVerts = g.numVertices();
-        int sourceKeys = g.key(vOrig);
-        if(sourceKeys == -1) return false;
+        int sourceKey = g.key(vOrig);
+        if (sourceKey == -1) return false;
 
         // initialize data structures
         E[] dist = (E[]) new Object[numVerts];
         int[] predecessors = new int[numVerts];
         Arrays.fill(predecessors, -1);
 
-        paths.clear(); dists.clear();
+        paths.clear();
+        dists.clear();
 
         // initialize return lists
-        for(int i = 0; i < numVerts; i++) {
+        for (int i = 0; i < numVerts; i++) {
             dists.add(null);
             paths.add(null);
         }
 
-        // distance from source to itself is zero
-        dist[sourceKeys] = zero;
-        dists.set(sourceKeys, zero);
+        // the distance from the source to itself is zero
+        dist[sourceKey] = zero;
+        dists.set(sourceKey, zero);
 
+        // relaxation phase
         relaxation(g, dist, sum, ce, predecessors);
+
+        // check for negative cycles
         LinkedList<V> cycle = checkNegativeCycles(g, dist, sum, ce, predecessors);
 
-        if(cycle != null) {
-            // if cycle exists -> clean everything -> return only cycle in first position
-            paths.clear(); dists.clear();
-            paths.add(cycle); // return cycle as error path
-            return false;
+        if (cycle != null) {
+            // negative cycle detected
+            paths.clear();
+            dists.clear();
+            paths.add(cycle); // store cycle in the first position
+            return false; // failure due to negative cycle
         }
 
-        // if no cycles found -> reconstruct paths
-        reconstructPaths(g, sourceKeys, dist, predecessors, paths, dists);
+        // no cycles found - reconstruct paths
+        reconstructPaths(g, sourceKey, dist, predecessors, paths, dists);
 
         return true; // success
     }
@@ -350,106 +376,159 @@ public class Algorithms {
 
         int numVerts = g.numVertices();
 
-        for(int i = 1; i < numVerts; i++) {
+        // relax all edges V-1 times
+        for (int i = 1; i < numVerts; i++) {
             boolean changed = false;
 
-            for(Edge<V, E> edge : g.edges()) {
+            for (Edge<V, E> edge : g.edges()) {
                 int u = g.key(edge.getVOrigin());
                 int v = g.key(edge.getVTarget());
-                E weight = edge.getWeight();
 
-                if(dist[u] != null) {
-                    E newDist = sum.apply(dist[u], weight);
+                E edgeWeight = edge.getWeight();
 
-                    if(dist[v] == null || ce.compare(newDist, dist[v]) < 0) {
+                // only relax if source vertex has been reached
+                if (dist[u] != null) {
+                    E newDist = sum.apply(dist[u], edgeWeight);
+
+                    // if a shorter path has been found, update distance
+                    if (dist[v] == null || ce.compare(newDist, dist[v]) < 0) {
                         dist[v] = newDist;
                         predecessors[v] = u;
                         changed = true;
                     }
                 }
             }
-            // if no distance changed, break
-            if(!changed) break;
+
+            // if no distance changed, terminate
+            if (!changed) break;
         }
     }
 
     /**
      * Check for negative cycles in the graph.
+     * Performs one more iteration to detect if any distance can still be improved.
+     * ONLY checks edges that are reachable from the source (dist[u] != null).
      *
-     * @return  The cycle as a LinkedList if found, otherwise null
+     * @return The cycle as a LinkedList if found, otherwise null
      */
     private static <V, E> LinkedList<V> checkNegativeCycles(Graph<V, E> g, E[] dist, BinaryOperator<E> sum,
-                                                   Comparator<E> ce, int[] predecessors) {
+                                                            Comparator<E> ce, int[] predecessors) {
 
-        for(Edge<V, E> edge : g.edges()) {
+        // if any distance improves on reachable edges, there's a negative cycle
+        for (Edge<V, E> edge : g.edges()) {
             int u = g.key(edge.getVOrigin());
             int v = g.key(edge.getVTarget());
-            E weight = edge.getWeight();
 
-            if(dist[u] != null) {
-                E newDist = sum.apply(dist[u], weight);
+            E edgeWeight = edge.getWeight();
+
+            // only check edges where source vertex is reachable (dist[u] != null)
+            if (dist[u] != null) {
+                E newDist = sum.apply(dist[u], edgeWeight);
+
+                // If we can still improve the distance, there's a negative cycle
                 if (dist[v] == null || ce.compare(newDist, dist[v]) < 0) {
-                    // cycle detected -> reconstruction
+                    // negative cycle detected in the reachable part of the graph
                     return buildCyclePath(g, v, predecessors);
-
                 }
             }
         }
-        return null;
+        return null; // no negative cycle in reachable part
     }
 
     /**
-     * Reconstructs the specific negative cycle previously found.
+     * Reconstructs the specific negative cycle.
      */
     private static <V, E> LinkedList<V> buildCyclePath(Graph<V, E> g, int startKey, int[] predecessors) {
-        LinkedList<V> cycle = new LinkedList<>();
-        boolean[] visited = new boolean[g.numVertices()];
-        int current = startKey;
+        int numVerts = g.numVertices();
 
-        // go back in predecessors until we reach the start vertex
-        while(!visited[current]) {
-            visited[current] = true;
+        int current = startKey;
+        for (int i = 0; i < numVerts; i++) {
+            if (predecessors[current] == -1) break;
             current = predecessors[current];
         }
 
-        // go through the cycle
-        int cycleStart = current;
-        cycle.addFirst(g.vertex(current));
-        current = predecessors[current];
+        int cycleStart = current; // mark the starting point
+        LinkedList<V> cycle = new LinkedList<>();
 
-        while(current != cycleStart) {
+        // build the cycle by following predecessors until we return to start
+        do {
             cycle.addFirst(g.vertex(current));
             current = predecessors[current];
+        } while (current != cycleStart && current != -1);
+
+        // add the starting vertex again to close the cycle
+        if (current == cycleStart) {
+            cycle.addFirst(g.vertex(cycleStart));
         }
-        cycle.addFirst(g.vertex(cycleStart)); // close cycle
 
         return cycle;
     }
 
     /**
-     * Reconstructs all shortest paths from source to valid destinations.
+     * Reconstructs all shortest paths from source to all reachable destinations.
      */
     private static <V, E> void reconstructPaths(Graph<V, E> g, int sourceKey, E[] dist, int[] predecessors,
                                                 ArrayList<LinkedList<V>> paths, ArrayList<E> dists) {
 
         int numVerts = g.numVertices();
 
-        for(int i = 0; i < numVerts; i++) {
+        for (int i = 0; i < numVerts; i++) {
             dists.set(i, dist[i]);
 
-            if(dist[i] != null) {
+            if (dist[i] != null) {
                 LinkedList<V> path = new LinkedList<>();
                 int current = i;
 
-                // reconstruct from back to front
-                while(current != -1) {
+                // reconstruct the path from destination to source
+                while (current != -1) {
                     path.addFirst(g.vertex(current));
-                    if(current == sourceKey) break;
+                    if (current == sourceKey) break;
                     current = predecessors[current];
                 }
                 paths.set(i, path);
             }
         }
+    }
+
+    /**
+     * Computes the shortest path between two vertices
+     * with support for negative edge weights and negative cycle detection.
+     *
+     * @param g         Graph instance
+     * @param vOrig     Origin vertex
+     * @param vDest     Destination vertex
+     * @param ce        Comparator between elements of type E
+     * @param sum       Sum two elements of type E
+     * @param zero      Neutral element of the sum
+     * @param shortPath Returns the shortest path (or cycle if detected)
+     * @return          The shortest distance, or null if the negative cycle exists or the path doesn't exist
+     */
+    public static <V, E> E shortestPathBellmanFord(Graph<V, E> g, V vOrig, V vDest,
+                                                   Comparator<E> ce, BinaryOperator<E> sum, E zero,
+                                                   LinkedList<V> shortPath) {
+
+        shortPath.clear();
+
+        ArrayList<LinkedList<V>> paths = new ArrayList<>();
+        ArrayList<E> dists = new ArrayList<>();
+
+        boolean success = bellmanFord(g, vOrig, ce, sum, zero, paths, dists);
+
+        if (!success) {
+            // negative cycle detected - cycle is in paths.get(0)
+            if (!paths.isEmpty() && paths.get(0) != null) {
+                shortPath.addAll(paths.get(0));
+            }
+            return null; // no valid shortest path due to the negative cycle
+        }
+
+        int destKey = g.key(vDest);
+        if (destKey == -1 || paths.get(destKey) == null) {
+            return null; // destination unreachable
+        }
+
+        shortPath.addAll(paths.get(destKey));
+        return dists.get(destKey);
     }
 
     /**
