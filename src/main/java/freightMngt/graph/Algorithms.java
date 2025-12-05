@@ -53,30 +53,49 @@ public class Algorithms {
         return qbfs;
     }
 
-    /**
-     * Performs depth-first search starting in a vertex
+    /** Performs depth-first search starting in a vertex
      *
-     * @param g       Graph instance
-     * @param vOrig   vertex of graph g that will be the source of the search
+     * @param g Graph instance
+     * @param vOrig vertex of graph g that will be the source of the search
      * @param visited set of previously visited vertices
-     * @param qdfs    return LinkedList with vertices of depth-first search
+     * @param qdfs return LinkedList with vertices of depth-first search
      */
     private static <V, E> void DepthFirstSearch(Graph<V, E> g, V vOrig, boolean[] visited, LinkedList<V> qdfs) {
-
-        throw new UnsupportedOperationException("Not supported yet.");
+        int vOrigKey = g.key(vOrig);
+        // If already visited, return
+        if (visited[vOrigKey]) {
+            return;
+        }
+        // Add current vertex to result list
+        qdfs.add(vOrig);
+        // Mark as visited
+        visited[vOrigKey] = true;
+        // Recursively visit all adjacent vertices
+        for (V vAdj : g.adjVertices(vOrig)) {
+            DepthFirstSearch(g, vAdj, visited, qdfs);
+        }
     }
 
-    /**
-     * Performs depth-first search starting in a vertex
+    /** Performs depth-first search starting in a vertex
      *
-     * @param g    Graph instance
+     * @param g Graph instance
      * @param vert vertex of graph g that will be the source of the search
-     *
      * @return a LinkedList with the vertices of depth-first search
      */
     public static <V, E> LinkedList<V> DepthFirstSearch(Graph<V, E> g, V vert) {
-
-        throw new UnsupportedOperationException("Not supported yet.");
+        // Validate input
+        if (g == null) {
+            throw new IllegalArgumentException("Graph is null.");
+        }
+        if (!g.validVertex(vert)) {
+            return null;
+        }
+        // Initialize data structures
+        LinkedList<V> qdfs = new LinkedList<>();
+        boolean[] visited = new boolean[g.numVertices()];
+        // Perform DFS
+        DepthFirstSearch(g, vert, visited, qdfs);
+        return qdfs;
     }
 
     /**

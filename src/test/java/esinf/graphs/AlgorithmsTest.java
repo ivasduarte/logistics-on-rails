@@ -12,13 +12,10 @@ import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class MapAlgorithmsTest {
+class AlgorithmsTest {
 
     final Graph<String, Integer> completeMap = new MapGraph<>(false);
     Graph<String, Integer> incompleteMap = new MapGraph<>(false);
-
-    public MapAlgorithmsTest() {
-    }
 
     @BeforeEach
     public void setUp() {
