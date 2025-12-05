@@ -151,13 +151,14 @@ public class Algorithms {
             return; // vertex doesn't exist
         }
 
-        // initialize distances to infinity (zero) and pathKeys to null
+        // initialize distances and pathKeys to null
         for (int i = 0; i < g.numVertices(); i++) {
-            dist[i] = zero;
+            dist[i] = null;
             pathKeys[i] = null;
             visited[i] = false;
         }
 
+        dist[vOriginI] = zero; // distance from origin to itself is zero
         pathKeys[vOriginI] = vOrig;
 
         // get vertex with minimum distance
@@ -231,7 +232,39 @@ public class Algorithms {
                                         Comparator<E> ce, BinaryOperator<E> sum, E zero,
                                         LinkedList<V> shortPath) {
 
-        throw new UnsupportedOperationException("Not supported yet.");
+        // return if origin and/or destination isn't valid'
+        if (!g.validVertex(vOrig) || !g.validVertex(vDest)) return null;
+
+        shortPath.clear(); // clear path list
+
+        if (vOrig.equals(vDest)) {
+            shortPath.add(vOrig);
+            return zero;
+        }
+
+        int numV = g.numVertices();
+        boolean[] visited = new boolean[numV];
+
+        @SuppressWarnings("unchecked")
+        V[] pathKeys = (V[]) new Object[numV];
+
+        @SuppressWarnings("unchecked")
+        E[] dist = (E[]) new Object[numV];
+
+        // perform Dijkstra's algorithm
+        shortestPathDijkstra(g, vOrig, ce, sum, zero, visited, pathKeys, dist);
+
+        // extract path from pathKeys
+        getPath(g, vOrig, vDest, pathKeys, shortPath);
+
+        // extract shortest distance to destination
+        int vDestI = g.key(vDest);
+
+        // if path doesn't exist return null
+        if (shortPath.isEmpty()) return null;
+
+        // return shortest distance to destination
+        return dist[vDestI];
     }
 
     /**
