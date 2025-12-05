@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 
 
 import java.util.*;
+import java.util.function.BinaryOperator;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -16,6 +17,10 @@ class AlgorithmsTest {
 
     final Graph<String, Integer> completeMap = new MapGraph<>(false);
     Graph<String, Integer> incompleteMap = new MapGraph<>(false);
+
+    // graph for Bellman-Ford algorithm test
+    final Graph<String, Double> testGraph = new MapGraph<>(true);
+    Graph<String, Double> negativeCycleGraph = new MapGraph<>(true);
 
     @BeforeEach
     public void setUp() {
@@ -49,6 +54,43 @@ class AlgorithmsTest {
         completeMap.addEdge("Aveiro", "Viseu", 85);
         completeMap.addEdge("Leiria", "Castelo Branco", 170);
         completeMap.addEdge("Lisboa", "Faro", 280);
+    }
+
+    @BeforeEach
+    public void setUpBellmanFord() {
+
+        testGraph.addVertex("Porto");
+        testGraph.addVertex("Braga");
+        testGraph.addVertex("Vila Real");
+        testGraph.addVertex("Aveiro");
+        testGraph.addVertex("Coimbra");
+        testGraph.addVertex("Leiria");
+
+        testGraph.addVertex("Viseu");
+        testGraph.addVertex("Guarda");
+        testGraph.addVertex("Castelo Branco");
+        testGraph.addVertex("Lisboa");
+        testGraph.addVertex("Faro");
+
+        testGraph.addEdge("Porto", "Aveiro", 75.5);
+        testGraph.addEdge("Porto", "Braga", 60.0);
+        testGraph.addEdge("Porto", "Vila Real", 100.1);
+        testGraph.addEdge("Viseu", "Guarda", -75.9);
+        testGraph.addEdge("Guarda", "Castelo Branco", 100.5);
+        testGraph.addEdge("Aveiro", "Coimbra", 60.3);
+        testGraph.addEdge("Coimbra", "Lisboa", -200.4);
+        testGraph.addEdge("Coimbra", "Leiria", 80.0);
+        testGraph.addEdge("Aveiro", "Leiria", -120.0);
+        testGraph.addEdge("Leiria", "Lisboa", -150.1);
+        testGraph.addEdge("Aveiro", "Viseu", 85.0);
+
+        negativeCycleGraph = testGraph.clone();
+
+        negativeCycleGraph.addEdge("Guarda", "Viseu", 50.0);
+
+        testGraph.addEdge("Leiria", "Castelo Branco", 170.0);
+        testGraph.addEdge("Lisboa", "Faro", 280.0);
+
     }
 
     private void checkContentEquals(List<String> l1, List<String> l2, String msg) {
@@ -205,5 +247,72 @@ class AlgorithmsTest {
 
         throw new UnsupportedOperationException("Not supported yet.");
 
+    }
+
+    @Test
+    public void testBellmanFord() {
+        System.out.println("Test of finding shortest path using the Bellman-Ford algorithm.");
+
+        ArrayList<LinkedList<String>> paths = new ArrayList<>();
+        ArrayList<Double> dists = new ArrayList<>();
+
+        Comparator<Double> comp = Double::compare;
+        BinaryOperator<Double> sum = Double::sum;
+        Double zero = 0.0;
+        final double DELTA = 0.001;
+
+        boolean success = Algorithms.bellmanFord(testGraph, "Porto", comp, sum, zero, paths, dists);
+
+        assertTrue(success, "Bellman-Ford should be successful (no negative cycle)");
+        assertEquals(testGraph.numVertices(), paths.size(), "There should be a path for each vertex");
+        assertEquals(paths.size(), dists.size(), "There should be as many distances as paths");
+
+        // 1.1 Shortest Path to Lisbon (with negative cost)
+        // Porto -> Aveiro -> Leiria -> Lisboa = 75.5 + (-120.0) + (-150.1) = -194.6
+        double expectedLisboaDist = -194.6;
+        int lisboaKey = testGraph.key("Lisboa");
+
+        assertEquals(expectedLisboaDist, dists.get(lisboaKey), DELTA, "Distance Porto->Lisboa should be -194.6 km (via Aveiro, Leiria)");
+        assertEquals(Arrays.asList("Porto", "Aveiro", "Leiria", "Lisboa"), paths.get(lisboaKey), "Path to Lisboa");
+
+        // 1.2 Shortest Path to Castelo Branco (via negative weight)
+        // Porto -> Aveiro -> Leiria -> Castelo Branco = 75.5 + (-120.0) + 170.0 = 125.5
+        double expectedCasteloBrancoDist = 125.5;
+        int cbKey = testGraph.key("Castelo Branco");
+
+        assertEquals(expectedCasteloBrancoDist, dists.get(cbKey), DELTA, "Distance Porto->Castelo Branco should be 125.5 km");
+        assertEquals(Arrays.asList("Porto", "Aveiro", "Leiria", "Castelo Branco"), paths.get(cbKey), "Path to Castelo Branco");
+
+        // 1.3 Unreachable Path (Braga cannot reach Porto, graph is directed)
+        // Recalculate path from Braga
+        paths.clear();
+        dists.clear();
+        Algorithms.bellmanFord(testGraph, "Braga", comp, sum, zero, paths, dists);
+
+        // Porto is unreachable from Braga
+        assertNull(dists.get(testGraph.key("Porto")), "Distance to Porto (unreachable) should be null");
+        assertNull(paths.get(testGraph.key("Porto")), "Path to Porto (unreachable) should be null");
+
+
+        // --- Scenario 2: Negative Cycle Detection ('Porto' to negativeCycleGraph) ---
+        paths.clear(); // Clear previous results
+        dists.clear();
+
+        // The negative cycle (Viseu -> Guarda -> Viseu) is accessible from Porto (Porto -> Aveiro -> Viseu)
+        success = Algorithms.bellmanFord(negativeCycleGraph, "Porto", comp, sum, zero, paths, dists);
+
+        assertFalse(success, "Bellman-Ford should fail (negative cycle detected)");
+        // In case of failure, 'paths' is cleared and only the cycle is inserted in paths.get(0)
+        assertEquals(1, paths.size(), "paths should contain only one element: the negative cycle");
+        assertTrue(dists.isEmpty(), "dists should be empty");
+
+        // The cycle is Viseu -> Guarda -> Viseu
+        LinkedList<String> expectedCycleNodes = new LinkedList<>(Arrays.asList("Viseu", "Guarda"));
+        LinkedList<String> foundCycle = paths.get(0);
+
+        // Verify that the cycle has format (V1, V2, V1) and contains expected nodes
+        assertEquals(3, foundCycle.size(), "The cycle should have 3 nodes (start, mid, end)");
+        assertEquals(foundCycle.getFirst(), foundCycle.getLast(), "First and last vertex of the cycle should be the same");
+        assertTrue(foundCycle.containsAll(expectedCycleNodes), "The detected cycle should involve Viseu and Guarda");
     }
 }
