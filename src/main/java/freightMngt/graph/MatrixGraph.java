@@ -54,8 +54,17 @@ public class MatrixGraph<V,E> extends CommonGraph<V,E> {
 
     @Override
     public Collection<Edge<V, E>> edges() {
+        ArrayList<Edge<V, E>> le = new ArrayList<>(numEdges);
 
-        throw new UnsupportedOperationException("Not supported yet.");
+        for (int i = 0; i < numVerts; i++) {
+            for (int j = 0; j < numVerts; j++) {
+                if (edgeMatrix[i][j] != null) {
+                    le.add(edgeMatrix[i][j]);
+                }
+            }
+        }
+
+        return le;
     }
 
     @Override
