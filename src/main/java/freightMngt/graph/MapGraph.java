@@ -101,8 +101,18 @@ public class MapGraph<V, E> extends CommonGraph<V, E> {
 
     @Override
     public Collection<Edge<V, E>> incomingEdges(V vert) {
+        if (!validVertex(vert))
+            return null;
 
-        throw new UnsupportedOperationException("Not supported yet.");
+        Collection<Edge<V, E>> incomingEdges = new ArrayList<>();
+
+        for (V otherVert : mapVertices.keySet()) {
+            Edge<V, E> edge = edge(otherVert, vert);
+            if (edge != null)
+                incomingEdges.add(edge);
+        }
+
+        return incomingEdges;
     }
 
     @Override
