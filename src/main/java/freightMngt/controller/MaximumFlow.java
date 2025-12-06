@@ -39,4 +39,22 @@ public class MaximumFlow {
 
         return false;
     }
+
+    private static <V> int getPathMinCap(Graph<V, Integer> graph, LinkedList<V> path) {
+        int minCap = Integer.MAX_VALUE;
+
+        ArrayList<V> pathList = new ArrayList<>(path);
+
+        for (int i = pathList.size() - 1; i > 0; i--) {
+            V from = pathList.get(i);
+            V to = pathList.get(i - 1);
+
+            Edge<V, Integer> edge = graph.edge(from, to);
+            if (edge != null && edge.getWeight() != null) {
+                minCap = Math.min(minCap, edge.getWeight());
+            }
+        }
+
+        return minCap;
+    }
 }
