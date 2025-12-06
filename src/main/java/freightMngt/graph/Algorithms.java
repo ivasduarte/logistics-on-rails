@@ -614,7 +614,43 @@ public class Algorithms {
      * @return the minimum distance graph
      */
     public static <V, E> MatrixGraph<V, E> minDistGraph(Graph<V, E> g, Comparator<E> ce, BinaryOperator<E> sum) {
+        MatrixGraph<V, E> minDistGraph = new MatrixGraph<>(g.isDirected());
 
-        throw new UnsupportedOperationException("Not supported yet.");
+        ArrayList<V> vertices = g.vertices();
+
+        for (V vertex : vertices) {
+            minDistGraph.addVertex(vertex);
+        }
+
+        for (V vi : vertices) {
+            for (V vj : vertices) {
+                Edge<V, E> edge = g.edge(vi, vj);
+                if (edge != null) {
+                    minDistGraph.addEdge(vi, vj, edge.getWeight());
+                }
+            }
+        }
+
+        int n = minDistGraph.numVertices();
+        for (int k = 0; k < n; k++) {
+            for (int i = 0; i < n; i++) {
+                if (i != k && minDistGraph.edge(vertices.get(i), vertices.get(k)) != null) {
+                    for (int j = 0; j < n; j++) {
+                        if (i != j && k != j && minDistGraph.edge(vertices.get(k), vertices.get(j)) != null) {
+                            E edgeIK = minDistGraph.edge(vertices.get(i), vertices.get(k)).getWeight();
+                            E edgeKJ = minDistGraph.edge(vertices.get(k), vertices.get(j)).getWeight();
+                            E pathDistance = sum.apply(edgeIK, edgeKJ);
+                            Edge<V, E> currentEdge = minDistGraph.edge(vertices.get(i), vertices.get(j));
+
+                            if (currentEdge == null || ce.compare(pathDistance, currentEdge.getWeight()) < 0) {
+                                minDistGraph.addEdge(vertices.get(i), vertices.get(j), pathDistance);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return minDistGraph;
     }
 }

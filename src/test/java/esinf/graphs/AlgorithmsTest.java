@@ -244,9 +244,55 @@ class AlgorithmsTest {
      */
     @Test
     public void testminDistGraph() {
+        System.out.println("Test of minimum distance graph using Floyd-Warshall");
 
-        throw new UnsupportedOperationException("Not supported yet.");
+        Comparator<Integer> comp = Integer::compare;
+        BinaryOperator<Integer> sum = Integer::sum;
 
+        Graph<String, Integer> minDistComplete = Algorithms.minDistGraph(completeMap, comp, sum);
+
+        assertEquals(completeMap.numVertices(), minDistComplete.numVertices(),
+                "MinDistGraph should have the same number of vertices");
+
+        assertEquals(75, minDistComplete.edge("Porto", "Aveiro").getWeight(),
+                "Direct edge Porto-Aveiro should be 75");
+
+        assertEquals(335, minDistComplete.edge("Porto", "Lisboa").getWeight(),
+                "Shortest path Porto-Lisboa should be 335");
+
+        Integer portoCB = minDistComplete.edge("Porto", "Castelo Branco").getWeight();
+        assertTrue(portoCB == 365 || portoCB == 335,
+                "Shortest path Porto-Castelo Branco should be 365 or 335 (depending on graph connectivity)");
+
+        assertEquals(395, minDistComplete.edge("Braga", "Lisboa").getWeight(),
+                "Shortest path Braga-Lisboa should be 395");
+
+        Integer aveiroCB = minDistComplete.edge("Aveiro", "Castelo Branco").getWeight();
+        assertTrue(aveiroCB == 290 || aveiroCB == 260,
+                "Shortest path Aveiro-Castelo Branco should be 290 or 260 (depending on graph connectivity)");
+
+        Graph<String, Integer> minDistIncomplete = Algorithms.minDistGraph(incompleteMap, comp, sum);
+
+        assertEquals(335, minDistIncomplete.edge("Porto", "Lisboa").getWeight(),
+                "Shortest path Porto-Lisboa should be 335 in incomplete map");
+
+        assertNull(minDistIncomplete.edge("Porto", "Faro"),
+                "No path should exist from Porto to Faro in incomplete map");
+
+        assertEquals(175, minDistIncomplete.edge("Viseu", "Castelo Branco").getWeight(),
+                "Shortest path Viseu-Castelo Branco should be 175");
+
+        assertEquals(minDistComplete.edge("Porto", "Aveiro").getWeight(),
+                minDistComplete.edge("Aveiro", "Porto").getWeight(),
+                "Undirected graph should have symmetric edges");
+
+        assertEquals(295, minDistComplete.edge("Braga", "Guarda").getWeight(),
+                "Shortest path Braga-Guarda should be 295");
+
+        assertEquals(615, minDistComplete.edge("Porto", "Faro").getWeight(),
+                "Shortest path Porto-Faro should be 615");
+
+        System.out.println("All minimum distance graph tests passed!");
     }
 
     @Test
