@@ -2,7 +2,6 @@ package spatialQuerying.controller;
 
 import freightMngt.domain.Station;
 import spatialQuerying.structures.kd.KDTree2D;
-import spatialQuerying.structures.kd.Point2D;
 import spatialQuerying.structures.nodes.KDNode;
 
 import java.util.ArrayList;
@@ -20,62 +19,91 @@ public class GeographicalSearch {
     /**
      * Constructs a new instance of GeographicalSearch using the specified KD-Tree.
      *
-     * @param kdTree the KD-Tree data structure that organizes geographical points
-     *               based on latitude and longitude, to be used for performing
-     *               geographical searches. Must not be null.
+     * @param kdTree the KD-Tree data structure. Must not be null.
      */
     public GeographicalSearch(KDTree2D kdTree) {
         this.kdTree = kdTree;
     }
 
     /**
-     * Searches for stations located at the specified geographical coordinates.
-     * The search is performed in a KD-Tree structure, which efficiently organizes
-     * and searches stations by latitude and longitude.
+     * Searches for stations within a specified geographical area, applying optional filters for
+     * station attributes such as city status, main station designation, and country.
      *
-     * @param latitude the latitude of the target location, must be between -90 and 90 (inclusive)
-     * @param longitude the longitude of the target location, must be between -180 and 180 (inclusive)
-     * @return a list of all stations at the specified coordinates, or an empty list if none found
+     * @param latMin the minimum latitude of the search area
+     * @param latMax the maximum latitude of the search area
+     * @param lonMin the minimum longitude of the search area
+     * @param lonMax the maximum longitude of the search area
+     * @param isCity optional filter indicating whether to include only stations located in a city;
+     *               if null, this filter is ignored
+     * @param isMainStation optional filter indicating whether to include only main stations;
+     *                      if null, this filter is ignored
+     * @param country optional filter to include only stations within the specified country;
+     *                if null, this filter is ignored
+     * @return a list of stations matching the specified geographical area and filter criteria
+     * @throws IllegalArgumentException if the provided coordinate ranges are invalid
      */
-    public List<Station> searchByCoordinates(double latitude, double longitude) {
-        return searchByCoordinates(latitude, longitude, null, null, null);
+    public List<Station> searchByArea(double latMin, double latMax, double lonMin, double lonMax,
+                                      Boolean isCity, Boolean isMainStation, String country) {
+
+        if (!isValidRange(latMin, latMax, lonMin, lonMax)) {
+            throw new IllegalArgumentException("Invalid coordinates range.");
+        }
+
+        List<Station> stationsInArea = new ArrayList<>();
+
+        searchAreaRecursive(kdTree.getRoot(), latMin, latMax, lonMin, lonMax, true, stationsInArea);
+
+        return applyFilters(stationsInArea, isCity, isMainStation, country);
     }
 
     /**
-     * Searches for stations located at the specified geographical coordinates with optional filters.
-     * The search is performed in a KD-Tree structure, which efficiently organizes
-     * and searches stations by latitude and longitude.
+     * Recursively searches the KD-Tree for nodes within the bounding box (Range Search).
+     * Implements pruning to avoid scanning the whole dataset.
      *
-     * @param latitude the latitude of the target location, must be between -90 and 90 (inclusive)
-     * @param longitude the longitude of the target location, must be between -180 and 180 (inclusive)
-     * @param isCity filter by city status (true/false), or null for no filter
-     * @param isMainStation filter by main station status (true/false), or null for no filter
-     * @param country filter by country code ("PT", "ES", or "all"), or null for no filter
-     * @return a list of stations matching the coordinates and filters, or an empty list if none found
+     * @param node current node
+     * @param latMin search area min latitude
+     * @param latMax search area max latitude
+     * @param lonMin search area min longitude
+     * @param lonMax search area max longitude
+     * @param divideByLatitude true if splitting by latitude, false if by longitude
+     * @param result list to collect matching stations
      */
-    public List<Station> searchByCoordinates(double latitude, double longitude,
-                                             Boolean isCity, Boolean isMainStation, String country) {
-        if (!isValidCoordinates(latitude, longitude)) {
-            throw new IllegalArgumentException("Invalid coordinates: latitude must be between -90 and 90, longitude must be between -180 and 180");
+    private void searchAreaRecursive(KDNode node, double latMin, double latMax,
+                                     double lonMin, double lonMax,
+                                     boolean divideByLatitude, List<Station> result) {
+        if (node == null) {
+            return;
         }
-        Point2D target = new Point2D(latitude, longitude);
-        KDNode result = searchNode(kdTree.getRoot(), target, true);
 
-        if (result != null) {
-            List<Station> stations = new ArrayList<>(result.getStationList());
-            return applyFilters(stations, isCity, isMainStation, country);
+        double nodeLat = node.getCoordinates().getStationLatitude();
+        double nodeLon = node.getCoordinates().getStationLongitude();
+
+        boolean inLatRange = nodeLat >= latMin && nodeLat <= latMax;
+        boolean inLonRange = nodeLon >= lonMin && nodeLon <= lonMax;
+
+        if (inLatRange && inLonRange) {
+            result.addAll(node.getStationList());
         }
-        return new ArrayList<>();
+
+        if (divideByLatitude) {
+            if (latMin <= nodeLat) {
+                searchAreaRecursive(node.getLeft(), latMin, latMax, lonMin, lonMax, !divideByLatitude, result);
+            }
+            if (latMax >= nodeLat) {
+                searchAreaRecursive(node.getRight(), latMin, latMax, lonMin, lonMax, !divideByLatitude, result);
+            }
+        } else {
+            if (lonMin <= nodeLon) {
+                searchAreaRecursive(node.getLeft(), latMin, latMax, lonMin, lonMax, !divideByLatitude, result);
+            }
+            if (lonMax >= nodeLon) {
+                searchAreaRecursive(node.getRight(), latMin, latMax, lonMin, lonMax, !divideByLatitude, result);
+            }
+        }
     }
 
     /**
      * Applies the specified filters to a list of stations.
-     *
-     * @param stations the list of stations to filter
-     * @param isCity filter by city status (true/false), or null for no filter
-     * @param isMainStation filter by main station status (true/false), or null for no filter
-     * @param country filter by country code ("PT", "ES", or "all"), or null for no filter
-     * @return a filtered list of stations matching all specified criteria
      */
     private List<Station> applyFilters(List<Station> stations, Boolean isCity,
                                        Boolean isMainStation, String country) {
@@ -88,51 +116,11 @@ public class GeographicalSearch {
     }
 
     /**
-     * Validates whether the provided latitude and longitude coordinates
-     * are within the acceptable range of values.
-     *
-     * @param latitude the latitude value to validate, must be between -90 and 90 (inclusive)
-     * @param longitude the longitude value to validate, must be between -180 and 180 (inclusive)
-     * @return true if the provided coordinates are valid, false otherwise
+     * Validates input ranges.
      */
-    private boolean isValidCoordinates(double latitude, double longitude) {
-        return latitude >= LAT_MIN && latitude <= LAT_MAX &&
-                longitude >= LON_MIN && longitude <= LON_MAX;
-    }
-
-    /**
-     * Recursively searches for a node in a KD-Tree that matches the given target coordinates.
-     * The tree is traversed by alternating between latitude and longitude as the division criteria.
-     *
-     * @param node the current node being evaluated during the search
-     * @param target the target coordinates to search for in the KD-Tree
-     * @param divideByLatitude a boolean indicating whether the search currently divides by latitude
-     *                         (true for latitude, false for longitude)
-     * @return the KDNode that matches the target coordinates, or null if no such node exists
-     */
-    private KDNode searchNode(KDNode node, Point2D target, boolean divideByLatitude) {
-        if (node == null) {
-            return null;
-        }
-
-        // Check if we found the target
-        if (node.getCoordinates().equals(target)) {
-            return node;
-        }
-
-        // Determine which subtree to search based on current dimension
-        boolean goLeft;
-        if (divideByLatitude) {
-            goLeft = target.getStationLatitude() < node.getCoordinates().getStationLatitude();
-        } else {
-            goLeft = target.getStationLongitude() < node.getCoordinates().getStationLongitude();
-        }
-
-        // Recursively search the appropriate subtree
-        if (goLeft) {
-            return searchNode(node.getLeft(), target, !divideByLatitude);
-        } else {
-            return searchNode(node.getRight(), target, !divideByLatitude);
-        }
+    private boolean isValidRange(double latMin, double latMax, double lonMin, double lonMax) {
+        return latMin >= LAT_MIN && latMax <= LAT_MAX &&
+                lonMin >= LON_MIN && lonMax <= LON_MAX &&
+                latMin <= latMax && lonMin <= lonMax;
     }
 }

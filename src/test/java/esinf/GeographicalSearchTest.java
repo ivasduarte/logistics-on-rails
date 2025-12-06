@@ -63,80 +63,18 @@ public class GeographicalSearchTest {
     }
 
     /**
-     * Constrói uma árvore válida manualmente para teste.
-     * Estrutura corrigida para respeitar a alternância Lat/Lon:
-     *
-     * ROOT (Split by Lat): Madrid (40.4)
-     * |
-     * +-- LEFT (Lat < 40.4): Lisbon (40.0) -> (Split by Lon: -8.0)
-     * |      |
-     * |      +-- LEFT (Lon < -8.0): Coimbra (-8.4)
-     * |
-     * +-- RIGHT (Lat >= 40.4): Salamanca (40.97) -> (Split by Lon: -5.66)
-     * |
-     * +-- LEFT (Lon < -5.66): Porto (-8.6)
+     * Builds the KD-Tree using the actual implementation method.
+     * We pass null for the AVL trees (LatitudeTree and LongitudeTree) because
+     * the buildBalancedTree method supports sorting via standard Lists if trees are unavailable.
      */
     private void buildTestTree() {
-        // 1. Root Node: Madrid (Index 3)
-        // Split dimension: Latitude
-        Point2D madridPoint = new Point2D(40.4, -3.7);
-        List<Station> madridStations = new ArrayList<>();
-        madridStations.add(testStations.get(3));
-        KDNode root = new KDNode(madridPoint, madridStations);
-
-        // 2. Left Child of Root: Lisbon (Index 0, 1)
-        // Logic: Lat 40.0 < 40.4 -> Left
-        // Split dimension: Longitude
-        Point2D lisbonPoint = new Point2D(40.0, -8.0);
-        List<Station> lisbonStations = new ArrayList<>();
-        lisbonStations.add(testStations.get(0));
-        lisbonStations.add(testStations.get(1));
-        KDNode lisbonNode = new KDNode(lisbonPoint, lisbonStations);
-
-        // 3. Right Child of Root: Salamanca (Index 5)
-        // Logic: Lat 40.97 >= 40.4 -> Right
-        // Split dimension: Longitude
-        Point2D salamancaPoint = new Point2D(40.97, -5.66);
-        List<Station> salamancaStations = new ArrayList<>();
-        salamancaStations.add(testStations.get(5));
-        KDNode salamancaNode = new KDNode(salamancaPoint, salamancaStations);
-
-        // 4. Child of Lisbon: Coimbra (Index 4)
-        // Path: Root(Left) -> Lisbon
-        // Logic: Lon -8.4 < -8.0 -> Left
-        Point2D coimbraPoint = new Point2D(40.2, -8.4);
-        List<Station> coimbraStations = new ArrayList<>();
-        coimbraStations.add(testStations.get(4));
-        KDNode coimbraNode = new KDNode(coimbraPoint, coimbraStations);
-
-        // 5. Child of Salamanca: Porto (Index 2)
-        // Path: Root(Right) -> Salamanca
-        // Logic: Lon -8.6 < -5.66 -> Left
-        Point2D portoPoint = new Point2D(41.5, -8.6);
-        List<Station> portoStations = new ArrayList<>();
-        portoStations.add(testStations.get(2));
-        KDNode portoNode = new KDNode(portoPoint, portoStations);
-
-        // Link nodes
-        lisbonNode.setLeft(coimbraNode);      // Coimbra is Left of Lisbon (Lon comparison)
-        salamancaNode.setLeft(portoNode);     // Porto is Left of Salamanca (Lon comparison)
-        root.setLeft(lisbonNode);             // Lisbon is Left of Madrid (Lat comparison)
-        root.setRight(salamancaNode);         // Salamanca is Right of Madrid (Lat comparison)
-
-        // Set the root using reflection
-        try {
-            Field rootField = KDTree2D.class.getDeclaredField("root");
-            rootField.setAccessible(true);
-            rootField.set(kdTree, root);
-        } catch (Exception e) {
-            fail("Could not set root node: " + e.getMessage());
-        }
+        kdTree.buildBalancedTree(testStations, null, null);
     }
 
     @Test
-    void testSearchByCoordinates_ExistingLocation() {
+    void testSearchByArea_ExistingLocation() {
         // Test finding stations at Lisbon coordinates
-        List<Station> results = geoSearch.searchByCoordinates(40.0, -8.0);
+        List<Station> results = geoSearch.searchByArea(40.0, 40.0, -8.0, -8.0, null, null, null);
 
         assertNotNull(results);
         assertEquals(2, results.size());
@@ -145,9 +83,9 @@ public class GeographicalSearchTest {
     }
 
     @Test
-    void testSearchByCoordinates_SingleStation() {
+    void testSearchByArea_SingleStation() {
         // Test finding Porto
-        List<Station> results = geoSearch.searchByCoordinates(41.5, -8.6);
+        List<Station> results = geoSearch.searchByArea(41.5, 41.5, -8.6, -8.6, null, null, null);
 
         assertNotNull(results);
         assertEquals(1, results.size());
@@ -155,18 +93,18 @@ public class GeographicalSearchTest {
     }
 
     @Test
-    void testSearchByCoordinates_NonExistingLocation() {
+    void testSearchByArea_NonExistingLocation() {
         // Test coordinates that don't exist in the tree
-        List<Station> results = geoSearch.searchByCoordinates(50.0, 10.0);
+        List<Station> results = geoSearch.searchByArea(50.0, 50.0, 10.0, 10.0, null, null, null);
 
         assertNotNull(results);
         assertTrue(results.isEmpty());
     }
 
     @Test
-    void testSearchByCoordinates_WithCityFilter_True() {
+    void testSearchByArea_WithCityFilter_True() {
         // Search for cities only at Lisbon coordinates
-        List<Station> results = geoSearch.searchByCoordinates(40.0, -8.0, true, null, null);
+        List<Station> results = geoSearch.searchByArea(40.0, 40.0, -8.0, -8.0, true, null, null);
 
         assertNotNull(results);
         assertEquals(2, results.size());
@@ -174,9 +112,9 @@ public class GeographicalSearchTest {
     }
 
     @Test
-    void testSearchByCoordinates_WithCityFilter_False() {
+    void testSearchByArea_WithCityFilter_False() {
         // Search for non-cities at Coimbra coordinates
-        List<Station> results = geoSearch.searchByCoordinates(40.2, -8.4, false, null, null);
+        List<Station> results = geoSearch.searchByArea(40.2, 40.2, -8.4, -8.4, false, null, null);
 
         assertNotNull(results);
         assertEquals(1, results.size());
@@ -184,9 +122,9 @@ public class GeographicalSearchTest {
     }
 
     @Test
-    void testSearchByCoordinates_WithMainStationFilter_True() {
+    void testSearchByArea_WithMainStationFilter_True() {
         // Search for main stations at Porto coordinates
-        List<Station> results = geoSearch.searchByCoordinates(41.5, -8.6, null, true, null);
+        List<Station> results = geoSearch.searchByArea(41.5, 41.5, -8.6, -8.6, null, true, null);
 
         assertNotNull(results);
         assertEquals(1, results.size());
@@ -194,9 +132,9 @@ public class GeographicalSearchTest {
     }
 
     @Test
-    void testSearchByCoordinates_WithMainStationFilter_False() {
+    void testSearchByArea_WithMainStationFilter_False() {
         // Search for non-main stations at Salamanca coordinates
-        List<Station> results = geoSearch.searchByCoordinates(40.97, -5.66, null, false, null);
+        List<Station> results = geoSearch.searchByArea(40.97, 40.97, -5.66, -5.66, null, false, null);
 
         assertNotNull(results);
         assertEquals(1, results.size());
@@ -204,9 +142,9 @@ public class GeographicalSearchTest {
     }
 
     @Test
-    void testSearchByCoordinates_WithCountryFilter_Portugal() {
+    void testSearchByArea_WithCountryFilter_Portugal() {
         // Search for Portuguese stations at Lisbon coordinates
-        List<Station> results = geoSearch.searchByCoordinates(40.0, -8.0, null, null, "PT");
+        List<Station> results = geoSearch.searchByArea(40.0, 40.0, -8.0, -8.0, null, null, "PT");
 
         assertNotNull(results);
         assertEquals(2, results.size());
@@ -214,9 +152,9 @@ public class GeographicalSearchTest {
     }
 
     @Test
-    void testSearchByCoordinates_WithCountryFilter_Spain() {
+    void testSearchByArea_WithCountryFilter_Spain() {
         // Search for Spanish stations at Madrid coordinates
-        List<Station> results = geoSearch.searchByCoordinates(40.4, -3.7, null, null, "ES");
+        List<Station> results = geoSearch.searchByArea(40.4, 40.4, -3.7, -3.7, null, null, "ES");
 
         assertNotNull(results);
         assertEquals(1, results.size());
@@ -224,27 +162,27 @@ public class GeographicalSearchTest {
     }
 
     @Test
-    void testSearchByCoordinates_WithCountryFilter_All() {
+    void testSearchByArea_WithCountryFilter_All() {
         // Search with "all" country filter should return all stations
-        List<Station> results = geoSearch.searchByCoordinates(40.0, -8.0, null, null, "all");
+        List<Station> results = geoSearch.searchByArea(40.0, 40.0, -8.0, -8.0, null, null, "all");
 
         assertNotNull(results);
         assertEquals(2, results.size());
     }
 
     @Test
-    void testSearchByCoordinates_WithCountryFilter_CaseInsensitive() {
+    void testSearchByArea_WithCountryFilter_CaseInsensitive() {
         // Test case insensitivity
-        List<Station> results1 = geoSearch.searchByCoordinates(40.0, -8.0, null, null, "pt");
-        List<Station> results2 = geoSearch.searchByCoordinates(40.0, -8.0, null, null, "PT");
+        List<Station> results1 = geoSearch.searchByArea(40.0, 40.0, -8.0, -8.0, null, null, "pt");
+        List<Station> results2 = geoSearch.searchByArea(40.0, 40.0, -8.0, -8.0, null, null, "PT");
 
         assertEquals(results1.size(), results2.size());
     }
 
     @Test
-    void testSearchByCoordinates_MultipleFilters() {
+    void testSearchByArea_MultipleFilters() {
         // Search with multiple filters: city=true, mainStation=true, country=PT
-        List<Station> results = geoSearch.searchByCoordinates(40.0, -8.0, true, true, "PT");
+        List<Station> results = geoSearch.searchByArea(40.0, 40.0, -8.0, -8.0, true, true, "PT");
 
         assertNotNull(results);
         assertEquals(2, results.size());
@@ -253,66 +191,64 @@ public class GeographicalSearchTest {
     }
 
     @Test
-    void testSearchByCoordinates_FilterEliminatesAllResults() {
+    void testSearchByArea_FilterEliminatesAllResults() {
         // Search for Spanish stations at Portuguese coordinates (should return empty)
-        List<Station> results = geoSearch.searchByCoordinates(40.0, -8.0, null, null, "ES");
+        List<Station> results = geoSearch.searchByArea(40.0, 40.0, -8.0, -8.0, null, null, "ES");
 
         assertNotNull(results);
         assertTrue(results.isEmpty());
     }
 
     @Test
-    void testSearchByCoordinates_InvalidLatitude_TooLow() {
+    void testSearchByArea_InvalidLatitude_TooLow() {
         // Test latitude below -90
         assertThrows(IllegalArgumentException.class, () -> {
-            geoSearch.searchByCoordinates(-91.0, 0.0);
+            geoSearch.searchByArea(-91.0, -91.0, 0.0, 0.0, null, null, null);
         });
     }
 
     @Test
-    void testSearchByCoordinates_InvalidLatitude_TooHigh() {
+    void testSearchByArea_InvalidLatitude_TooHigh() {
         // Test latitude above 90
         assertThrows(IllegalArgumentException.class, () -> {
-            geoSearch.searchByCoordinates(91.0, 0.0);
+            geoSearch.searchByArea(91.0, 91.0, 0.0, 0.0, null, null, null);
         });
     }
 
     @Test
-    void testSearchByCoordinates_InvalidLongitude_TooLow() {
+    void testSearchByArea_InvalidLongitude_TooLow() {
         // Test longitude below -180
         assertThrows(IllegalArgumentException.class, () -> {
-            geoSearch.searchByCoordinates(0.0, -181.0);
+            geoSearch.searchByArea(0.0, 0.0, -181.0, -181.0, null, null, null);
         });
     }
 
     @Test
-    void testSearchByCoordinates_InvalidLongitude_TooHigh() {
+    void testSearchByArea_InvalidLongitude_TooHigh() {
         // Test longitude above 180
         assertThrows(IllegalArgumentException.class, () -> {
-            geoSearch.searchByCoordinates(0.0, 181.0);
+            geoSearch.searchByArea(0.0, 0.0, 181.0, 181.0, null, null, null);
         });
     }
 
     @Test
-    void testSearchByCoordinates_BoundaryValues() {
+    void testSearchByArea_BoundaryValues() {
         // Test valid boundary values
         assertDoesNotThrow(() -> {
-            geoSearch.searchByCoordinates(-90.0, -180.0);
-            geoSearch.searchByCoordinates(90.0, 180.0);
-            geoSearch.searchByCoordinates(0.0, 0.0);
+            geoSearch.searchByArea(-90.0, -90.0, -180.0, -180.0, null, null, null);
+            geoSearch.searchByArea(90.0, 90.0, 180.0, 180.0, null, null, null);
+            geoSearch.searchByArea(0.0, 0.0, 0.0, 0.0, null, null, null);
         });
     }
 
     @Test
-    void testSearchByCoordinates_InvalidCoordinates_ExceptionMessage() {
+    void testSearchByArea_InvalidCoordinates_ExceptionMessage() {
         // Test that exception message is correct
         Exception exception = assertThrows(IllegalArgumentException.class, () -> {
-            geoSearch.searchByCoordinates(100.0, 200.0);
+            geoSearch.searchByArea(100.0, 100.0, 200.0, 200.0, null, null, null);
         });
 
-        assertTrue(exception.getMessage().contains("Invalid coordinates"));
-        assertTrue(exception.getMessage().contains("latitude must be between -90 and 90"));
-        assertTrue(exception.getMessage().contains("longitude must be between -180 and 180"));
+        assertTrue(exception.getMessage().contains("Invalid coordinates range"));
     }
 
     @Test
@@ -324,21 +260,21 @@ public class GeographicalSearchTest {
     }
 
     @Test
-    void testSearchByCoordinates_EmptyTree() {
+    void testSearchByArea_EmptyTree() {
         // Test with an empty KD-tree
         KDTree2D emptyTree = new KDTree2D();
         GeographicalSearch emptySearch = new GeographicalSearch(emptyTree);
 
-        List<Station> results = emptySearch.searchByCoordinates(40.0, -8.0);
+        List<Station> results = emptySearch.searchByArea(40.0, 40.0, -8.0, -8.0, null, null, null);
 
         assertNotNull(results);
         assertTrue(results.isEmpty());
     }
 
     @Test
-    void testSearchByCoordinates_NullFilters() {
+    void testSearchByArea_NullFilters() {
         // Test that null filters are properly handled (no filtering applied)
-        List<Station> results = geoSearch.searchByCoordinates(40.0, -8.0, null, null, null);
+        List<Station> results = geoSearch.searchByArea(40.0, 40.0, -8.0, -8.0, null, null, null);
 
         assertNotNull(results);
         assertEquals(2, results.size());
@@ -352,8 +288,10 @@ public class GeographicalSearchTest {
         boolean filterIsMain = true;
         String filterCountry = "PT";
 
-        List<Station> results = geoSearch.searchByCoordinates(
+        List<Station> results = geoSearch.searchByArea(
                 targetLat,
+                targetLat,
+                targetLon,
                 targetLon,
                 filterIsCity,
                 filterIsMain,

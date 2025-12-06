@@ -255,10 +255,15 @@ public class SpatialQueryingUI implements Runnable {
             geographicalSearch = new GeographicalSearch(kdTree);
         }
 
-        System.out.print("Enter latitude: ");
-        double lat = sc.nextDouble();
-        System.out.print("Enter longitude: ");
-        double lon = sc.nextDouble();
+        System.out.println("\nEnter coordinate ranges:");
+        System.out.print("Minimum latitude: ");
+        double latMin = sc.nextDouble();
+        System.out.print("Maximum latitude: ");
+        double latMax = sc.nextDouble();
+        System.out.print("Minimum longitude: ");
+        double lonMin = sc.nextDouble();
+        System.out.print("Maximum longitude: ");
+        double lonMax = sc.nextDouble();
         sc.nextLine();
 
         System.out.println("\n=== Optional Filters ===");
@@ -274,17 +279,22 @@ public class SpatialQueryingUI implements Runnable {
         String countryInput = sc.nextLine().trim();
         String country = countryInput.isEmpty() ? null : countryInput;
 
-        List<Station> results = geographicalSearch.searchByCoordinates(lat, lon, isCity, isMainStation, country);
+        try {
+            List<Station> results = geographicalSearch.searchByArea(latMin, latMax, lonMin, lonMax,
+                    isCity, isMainStation, country);
 
-        System.out.println("\n=== Results ===");
-        if (results.isEmpty()) {
-            System.out.println("No stations found matching the criteria.");
-        } else {
-            System.out.println("Found " + results.size() + " station(s):");
-            results.forEach(s -> System.out.printf("- %s (%s)%n    City: %s | Main Station: %s%n",
-                    s.getStationName(), s.getStationCountry(),
-                    s.isCity() ? "Yes" : "No",
-                    s.isMainStation() ? "Yes" : "No"));
+            System.out.println("\n=== Results ===");
+            if (results.isEmpty()) {
+                System.out.println("No stations found matching the criteria.");
+            } else {
+                System.out.println("Found " + results.size() + " station(s):");
+                results.forEach(s -> System.out.printf("- %s (%s)%n    City: %s | Main Station: %s%n",
+                        s.getStationName(), s.getStationCountry(),
+                        s.isCity() ? "Yes" : "No",
+                        s.isMainStation() ? "Yes" : "No"));
+            }
+        } catch (IllegalArgumentException e) {
+            System.out.println("Error: " + e.getMessage());
         }
     }
 
