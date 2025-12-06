@@ -303,7 +303,48 @@ public class Algorithms {
                                                Comparator<E> ce, BinaryOperator<E> sum, E zero,
                                                ArrayList<LinkedList<V>> paths, ArrayList<E> dists) {
 
-        throw new UnsupportedOperationException("Not supported yet.");
+        // return false if origin isn't valid
+        if (!g.validVertex(vOrig)) return false;
+
+        int numV = g.numVertices();
+
+        // initialize auxiliary structures for dijkstra
+        boolean[] visited = new boolean[numV];
+
+        @SuppressWarnings("unchecked")
+        V[] pathKeys = (V[])  new Object[numV];
+
+        @SuppressWarnings("unchecked")
+        E[] dist = (E[])  new Object[numV];
+
+        // clear and fill return lists with null
+        paths.clear();
+        dists.clear();
+
+        for (int i = 0; i < numV; i++) {
+            paths.add(null);
+            dists.add(null);
+        }
+
+        // execute dijkstra
+        shortestPathDijkstra(g, vOrig, ce, sum, zero, visited, pathKeys, dist);
+
+        for (V vDest : g.vertices()) {
+            int vDestI = g.key(vDest);
+
+            // store distance
+            dists.set(vDestI, dist[vDestI]);
+
+            // skip if null distance
+            if (dist[vDestI] == null) continue;
+
+            // get and store path
+            LinkedList<V> shortPath = new LinkedList<>();
+            getPath(g, vOrig, vDest, pathKeys, shortPath);
+            paths.set(vDestI, shortPath);
+        }
+
+        return true;
     }
 
     /**
