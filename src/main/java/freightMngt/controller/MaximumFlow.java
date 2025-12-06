@@ -57,4 +57,28 @@ public class MaximumFlow {
 
         return minCap;
     }
+
+    private static <V> void updateResidualGraph(Graph<V, Integer> graph, LinkedList<V> path, int flow) {
+        ArrayList<V> pathList = new ArrayList<>(path);
+
+        // traversing backwards cause path is in reverse order
+        for (int i = pathList.size() - 1; i > 0; i--) {
+            V from = pathList.get(i);
+            V to = pathList.get(i - 1);
+
+            Edge<V, Integer> forwardEdge = graph.edge(from, to);
+            if (forwardEdge != null) {
+                int newCap = forwardEdge.getWeight() - flow;
+                forwardEdge.setWeight(newCap);
+            }
+
+            Edge<V, Integer> backwardEdge = graph.edge(to, from);
+            if (backwardEdge != null) {
+                int newCap = backwardEdge.getWeight() + flow;
+                backwardEdge.setWeight(newCap);
+            } else {
+                graph.addEdge(to, from, flow);
+            }
+        }
+    }
 }
