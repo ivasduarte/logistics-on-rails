@@ -81,4 +81,31 @@ public class MaximumFlow {
             }
         }
     }
+
+    public static <V> Integer maxFlow(Graph<V, Integer> graph, V source, V sink) {
+
+        if (!graph.validVertex(source) || !graph.validVertex(sink)) return null;
+        if (source.equals(sink)) return 0;
+
+        // residual graph creation
+        Graph<V, Integer> residualGraph = graph.clone();
+
+        int totalFlow = 0;
+
+        while (true) {
+            boolean[] visited = new boolean[residualGraph.numVertices()];
+            LinkedList<V> path = new LinkedList<>();
+
+            boolean existingPath = findAugmentationPath(residualGraph, source, sink, visited, path);
+
+            if (!existingPath || path.isEmpty()) break; // There are no more augmentation paths
+
+            int minCap = getPathMinCap(residualGraph, path);
+            updateResidualGraph(residualGraph, path, minCap);
+
+            totalFlow += minCap;
+        }
+
+        return totalFlow;
+    }
 }
