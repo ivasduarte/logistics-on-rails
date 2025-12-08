@@ -240,6 +240,427 @@ class AlgorithmsTest {
     }
 
     /**
+     * Test of betweennessCentrality method, of class Algorithms.
+     */
+    @Test
+    public void testBetweennessCentrality() {
+        System.out.println("Test of Betweenness Centrality");
+
+        // Test 1: Simple linear graph (A -> B -> C)
+        Graph<String, Integer> linearGraph = new MapGraph<>(false);
+        linearGraph.addVertex("A");
+        linearGraph.addVertex("B");
+        linearGraph.addVertex("C");
+        linearGraph.addEdge("A", "B", 1);
+        linearGraph.addEdge("B", "C", 1);
+
+        Map<String, Double> centrality = Algorithms.betweennessCentrality(
+                linearGraph,
+                Integer::compare,
+                Integer::sum,
+                0
+        );
+
+        // B should have centrality 1 (only path A-C passes through B)
+        assertEquals(1.0, centrality.get("B"), 0.001, "B should be the central vertex with centrality 1");
+        assertEquals(0.0, centrality.get("A"), 0.001, "A should have centrality 0");
+        assertEquals(0.0, centrality.get("C"), 0.001, "C should have centrality 0");
+
+        // Test 2: Star graph (hub and spokes)
+        Graph<String, Integer> starGraph = new MapGraph<>(false);
+        starGraph.addVertex("Hub");
+        starGraph.addVertex("A");
+        starGraph.addVertex("B");
+        starGraph.addVertex("C");
+        starGraph.addEdge("Hub", "A", 1);
+        starGraph.addEdge("Hub", "B", 1);
+        starGraph.addEdge("Hub", "C", 1);
+
+        centrality = Algorithms.betweennessCentrality(
+                starGraph,
+                Integer::compare,
+                Integer::sum,
+                0
+        );
+
+        // Hub should have high centrality (all paths between spokes go through it)
+        // For 4 vertices: (3 choose 2) = 3 paths pass through hub
+        assertEquals(3.0, centrality.get("Hub"), 0.001, "Hub should have centrality 3");
+        assertEquals(0.0, centrality.get("A"), 0.001, "A should have centrality 0");
+        assertEquals(0.0, centrality.get("B"), 0.001, "B should have centrality 0");
+        assertEquals(0.0, centrality.get("C"), 0.001, "C should have centrality 0");
+
+        // Test 3: Complete graph (all vertices connected)
+        Graph<String, Integer> completeGraph = new MapGraph<>(false);
+        completeGraph.addVertex("A");
+        completeGraph.addVertex("B");
+        completeGraph.addVertex("C");
+        completeGraph.addEdge("A", "B", 1);
+        completeGraph.addEdge("B", "C", 1);
+        completeGraph.addEdge("A", "C", 1);
+
+        centrality = Algorithms.betweennessCentrality(
+                completeGraph,
+                Integer::compare,
+                Integer::sum,
+                0
+        );
+
+        // All vertices should have centrality 0 (direct paths exist)
+        assertEquals(0.0, centrality.get("A"), 0.001, "A should have centrality 0 in complete graph");
+        assertEquals(0.0, centrality.get("B"), 0.001, "B should have centrality 0 in complete graph");
+        assertEquals(0.0, centrality.get("C"), 0.001, "C should have centrality 0 in complete graph");
+
+        // Test 4: Using the Portuguese cities graph
+        centrality = Algorithms.betweennessCentrality(
+                completeMap,
+                Integer::compare,
+                Integer::sum,
+                0
+        );
+
+        // Aveiro should be important (connects Porto to southern cities)
+        // Coimbra should be important (on path to Lisboa)
+        assertTrue(centrality.get("Aveiro") > 0, "Aveiro should have positive centrality");
+        assertTrue(centrality.get("Coimbra") > 0, "Coimbra should have positive centrality");
+
+        // Faro is a leaf node, should have 0 centrality
+        assertEquals(0.0, centrality.get("Faro"), 0.001, "Faro should have centrality 0 (leaf node)");
+
+        // Test 5: Disconnected graph
+        Graph<String, Integer> disconnectedGraph = new MapGraph<>(false);
+        disconnectedGraph.addVertex("A");
+        disconnectedGraph.addVertex("B");
+        disconnectedGraph.addVertex("C");
+        disconnectedGraph.addVertex("D");
+        disconnectedGraph.addEdge("A", "B", 1);
+        // C and D are isolated
+
+        centrality = Algorithms.betweennessCentrality(
+                disconnectedGraph,
+                Integer::compare,
+                Integer::sum,
+                0
+        );
+
+        // All should have 0 centrality (no paths through intermediate vertices)
+        assertEquals(0.0, centrality.get("A"), 0.001, "A should have centrality 0");
+        assertEquals(0.0, centrality.get("B"), 0.001, "B should have centrality 0");
+        assertEquals(0.0, centrality.get("C"), 0.001, "C should have centrality 0");
+        assertEquals(0.0, centrality.get("D"), 0.001, "D should have centrality 0");
+    }
+
+    /**
+     * Test of mostCentralVertex method, of class Algorithms.
+     */
+    @Test
+    public void testMostCentralVertex() {
+        System.out.println("Test of Most Central Vertex");
+
+        // Test 1: Linear graph - B should be most central
+        Graph<String, Integer> linearGraph = new MapGraph<>(false);
+        linearGraph.addVertex("A");
+        linearGraph.addVertex("B");
+        linearGraph.addVertex("C");
+        linearGraph.addEdge("A", "B", 1);
+        linearGraph.addEdge("B", "C", 1);
+
+        String mostCentral = Algorithms.mostCentralVertex(
+                linearGraph,
+                Integer::compare,
+                Integer::sum,
+                0
+        );
+
+        assertEquals("B", mostCentral, "B should be the most central vertex in linear graph");
+
+        // Test 2: Star graph - Hub should be most central
+        Graph<String, Integer> starGraph = new MapGraph<>(false);
+        starGraph.addVertex("Hub");
+        starGraph.addVertex("A");
+        starGraph.addVertex("B");
+        starGraph.addVertex("C");
+        starGraph.addVertex("D");
+        starGraph.addEdge("Hub", "A", 1);
+        starGraph.addEdge("Hub", "B", 1);
+        starGraph.addEdge("Hub", "C", 1);
+        starGraph.addEdge("Hub", "D", 1);
+
+        mostCentral = Algorithms.mostCentralVertex(
+                starGraph,
+                Integer::compare,
+                Integer::sum,
+                0
+        );
+
+        assertEquals("Hub", mostCentral, "Hub should be the most central vertex in star graph");
+
+        // Test 3: Portuguese cities graph
+        mostCentral = Algorithms.mostCentralVertex(
+                completeMap,
+                Integer::compare,
+                Integer::sum,
+                0
+        );
+
+        // Should be one of the well-connected central cities
+        assertNotNull(mostCentral, "Should find a most central vertex");
+        assertTrue(
+                Arrays.asList("Aveiro", "Coimbra", "Leiria").contains(mostCentral),
+                "Most central vertex should be one of the central cities"
+        );
+
+        // Test 4: Graph with all equal centrality
+        Graph<String, Integer> completeTriangle = new MapGraph<>(false);
+        completeTriangle.addVertex("A");
+        completeTriangle.addVertex("B");
+        completeTriangle.addVertex("C");
+        completeTriangle.addEdge("A", "B", 1);
+        completeTriangle.addEdge("B", "C", 1);
+        completeTriangle.addEdge("A", "C", 1);
+
+        mostCentral = Algorithms.mostCentralVertex(
+                completeTriangle,
+                Integer::compare,
+                Integer::sum,
+                0
+        );
+
+        // Any vertex can be returned (all have centrality 0)
+        assertNotNull(mostCentral, "Should return some vertex");
+        assertTrue(
+                Arrays.asList("A", "B", "C").contains(mostCentral),
+                "Should be one of the vertices"
+        );
+
+        // Test 5: Empty graph
+        Graph<String, Integer> emptyGraph = new MapGraph<>(false);
+
+        mostCentral = Algorithms.mostCentralVertex(
+                emptyGraph,
+                Integer::compare,
+                Integer::sum,
+                0
+        );
+
+        assertNull(mostCentral, "Empty graph should return null");
+    }
+
+    /**
+     * Test of normalizeCentrality method, of class Algorithms.
+     */
+    @Test
+    public void testNormalizeCentrality() {
+        System.out.println("Test of Normalize Centrality");
+
+        // Test 1: Linear graph (3 vertices)
+        Graph<String, Integer> linearGraph = new MapGraph<>(false);
+        linearGraph.addVertex("A");
+        linearGraph.addVertex("B");
+        linearGraph.addVertex("C");
+        linearGraph.addEdge("A", "B", 1);
+        linearGraph.addEdge("B", "C", 1);
+
+        Map<String, Double> centrality = Algorithms.betweennessCentrality(
+                linearGraph,
+                Integer::compare,
+                Integer::sum,
+                0
+        );
+
+        Map<String, Double> normalized = Algorithms.normalizeCentrality(
+                centrality,
+                linearGraph.numVertices(),
+                linearGraph.isDirected()
+        );
+
+        // For 3 vertices, undirected: max = (3-1)*(3-2)/2 = 1
+        // B has centrality 1, so normalized should be 1.0
+        assertEquals(1.0, normalized.get("B"), 0.001, "B normalized centrality should be 1.0");
+        assertEquals(0.0, normalized.get("A"), 0.001, "A normalized centrality should be 0.0");
+        assertEquals(0.0, normalized.get("C"), 0.001, "C normalized centrality should be 0.0");
+
+        // Test 2: Star graph (5 vertices)
+        Graph<String, Integer> starGraph = new MapGraph<>(false);
+        starGraph.addVertex("Hub");
+        starGraph.addVertex("A");
+        starGraph.addVertex("B");
+        starGraph.addVertex("C");
+        starGraph.addVertex("D");
+        starGraph.addEdge("Hub", "A", 1);
+        starGraph.addEdge("Hub", "B", 1);
+        starGraph.addEdge("Hub", "C", 1);
+        starGraph.addEdge("Hub", "D", 1);
+
+        centrality = Algorithms.betweennessCentrality(
+                starGraph,
+                Integer::compare,
+                Integer::sum,
+                0
+        );
+
+        normalized = Algorithms.normalizeCentrality(
+                centrality,
+                starGraph.numVertices(),
+                starGraph.isDirected()
+        );
+
+        // For 5 vertices, undirected: max = (5-1)*(5-2)/2 = 6
+        // Hub has centrality 6, so normalized should be 1.0
+        assertEquals(1.0, normalized.get("Hub"), 0.001, "Hub normalized centrality should be 1.0");
+        assertEquals(0.0, normalized.get("A"), 0.001, "A normalized centrality should be 0.0");
+
+        // Test 3: Graph with 2 vertices or less
+        Graph<String, Integer> twoVertexGraph = new MapGraph<>(false);
+        twoVertexGraph.addVertex("A");
+        twoVertexGraph.addVertex("B");
+        twoVertexGraph.addEdge("A", "B", 1);
+
+        centrality = Algorithms.betweennessCentrality(
+                twoVertexGraph,
+                Integer::compare,
+                Integer::sum,
+                0
+        );
+
+        normalized = Algorithms.normalizeCentrality(
+                centrality,
+                twoVertexGraph.numVertices(),
+                twoVertexGraph.isDirected()
+        );
+
+        // With 2 vertices, all normalized values should be 0
+        assertEquals(0.0, normalized.get("A"), 0.001, "A normalized centrality should be 0.0");
+        assertEquals(0.0, normalized.get("B"), 0.001, "B normalized centrality should be 0.0");
+
+        // Test 4: Directed graph
+        Graph<String, Integer> directedGraph = new MapGraph<>(true);
+        directedGraph.addVertex("A");
+        directedGraph.addVertex("B");
+        directedGraph.addVertex("C");
+        directedGraph.addVertex("D");
+        directedGraph.addEdge("A", "B", 1);
+        directedGraph.addEdge("B", "C", 1);
+        directedGraph.addEdge("C", "D", 1);
+
+        centrality = Algorithms.betweennessCentrality(
+                directedGraph,
+                Integer::compare,
+                Integer::sum,
+                0
+        );
+
+        normalized = Algorithms.normalizeCentrality(
+                centrality,
+                directedGraph.numVertices(),
+                directedGraph.isDirected()
+        );
+
+        // For 4 vertices, directed: max = (4-1)*(4-2) = 6
+        // Values should be between 0 and 1
+        for (Double value : normalized.values()) {
+            assertTrue(value >= 0.0 && value <= 1.0, "Normalized values should be between 0 and 1");
+        }
+
+        // Test 5: Portuguese cities graph
+        centrality = Algorithms.betweennessCentrality(
+                completeMap,
+                Integer::compare,
+                Integer::sum,
+                0
+        );
+
+        normalized = Algorithms.normalizeCentrality(
+                centrality,
+                completeMap.numVertices(),
+                completeMap.isDirected()
+        );
+
+        // All normalized values should be between 0 and 1
+        for (Map.Entry<String, Double> entry : normalized.entrySet()) {
+            assertTrue(
+                    entry.getValue() >= 0.0 && entry.getValue() <= 1.0,
+                    entry.getKey() + " normalized centrality should be between 0 and 1"
+            );
+        }
+    }
+
+    /**
+     * Test betweenness centrality on directed graphs.
+     */
+    @Test
+    public void testBetweennessCentralityDirected() {
+        System.out.println("Test of Betweenness Centrality on Directed Graph");
+
+        // Test 1: Simple directed path A -> B -> C
+        Graph<String, Integer> directedPath = new MapGraph<>(true);
+        directedPath.addVertex("A");
+        directedPath.addVertex("B");
+        directedPath.addVertex("C");
+        directedPath.addEdge("A", "B", 1);
+        directedPath.addEdge("B", "C", 1);
+
+        Map<String, Double> centrality = Algorithms.betweennessCentrality(
+                directedPath,
+                Integer::compare,
+                Integer::sum,
+                0
+        );
+
+        // B should have centrality 1 (path A->C goes through B)
+        assertEquals(1.0, centrality.get("B"), 0.001, "B should have centrality 1");
+        assertEquals(0.0, centrality.get("A"), 0.001, "A should have centrality 0");
+        assertEquals(0.0, centrality.get("C"), 0.001, "C should have centrality 0");
+
+        // Test 2: Directed cycle A -> B -> C -> A
+        Graph<String, Integer> directedCycle = new MapGraph<>(true);
+        directedCycle.addVertex("A");
+        directedCycle.addVertex("B");
+        directedCycle.addVertex("C");
+        directedCycle.addEdge("A", "B", 1);
+        directedCycle.addEdge("B", "C", 1);
+        directedCycle.addEdge("C", "A", 1);
+
+        centrality = Algorithms.betweennessCentrality(
+                directedCycle,
+                Integer::compare,
+                Integer::sum,
+                0
+        );
+
+        // In a directed cycle, each vertex is on exactly 1 shortest path as intermediate
+        // A->C goes through B, B->A goes through C, C->B goes through A
+        double expectedCentrality = 1.0; // Each vertex is on 1 shortest path
+        assertEquals(expectedCentrality, centrality.get("A"), 0.001, "A should have centrality 1");
+        assertEquals(expectedCentrality, centrality.get("B"), 0.001, "B should have centrality 1");
+        assertEquals(expectedCentrality, centrality.get("C"), 0.001, "C should have centrality 1");
+
+        // Test 3: Directed star with hub
+        Graph<String, Integer> directedStar = new MapGraph<>(true);
+        directedStar.addVertex("Hub");
+        directedStar.addVertex("A");
+        directedStar.addVertex("B");
+        directedStar.addVertex("C");
+        directedStar.addEdge("Hub", "A", 1);
+        directedStar.addEdge("Hub", "B", 1);
+        directedStar.addEdge("Hub", "C", 1);
+
+        centrality = Algorithms.betweennessCentrality(
+                directedStar,
+                Integer::compare,
+                Integer::sum,
+                0
+        );
+
+        // Hub has centrality 0 (no paths go through it as intermediate)
+        // There are no paths between A, B, C
+        assertEquals(0.0, centrality.get("Hub"), 0.001, "Hub should have centrality 0");
+        assertEquals(0.0, centrality.get("A"), 0.001, "A should have centrality 0");
+        assertEquals(0.0, centrality.get("B"), 0.001, "B should have centrality 0");
+        assertEquals(0.0, centrality.get("C"), 0.001, "C should have centrality 0");
+    }
+
+    /**
      * Test minimum distance graph using Floyd-Warshall.
      */
     @Test

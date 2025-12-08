@@ -348,6 +348,154 @@ public class Algorithms {
     }
 
     /**
+     * Computes the betweenness centrality for each vertex in the given graph.
+     * Betweenness centrality is a measure of the number of shortest paths
+     * passing through a vertex. This implementation accumulates centrality
+     * scores by iterating through all vertices and considering them as potential
+     * sources of shortest paths.
+     *
+     * @param g   The graph for which betweenness centrality is to be calculated.
+     *            It should contain both vertices and edges.
+     * @param ce  A comparator for comparing edge weights, used to determine the
+     *            shortest paths in the graph.
+     * @param sum A binary operator that specifies how to combine the weights
+     *            of multiple edges (e.g., addition for summing the weights along a path).
+     * @param zero The zero-weight value, representing the absence of weight.
+     *             Typically, it is the additive identity for the type of edge weights being used.
+     * @return A map that associates each vertex with its corresponding betweenness
+     *         centrality value. The map keys are the vertices of the graph, and
+     *         the values are the computed centrality scores.
+     */
+    public static <V, E> Map<V, Double> betweennessCentrality(Graph<V, E> g,
+                                                              Comparator<E> ce,
+                                                              BinaryOperator<E> sum,
+                                                              E zero) {
+
+        Map<V, Double> centrality = new HashMap<>();
+
+        // initialize centrality to 0 for all vertices
+        for (V v : g.vertices()) {
+            centrality.put(v, 0.0);
+        }
+
+        // run from each vertex as a source
+        for (V source : g.vertices()) {
+
+            // execute shortestPaths to get all shortest paths from source
+            ArrayList<LinkedList<V>> paths = new ArrayList<>();
+            ArrayList<E> dists = new ArrayList<>();
+
+            shortestPaths(g, source, ce, sum, zero, paths, dists);
+
+            // count how many shortest paths pass through each vertex
+            Map<V, Integer> pathCount = new HashMap<>();
+            for (V v : g.vertices()) {
+                pathCount.put(v, 0);
+            }
+
+            // for each destination
+            for (int i = 0; i < paths.size(); i++) {
+                LinkedList<V> path = paths.get(i);
+
+                if (path != null && path.size() > 2) {
+                    // count intermediate vertices (exclude source and destination)
+                    for (int j = 1; j < path.size() - 1; j++) {
+                        V intermediate = path.get(j);
+                        pathCount.put(intermediate, pathCount.get(intermediate) + 1);
+                    }
+                }
+            }
+
+            // add to centrality scores
+            for (Map.Entry<V, Integer> entry : pathCount.entrySet()) {
+                V vertex = entry.getKey();
+                if (!vertex.equals(source)) {
+                    centrality.put(vertex, centrality.get(vertex) + entry.getValue());
+                }
+            }
+        }
+
+        // for undirected graphs, divide by 2 (each edge counted twice)
+        if (!g.isDirected()) {
+            for (V v : g.vertices()) {
+                centrality.put(v, centrality.get(v) / 2.0);
+            }
+        }
+
+        return centrality;
+    }
+
+    /**
+     * Finds and returns the most central vertex in the provided graph
+     * based on betweenness centrality scores.
+     *
+     * @param <V> the type representing the vertices of the graph
+     * @param <E> the type representing the edges of the graph
+     * @param g the graph in which to find the most central vertex
+     * @param ce a comparator to compare the edge weights
+     * @param sum a binary operator to sum edge weights
+     * @param zero the identity element for the sum operator, representing zero edge weight
+     * @return the vertex with the highest betweenness centrality score, or null if the graph has no vertices
+     */
+    public static <V, E> V mostCentralVertex(Graph<V, E> g,
+                                             Comparator<E> ce,
+                                             BinaryOperator<E> sum,
+                                             E zero) {
+
+        Map<V, Double> centrality = betweennessCentrality(g, ce, sum, zero);
+
+        V mostCentral = null;
+        double maxCentrality = Double.NEGATIVE_INFINITY;
+
+        for (Map.Entry<V, Double> entry : centrality.entrySet()) {
+            if (entry.getValue() > maxCentrality) {
+                maxCentrality = entry.getValue();
+                mostCentral = entry.getKey();
+            }
+        }
+
+        return mostCentral;
+    }
+
+    /**
+     * Normalizes the centrality values of vertices in a graph.
+     * The normalization depends on the number of vertices in the graph and
+     * whether the graph is directed or undirected.
+     *
+     * @param centrality a map containing centrality values of vertices where keys are vertices
+     *                   and values are their corresponding centrality values
+     * @param numVertices the total number of vertices in the graph
+     * @param isDirected a boolean indicating whether the graph is directed; true for directed graphs,
+     *                   false for undirected graphs
+     * @return a map containing the normalized centrality values where keys represent vertices and
+     *         values are their corresponding normalized centrality values
+     */
+    public static <V> Map<V, Double> normalizeCentrality(Map<V, Double> centrality,
+                                                         int numVertices,
+                                                         boolean isDirected) {
+
+        Map<V, Double> normalized = new HashMap<>();
+
+        if (numVertices <= 2) {
+            for (V v : centrality.keySet()) {
+                normalized.put(v, 0.0);
+            }
+            return normalized;
+        }
+
+        // maximum possible centrality
+        double normFactor = isDirected ?
+                (numVertices - 1) * (numVertices - 2) :
+                (numVertices - 1) * (numVertices - 2) / 2.0;
+
+        for (Map.Entry<V, Double> entry : centrality.entrySet()) {
+            normalized.put(entry.getKey(), entry.getValue() / normFactor);
+        }
+
+        return normalized;
+    }
+
+    /**
      * Computes the shortest-path distance from a source vertex to all reachable vertices of a graph
      * g with potentially negative edge weights, using Bellman-Ford algorithm.
      *
