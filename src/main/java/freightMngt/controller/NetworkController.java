@@ -1,6 +1,8 @@
 package freightMngt.controller;
 
 import freightMngt.domain.ConnectionData;
+import freightMngt.domain.HubMetrics;
+import freightMngt.domain.HubService;
 import freightMngt.domain.Station;
 import freightMngt.graph.Algorithms;
 import freightMngt.graph.Edge;
@@ -176,6 +178,80 @@ public class NetworkController {
         // Known negative cycle: DRONGEN (335) <-> GENT-ST-P (455)
         return (origId.equals("335") && destId.equals("455")) ||
                 (origId.equals("455") && destId.equals("335"));
+    }
+
+    /**
+     * Calculates the HubScores for the network using the HubService.
+     * Uses 'Distance' as the weight criteria for centrality calculations.
+     *
+     * @param n The number of top hubs to return
+     * @return List of the top N stations sorted by HubScore
+     */
+    public List<HubMetrics<Station>> calculateAndRankHubs(int n) {
+        if (this.graph == null || this.graph.numVertices() == 0) {
+            return new ArrayList<>();
+        }
+
+        HubService hubService = new HubService();
+
+
+        Map<Station, HubMetrics<Station>> scores = hubService.calculateHubScores(
+                this.graph,
+                // 1. Comparator: Compares two edges by distance
+                Comparator.comparingDouble(ConnectionData::getDistance),
+
+                // 2. BinaryOperator (Sum): Sums two edges (creates a new one with the sum of distances)
+                (c1, c2) -> new ConnectionData(c1.getDistance() + c2.getDistance(), 0.0, 0.0),
+
+                // 3. Zero: Neutral element (distance 0)
+                new ConnectionData(0.0, 0.0, 0.0),
+
+                // 4. ConvertToDouble: How to transform the edge into a simple double for calculations
+                ConnectionData::getDistance
+        );
+
+        return hubService.getTopHubs(scores, n);
+    }
+
+    public void exportHubsToCSV(String filename, int topN) {
+        if (this.graph == null) return;
+
+        HubService hubService = new HubService();
+
+        // Nota o <Station> no tipo da variável
+        Map<Station, HubMetrics<Station>> metrics = hubService.calculateHubScores(
+                this.graph,
+                Comparator.comparingDouble(ConnectionData::getDistance),
+                (c1, c2) -> new ConnectionData(c1.getDistance() + c2.getDistance(), 0.0, 0.0),
+                new ConnectionData(0.0, 0.0, 0.0),
+                ConnectionData::getDistance
+        );
+
+        List<HubMetrics<Station>> topHubs = hubService.getTopHubs(metrics, topN);
+
+        try (FileWriter fw = new FileWriter(filename)) {
+            // Cabeçalho EXATO pedido na user story (com stid e stname)
+            fw.write("stid,stname,degree,strength,betweenness,harmonic_closeness,hubscore\n");
+
+            for (HubMetrics<Station> m : topHubs) {
+                Station s = m.getVertex(); // Recuperamos a estação
+
+                // Formatamos a linha com ID e Nome separados
+                String line = String.format(Locale.US, "%s,%s,%.0f,%.2f,%.4f,%.4f,%.4f\n",
+                        s.getNodeID(),          // stid
+                        s.getStationName(),     // stname
+                        m.getDegree(),
+                        m.getStrength(),
+                        m.getBetweenness(),
+                        m.getHarmonic(),
+                        m.getHubScore()
+                );
+                fw.write(line);
+            }
+            System.out.println("Hubs exported to " + filename);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
