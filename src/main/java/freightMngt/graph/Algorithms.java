@@ -549,6 +549,38 @@ public class Algorithms {
     }
 
     /**
+     * Calculates the Strength of all vertices in the graph.
+     * Strength is defined as the sum of the weights of the edges connected to a vertex.
+     *
+     * @param g               The graph instance
+     * @param convertToDouble Function to convert the edge weight E to Double
+     * @return Map containing the strength value for each vertex
+     */
+    public static <V, E> Map<V, Double> calculateStrength(Graph<V, E> g, Function<E, Double> convertToDouble) {
+        Map<V, Double> strengthMap = new HashMap<>();
+
+        if (g == null) {
+            return strengthMap;
+        }
+
+        for (V v : g.vertices()) {
+            double vertexStrength = 0.0;
+
+            // goes through all adjacent vertices to sum the weights of its edges
+            for (V adj : g.adjVertices(v)) {
+                Edge<V, E> edge = g.edge(v, adj);
+                if (edge != null && edge.getWeight() != null) {
+                    vertexStrength += convertToDouble.apply(edge.getWeight());
+                }
+            }
+
+            strengthMap.put(v, vertexStrength);
+        }
+
+        return strengthMap;
+    }
+
+    /**
      * Computes the shortest-path distance from a source vertex to all reachable vertices of a graph
      * g with potentially negative edge weights, using Bellman-Ford algorithm.
      *

@@ -769,6 +769,90 @@ class AlgorithmsTest {
     }
 
     /**
+     * Test of calculateStrength method, of class Algorithms.
+     */
+    @Test
+    public void testCalculateStrength() {
+        System.out.println("Test of Calculate Strength");
+
+        // Scenario 1: Simple Undirected Graph with Integer weights
+        // Topology: A --(1)-- B --(2)-- C
+        Graph<String, Integer> undirectedGraph = new MapGraph<>(false);
+        undirectedGraph.addVertex("A");
+        undirectedGraph.addVertex("B");
+        undirectedGraph.addVertex("C");
+        undirectedGraph.addEdge("A", "B", 1);
+        undirectedGraph.addEdge("B", "C", 2);
+
+        Map<String, Double> strength = Algorithms.calculateStrength(
+                undirectedGraph,
+                Integer::doubleValue
+        );
+
+        // A is connected to B (weight 1) -> Strength should be 1.0
+        assertEquals(1.0, strength.get("A"), 0.001, "A strength should be 1.0");
+
+        // B is connected to A (1) and C (2) -> Strength should be 1 + 2 = 3.0
+        assertEquals(3.0, strength.get("B"), 0.001, "B strength should be 3.0 (sum of incident edge weights)");
+
+        // C is connected to B (weight 2) -> Strength should be 2.0
+        assertEquals(2.0, strength.get("C"), 0.001, "C strength should be 2.0");
+
+
+        // Scenario 2: Directed Graph with Double weights (Out-Strength)
+        // Topology: Source --(10.5)--> Middle --(2.5)--> Sink
+        //           Source --(5.0)--> Sink
+        Graph<String, Double> directedGraph = new MapGraph<>(true);
+        directedGraph.addVertex("Source");
+        directedGraph.addVertex("Middle");
+        directedGraph.addVertex("Sink");
+        directedGraph.addEdge("Source", "Middle", 10.5);
+        directedGraph.addEdge("Source", "Sink", 5.0);
+        directedGraph.addEdge("Middle", "Sink", 2.5);
+
+        Map<String, Double> dirStrength = Algorithms.calculateStrength(
+                directedGraph,
+                Double::doubleValue
+        );
+
+        // Source has two outgoing edges: 10.5 + 5.0 = 15.5
+        assertEquals(15.5, dirStrength.get("Source"), 0.001, "Source strength should be sum of outgoing weights (15.5)");
+
+        // Middle has one outgoing edge: 2.5
+        assertEquals(2.5, dirStrength.get("Middle"), 0.001, "Middle strength should be 2.5");
+
+        // Sink has no outgoing edges -> Strength 0.0
+        assertEquals(0.0, dirStrength.get("Sink"), 0.001, "Sink strength should be 0.0 (no outgoing edges)");
+
+
+        // Scenario 3: Isolated Vertex
+        Graph<String, Integer> isolatedGraph = new MapGraph<>(false);
+        isolatedGraph.addVertex("Lonely");
+
+        Map<String, Double> isoStrength = Algorithms.calculateStrength(
+                isolatedGraph,
+                Integer::doubleValue
+        );
+
+        assertEquals(0.0, isoStrength.get("Lonely"), 0.001, "Isolated vertex strength should be 0.0");
+
+
+        // Scenario 4: Integration with existing dataset (completeMap)
+        // Checking 'Porto': Connected to Aveiro(75), Braga(60), Vila Real(100)
+        // Total expected: 75 + 60 + 100 = 235
+        Map<String, Double> mapStrength = Algorithms.calculateStrength(
+                completeMap,
+                Integer::doubleValue
+        );
+
+        assertNotNull(mapStrength.get("Porto"), "Porto should exist in strength map");
+        assertEquals(235.0, mapStrength.get("Porto"), 0.001, "Porto strength should be 235 (sum of 75+60+100)");
+
+        // Checking a leaf node 'Faro': Connected only to Lisboa(280)
+        assertEquals(280.0, mapStrength.get("Faro"), 0.001, "Faro strength should be 280");
+    }
+
+    /**
      * Test minimum distance graph using Floyd-Warshall.
      */
     @Test
