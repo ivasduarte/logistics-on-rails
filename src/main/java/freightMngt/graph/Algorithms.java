@@ -4,6 +4,7 @@ import freightMngt.domain.ConnectionData;
 
 import java.util.*;
 import java.util.function.BinaryOperator;
+import java.util.function.Function;
 
 /**
  * @author DEI-ISEP
@@ -493,6 +494,58 @@ public class Algorithms {
         }
 
         return normalized;
+    }
+
+    /**
+     * Calculates the harmonic centrality of each vertex in a given graph.
+     * Harmonic centrality is a measure that reflects the influence of a vertex
+     * in a graph, based on the reciprocal of the shortest path distances to
+     * all other vertices. The centrality values are normalized by the total
+     * number of vertices in the graph.
+     *
+     * @param <V> the vertex type of the graph
+     * @param <E> the edge type of the graph
+     * @param g the graph for which harmonic centrality is to be computed
+     * @param ce a comparator to compare edge weights
+     * @param sum a binary operator used to sum edge weights
+     * @param zero the zero-equivalent value for edge weights
+     * @param convertToDouble a function that converts edge weights to their double representation
+     * @return a map where keys are vertices and values are their computed harmonic centrality scores
+     */
+    public static <V, E> Map<V, Double> harmonicCentrality(Graph<V, E> g,
+                                                           Comparator<E> ce,
+                                                           BinaryOperator<E> sum,
+                                                           E zero,
+                                                           Function<E, Double> convertToDouble) {
+        Map<V, Double> map = new HashMap<>();
+
+        for (V vOrig : g.vertices()) {
+            ArrayList<LinkedList<V>> paths = new ArrayList<>();
+            ArrayList<E> dists = new ArrayList<>();
+
+            // execute shortest paths to get all shortest paths from vOrig
+            shortestPaths(g, vOrig, ce, sum, zero, paths, dists);
+
+            double hCentrality = 0;
+
+            for (E d : dists) {
+                // calculate harmonic centrality only for non-zero distances
+                if (d != null && ce.compare(d, zero) != 0) {
+                    double val = convertToDouble.apply(d);
+                    if (val != 0) {
+                        hCentrality += 1.0 / val;
+                    }
+                }
+            }
+
+            // normalize harmonic centrality by the number of vertices
+            if (g.numVertices() > 1) {
+                hCentrality /= (g.numVertices() - 1);
+            }
+
+            map.put(vOrig, hCentrality);
+        }
+        return map;
     }
 
     /**

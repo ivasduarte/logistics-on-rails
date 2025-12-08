@@ -661,6 +661,114 @@ class AlgorithmsTest {
     }
 
     /**
+     * Test of harmonicCentrality method, of class Algorithms.
+     */
+    @Test
+    public void testHarmonicCentrality() {
+        System.out.println("Test of Harmonic Centrality");
+
+        // Scenario 1: Simple Linear Graph (A - B - C) with weight 1
+        Graph<String, Integer> linearGraph = new MapGraph<>(false);
+        linearGraph.addVertex("A");
+        linearGraph.addVertex("B");
+        linearGraph.addVertex("C");
+        linearGraph.addEdge("A", "B", 1);
+        linearGraph.addEdge("B", "C", 1);
+
+        Map<String, Double> centrality = Algorithms.harmonicCentrality(
+                linearGraph,
+                Integer::compare,
+                Integer::sum,
+                0,
+                Integer::doubleValue
+        );
+
+        // Expected calculations (Normalized by N-1 = 2):
+        // B: dist(A)=1, dist(C)=1. Sum = 1/1 + 1/1 = 2. Norm = 2/2 = 1.0
+        assertEquals(1.0, centrality.get("B"), 0.001, "B (center of line) should have centrality 1.0");
+
+        // A: dist(B)=1, dist(C)=2. Sum = 1/1 + 1/2 = 1.5. Norm = 1.5/2 = 0.75
+        assertEquals(0.75, centrality.get("A"), 0.001, "A should have centrality 0.75");
+        assertEquals(0.75, centrality.get("C"), 0.001, "C should have centrality 0.75");
+
+        // Scenario 2: Star Graph (Hub connected to A, B, C)
+        Graph<String, Integer> starGraph = new MapGraph<>(false);
+        starGraph.addVertex("Hub");
+        starGraph.addVertex("A");
+        starGraph.addVertex("B");
+        starGraph.addVertex("C");
+        starGraph.addEdge("Hub", "A", 1);
+        starGraph.addEdge("Hub", "B", 1);
+        starGraph.addEdge("Hub", "C", 1);
+
+        centrality = Algorithms.harmonicCentrality(
+                starGraph,
+                Integer::compare,
+                Integer::sum,
+                0,
+                Integer::doubleValue
+        );
+
+        // Hub (N=4, normalization factor = 3)
+        // Hub reaches everyone with dist 1. Sum = 1+1+1 = 3. Norm = 3/3 = 1.0
+        assertEquals(1.0, centrality.get("Hub"), 0.001, "Hub should have maximum centrality");
+
+        // Leaves (A, B, C): dist(Hub)=1, dist(Others)=2. Sum = 1 + 0.5 + 0.5 = 2. Norm = 2/3
+        double expectedSpoke = 2.0 / 3.0;
+        assertEquals(expectedSpoke, centrality.get("A"), 0.001, "Star leaves should have centrality approx 0.66");
+
+        // Scenario 3: Disconnected Graph
+        Graph<String, Integer> disconnected = new MapGraph<>(false);
+        disconnected.addVertex("A");
+        disconnected.addVertex("B");
+        disconnected.addVertex("Isolated");
+        disconnected.addEdge("A", "B", 1);
+
+        centrality = Algorithms.harmonicCentrality(
+                disconnected,
+                Integer::compare,
+                Integer::sum,
+                0,
+                Integer::doubleValue
+        );
+
+        // Isolated Vertex: Sum = 0
+        assertEquals(0.0, centrality.get("Isolated"), 0.001, "Isolated vertex should have 0 centrality");
+
+        // A (N=3, norm=2): dist(B)=1. Sum=1. Norm=0.5
+        assertEquals(0.5, centrality.get("A"), 0.001, "A should have 0.5 (only one connection in a 3-node graph)");
+
+        // Scenario 4: Directed Graph with Double weights
+        // A -> B (2.0) -> C (4.0)
+        // Path A->C cost is 6.0
+        Graph<String, Double> weightedGraph = new MapGraph<>(true);
+        weightedGraph.addVertex("A");
+        weightedGraph.addVertex("B");
+        weightedGraph.addVertex("C");
+        weightedGraph.addEdge("A", "B", 2.0);
+        weightedGraph.addEdge("B", "C", 4.0);
+
+        Map<String, Double> weightedCentrality = Algorithms.harmonicCentrality(
+                weightedGraph,
+                Double::compare,
+                Double::sum,
+                0.0,
+                Double::doubleValue
+        );
+
+        // A (N=3, norm=2):
+        // A->B (2.0) -> inv = 0.5
+        // A->C (6.0) -> inv = 1/6 (~0.166)
+        // Sum = 0.5 + 0.1666... = 0.666...
+        // Norm = 0.666... / 2 = 0.333...
+        double expectedA = (0.5 + (1.0/6.0)) / 2.0;
+        assertEquals(expectedA, weightedCentrality.get("A"), 0.001, "Verification of calculation with decimal weights");
+
+        // C reaches no one
+        assertEquals(0.0, weightedCentrality.get("C"), 0.001, "C is a sink, should have 0 centrality");
+    }
+
+    /**
      * Test minimum distance graph using Floyd-Warshall.
      */
     @Test
