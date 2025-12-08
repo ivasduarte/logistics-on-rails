@@ -1,6 +1,7 @@
 package ui;
 
 import freightMngt.domain.ConnectionData;
+import freightMngt.domain.HubMetrics;
 import freightMngt.domain.Station;
 import freightMngt.graph.Edge;
 import freightMngt.graph.Graph;
@@ -9,6 +10,7 @@ import freightMngt.controller.NetworkController;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.List;
 import java.util.Scanner;
 
 public class NetworkUI implements Runnable {
@@ -46,7 +48,7 @@ public class NetworkUI implements Runnable {
                     System.out.println("Not implemented yet!");
                     break;
                 case "5":
-                    System.out.println("Not implemented yet!");
+                    railHubAnalysis();
                     break;
                 case "6":
                     System.out.println("Not implemented yet!");
@@ -171,7 +173,94 @@ public class NetworkUI implements Runnable {
         processShortestPathBellmanFord(vOrig, vDest);
     }
 
+    /**
+     * Analyzes and ranks railway hubs based on various centrality metrics in the transportation network.
+     *
+     * The method performs the following operations:
+     * 1. Validates whether the transportation network graph is loaded. If not, displays an error message
+     *    and terminates the operation.
+     * 2. Requests user input to determine the number of top hubs (N) to analyze and rank.
+     * 3. Calculates centrality metrics for the railway hubs, including Degree, Strength, Betweenness,
+     *    Harmonic Closeness, and Hub Score, using the network controller.
+     * 4. Displays a summary table in the console with rankings of the top N hubs and their metrics.
+     * 5. Exports detailed hub analysis results to a CSV file named "hubs_ranking.csv".
+     *
+     * Error handling is included for invalid user inputs, exceptions during metric calculations, and
+     * graph data issues (e.g., empty or disconnected graph).
+     *
+     * Outputs include a console table summarizing hub rankings and a CSV file with detailed results
+     * for statistical or archival purposes.
+     */
+    private void railHubAnalysis() {
+        // 1. Check if the network is loaded
+        if (networkController.getGraph().numVertices() == 0) {
+            showError("Network not loaded! Please load the network first (option 1).");
+            return;
+        }
 
+        System.out.println("\n--- Executing Rail Hub Centrality Analysis ---");
+
+        // 2. Request user input (Top N)
+        int n = 0;
+        while (n <= 0) {
+            System.out.print("Enter the number of Top Hubs to analyze/rank: ");
+            try {
+                String input = scanner.nextLine().trim();
+                n = Integer.parseInt(input);
+                if (n <= 0) System.out.println("Please enter a positive number.");
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid input. Please enter an integer.");
+            }
+        }
+
+        System.out.println("\nCalculating centrality metrics (Betweenness, Harmonic, Strength, Degree)...");
+
+        try {
+            // 3. Get data from Controller
+            List<HubMetrics<Station>> topHubs = networkController.calculateAndRankHubs(n);
+
+            if (topHubs.isEmpty()) {
+                showError("No hubs calculated. Check graph connectivity.");
+                return;
+            }
+
+            // 4. Display Preview Table in Console
+            System.out.println("\nTop " + n + " Hubs Ranking Preview:");
+            System.out.println("═════════════════════════════════════════════════════════════════════════════════════════");
+            System.out.printf("| %-6s | %-25s | %-6s | %-8s | %-11s | %-10s | %-8s |\n",
+                    "ID", "Station Name", "Degree", "Strength", "Between.", "Harmonic", "HubScore");
+            System.out.println("─────────────────────────────────────────────────────────────────────────────────────────");
+
+            for (HubMetrics<Station> hub : topHubs) {
+                // Truncate name if too long to prevent table breakage
+                String name = hub.getVertex().getStationName();
+                if (name.length() > 25) name = name.substring(0, 22) + "...";
+
+                System.out.printf("| %-6s | %-25s | %-6.0f | %-8.1f | %-11.4f | %-10.4f | %-8.4f |\n",
+                        hub.getVertex().getNodeID(),
+                        name,
+                        hub.getDegree(),
+                        hub.getStrength(),
+                        hub.getBetweenness(),
+                        hub.getHarmonic(),
+                        hub.getHubScore());
+            }
+            System.out.println("═════════════════════════════════════════════════════════════════════════════════════════");
+
+            // 5. Export CSV
+            String filename = "hubs_ranking.csv";
+            System.out.println("\nExporting detailed results to CSV...");
+
+            networkController.exportHubsToCSV(filename, n);
+
+            showSuccess("Hub analysis exported successfully to file: " + filename);
+            System.out.println("Format: stid, stname, degree, strength, betweenness, harmonic_closeness, hubscore");
+
+        } catch (Exception e) {
+            showError("Error during hub analysis: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
 
     /**
      * Busca o Station ID no arquivo CSV correspondente ao número da linha de entrada
