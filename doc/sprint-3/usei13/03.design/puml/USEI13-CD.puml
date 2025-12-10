@@ -1,0 +1,67 @@
+@startuml
+skinparam classAttributeSize 8
+skinparam linetype ortho
+
+class NetworkUI{}
+
+class NetworkController{
+    - graph: Graph<Station, ConnectionData>
+    + exportHubsToCSV(filename: String, topN: int): void
+    + calculateAndRankHubs(n: int): List<HubMetrics<Station>>
+}
+
+class HubService{
+    + calculateHubScores(graph: Graph, ...): Map<V, HubMetrics<V>>
+    + getTopHubs(metrics: Map, n: int): List<HubMetrics>
+    - normalizeMap(rawMap: Map): Map
+}
+
+class HubMetrics<V>{
+    - vertex: V
+    - degree: double
+    - strength: double
+    - betweenness: double
+    - harmonic: double
+    - hubScore: double
+    + getHubScore(): double
+}
+
+class Algorithms {
+    + {static} betweennessCentrality(g: Graph, ...): Map<V, Double>
+    + {static} harmonicCentrality(g: Graph, ...): Map<V, Double>
+    + {static} calculateStrength(g: Graph, ...): Map<V, Double>
+    + {static} normalizeCentrality(centrality: Map, ...): Map<V, Double>
+}
+
+interface Graph <V, E>{
+    + numVertices(): int
+    + vertices(): Iterable<V>
+    + edges(): Iterable<Edge<V, E>>
+    + adjVertices(v: V): Collection<V>
+}
+
+class Station{
+    - id: String
+    - name: String
+    + getNodeID(): String
+}
+
+class ConnectionData{
+    - distance: double
+    + getDistance(): double
+}
+
+'relationships
+NetworkUI ..> NetworkController
+NetworkController ..> HubService : uses
+NetworkController ..> HubMetrics : uses
+NetworkController o-- Graph : holds >
+
+HubService ..> Algorithms : invokes
+HubService ..> HubMetrics : creates >
+HubService ..> Graph : processes
+
+Graph "1" *-- "*" Station : contains vertices
+Graph "1" --> "1" ConnectionData : edge data
+
+@enduml

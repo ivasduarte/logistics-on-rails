@@ -1,0 +1,80 @@
+@startuml
+skinparam sequenceMessageAlign left
+skinparam responseMessageBelowArrow true
+skinparam maxMessageSize 250
+
+actor "Maintenance\nPlanner" as MP
+participant ":NetworkUI" as UI
+participant ":Network\nController" as C
+participant ":HubService" as HS
+participant ":Algorithms" as ALG
+participant ":HubMetrics" as HM
+participant ":Graph" as G
+
+autonumber
+
+activate MP
+MP -> UI : requests to export top N hubs
+activate UI
+
+UI -> C : exportHubsToCSV(filename, topN)
+activate C
+
+    C -> HS : calculateHubScores(graph, comparator, sum, zero, converter)
+    activate HS
+
+        ' 1. Calculate Betweenness
+        HS -> ALG : betweennessCentrality(graph, ...)
+        activate ALG
+        ALG --> HS : rawBetweennessMap
+        deactivate ALG
+
+        HS -> ALG : normalizeCentrality(rawBetweennessMap, ...)
+        activate ALG
+        ALG --> HS : normBetweennessMap
+        deactivate ALG
+
+        ' 2. Calculate Harmonic
+        HS -> ALG : harmonicCentrality(graph, ...)
+        activate ALG
+        ALG --> HS : harmonicMap
+        deactivate ALG
+
+        ' 3. Calculate Strength
+        HS -> ALG : calculateStrength(graph, ...)
+        activate ALG
+        ALG --> HS : rawStrengthMap
+        deactivate ALG
+
+        HS -> HS : normalizeMap(rawStrengthMap)
+
+        ' 4. Combine into HubMetrics
+        HS -> G : vertices()
+        activate G
+        G --> HS : iterator<Station>
+        deactivate G
+
+        loop for each Station v
+            HS -> HS : score = 0.35*betw + 0.35*harm + 0.30*str
+            HS -> HM ** : create(v, degree, strength, betw, harm, score)
+        end
+
+    HS --> C : map<Station, HubMetrics>
+    deactivate HS
+
+    C -> HS : getTopHubs(map, topN)
+    activate HS
+        HS -> HS : sort list by score descending
+        HS -> HS : subList(0, topN)
+    HS --> C : topHubsList
+    deactivate HS
+
+    C -> C : writeToCSV(topHubsList, filename)
+
+C --> UI : success message
+deactivate C
+
+UI --> MP : confirms export
+deactivate UI
+deactivate MP
+@enduml
