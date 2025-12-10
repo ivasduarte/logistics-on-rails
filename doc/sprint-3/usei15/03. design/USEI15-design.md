@@ -14,15 +14,13 @@ explicitly detect negative cycles to flag configuration errors.
 
 According to the project architecture, the implementation follows a layered approach:
 
-- **UI Layer:** RoutePlannerUI (Console interface).
+- **UI Layer:** NetworkUI (Console interface).
 
-- **Controller Layer:** RoutePlannerController.
+- **Controller Layer:** NetworkController.
 
-- **Domain Layer:** FreightNetwork (Aggregate), Station, Line, PathResult.
+- **Domain Layer:** ConnectionData, Station, Algorithms, Edge.
 
-- **Services/Algorithms:** BellmanFord.
-
-- **Infrastructure/Library:** Graph (Generic Interface), Edge.
+- **Infrastructure/Library:** Graph (Generic Interface).
 
 ---
 

@@ -1,71 +1,71 @@
 @startuml
 skinparam classAttributeSize 8
-skinparam linetype ortho
 
-class RoutePlannerUI{}
+class NetworkUI{}
 
-class RoutePlannerController{
-    + calcShortestPath(originID: String, targetID: String): String
+class NetworkController{
+    + shortestPathBellmanFord(vOrig: Station, vDest: Station, ...): Double
+    + getStationByID(id: String): Station
 }
 
-class FreightNetwork{
-    - network: Graph<Station, Line>
-    + getShortestPath(origin: Station, target: Station): PathResult
-    + getStationByID(id: String)
-}
-
-class Station{
-    - stationID: int
-    - stationName: String
-    - stationLatitude: double
-    - stationLongitude: double
-    + getStationID(): int
-}
-
-class Line{
+class ConnectionData{
     - distance: double
     - capacity: double
     - cost: double
     + getCost(): double
+    + getDistance(): double
 }
 
-class PathResult{
-    - path: List<Station>
-    - totalCost: double
-    - hasNegativeCycle: boolean
-    + toString(): String
+class Station{
+    - nodeID: String // The unique identifier
+    - stationName: String
+    - stationLatitude: double
+    + getNodeID(): String
 }
 
-class BellmanFord{
-    + shortestPath(graph: Graph<V, E>, vOrigin: V , vTarget: V): LinkedList<V>
-    - relaxesEdges(graph: Graph<V, E>, distance: Map<V, Double>, predecessor: Map<V, V>): void
-    - checkNegative(graph: Graph<V, E>, distance: Map<V, Double>): boolean
+class Algorithms{
+    + bellmanFord(g: Graph<V, E>, vOrig: V, ...): boolean
+    + shortestPathBellmanFord(g: Graph<V, E>, vOrig: V, vDest: V, ...): E
+    - relaxation(...)
+    - checkNegativeCycles(...)
 }
 
 interface Graph <V, E>{
     + numVertices(): int
-    + vertices(): Iterable<V>
     + edges(): Iterable<Edge<V, E>>
-    + incomingEdges(vertice: V): Iterable<Edge<V, E>>
+    + validVertex(vert: V): boolean
+    + key(vert: V): int
 }
 
 class Edge <V, E>{
-    - weight: double
-    + getWeight(): double
+    - vOrigin: V
+    - vDestination: V
+    - weight: E
+    + getWeight(): E
     + getVOrigin(): V
     + getVTarget(): V
 }
 
-'relationships
-RoutePlannerUI ..> RoutePlannerController
-RoutePlannerController ..> FreightNetwork
-FreightNetwork "1" o-- "1" Graph : owns
-FreightNetwork ..> BellmanFord : uses
-BellmanFord ..> PathResult : creates
-BellmanFord ..> Graph : traverses
 
+' Relationships
+
+' UI and Controller
+NetworkUI ..> NetworkController
+
+' Controller and Graph/Algorithms
+NetworkController "1" *-- "1" Graph : owns (network)
+NetworkController ..> Algorithms : uses (shortestPathBellmanFord)
+
+' Graph Structure
 Graph "1" *-- "*" Edge : contains
 Graph "1" *-- "*" Station : vertices are
-Edge "1" --> "1" Line : wraps
+
+' Edge Payload
+Edge "1" --> "1" ConnectionData : wraps/weight
+
+' Algorithms Dependencies
+Algorithms ..> Graph : traverses
+Algorithms ..> Edge : reads weight
+Algorithms ..> Station : manipulates path (V)
 
 @enduml

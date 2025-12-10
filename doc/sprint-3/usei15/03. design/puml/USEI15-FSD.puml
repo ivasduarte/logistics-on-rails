@@ -4,89 +4,59 @@ skinparam responseMessageBelowArrow true
 skinparam maxMessageSize 250
 
 actor "Route Planner" as RP
-participant ":RoutePlannerUI" as UI
-participant ":RoutePlanner\nController" as C
-participant ":FreightNetwork" as FN
-participant ":BellmanFord" as BF
-participant ":PathResult" as PR
-participant ":Graph" as G
-participant ":Edge" as E
+participant ":NetworkUI" as UI
+participant ":NetworkController" as C
+participant ":Graph<Station, ConnectionData>" as FN_Graph
+participant ":Graph<Station, Double>" as Cost_Graph
+participant ":Algorithms" as A
 
 autonumber
 
 activate RP
-RP -> UI : requests for shortest path
+RP -> UI : requests risk-aware shortest path (origID, targetID)
 activate UI
 
-UI -> C : shortest path (originID, targetID)
+UI -> C : shortestPathBellmanFord(vOrig, vDest, ...)
 activate C
 
-    C -> FN : getStationById(originID)
-    activate FN
-    FN --> C : originStation
-    deactivate FN
+    group Prepare Cost Graph (Risk-Aware)
+        C -> Cost_Graph **: create(directed=true)
+        C -> FN_Graph : vertices()
+        FN_Graph --> C : V
+        C -> FN_Graph : edges()
+        FN_Graph --> C : iterator<Edge>
 
-    C -> FN : getStationById(targetID)
-    activate FN
-    FN --> C : targetStation
-    deactivate FN
+        loop for each edge e in FN_Graph
+            C -> C : cost = ABS(e.getWeight().getCost())
+            C -> Cost_Graph : addEdge(u, v, cost)
+        end
+    end
 
-    C -> FN : getShortestPath(originStation, targetStation)
-    activate FN
+    C -> A : shortestPathBellmanFord(costGraph, vOrig, vDest, ...)
+    activate A
 
-        FN -> BF : shortestPath(graph, origin, target)
-        activate BF
+        A -> A : initialize dist[] = infinity, dist[orig] = 0
+        A -> Cost_Graph : numVertices()
+        Cost_Graph --> A : V
 
-            BF -> G : numVertices()
-            activate G
-            G --> BF : V
-            deactivate G
-
-            BF -> BF : initialize distance[] = infinity, distance[origin] = 0
-
-            loop i from 1 to V-1
-                BF -> G : edges()
-                activate G
-                G --> BF : iterator<Edge>
-                deactivate G
-
-                loop for each edge in path
-                    BF -> E : getWeight()
-                    activate E
-                    E --> BF : cost
-                    deactivate E
-
-                    BF -> BF : relaz(u, v, cost)
-                end
+        loop Relaxation Phase (1 to V-1)
+            A -> Cost_Graph : edges()
+            loop for each edge (u, v, w) in Cost_Graph
+                A -> A : relax(u, v, w) // dist[u] + w < dist[v]
             end
+        end
 
-            BF -> G : edges()
-            activate G
-            G --> BF : iterator<Edge>
-            deactivate G
+        A -> A : checkNegativeCycles() // V-th iteration
+        alt Negative Cycle Detected
+            A --> C : result (null, cycle_path)
+        else
+            A -> A : reconstructPath(predecessors, vDest)
+            A --> C : result (totalCost, shortestPath)
+        end
 
-            loop for each edge in graph
-                BF -> E : getWeight()
-                activate E
-                E --> BF : cost
-                deactivate E
+    deactivate A
 
-                alt distance[u] + cost < distance[v]
-                    BF -> PR **: create(hasNegativeCycle=true)
-                    BF --> FN : result
-                end
-            end
-
-            BF -> BF : reconstructPath(predecessors, target)
-            BF -> PR ** : create (path, totalCost)
-            BF --> FN : result
-
-        deactivate BF
-
-    FN --> C : result
-    deactivate FN
-
-C --> UI : formatted result string
+C --> UI : formatted result string (totalCost/path OR error)
 deactivate C
 
 UI --> RP : shows path and cost OR error message
