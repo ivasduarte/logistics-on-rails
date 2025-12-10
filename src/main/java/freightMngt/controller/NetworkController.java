@@ -169,7 +169,7 @@ public class NetworkController {
 
     /**
      * Identifies edges that are part of known negative cycles.
-     * Currently handles the DRONGEN-GENT-ST-P negative cycle.
+     * Currently, handles the DRONGEN-GENT-ST-P negative cycle.
      */
     private boolean isNegativeCycleEdge(Station origin, Station target) {
         String origId = origin.getNodeID();

@@ -16,7 +16,6 @@ public class Edge<V, E> {
      * Complete constructor.
      * @param vOrigin   origin vertice
      * @param vDestination  destination vertice
-     * @param element   edge element
      * @param weight    edge weight
      */
     public Edge(V vOrigin, V vDestination, E weight) {

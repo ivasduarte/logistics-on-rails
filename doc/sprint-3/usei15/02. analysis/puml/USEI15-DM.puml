@@ -4,71 +4,61 @@ skinparam classAttributeSize 0
 skinparam defaultTextAlignment center
 skinparam pakcageStyle rectangle
 skinparam Shadowing false
+skinparam linetype ortho
 skinparam ArrowFontSize 12
 skinparam nodesep 80
 skinparam ranksep 80
 
-class RoutePlannerController{
-    + calcShortestPath(originID: String, targetID: String): String
-}
+class NetworkUI{}
 
-class FreightNetwork{
-    - network: Graph<Station, Line>
-    + getShortestPath(origin: Station, target: Station): PathResult
-    + getStationByID(id: String)
-}
+class NetworkController{}
 
-class Station{
-    - stationID: int
-    - stationName: String
-    - stationLatitude: double
-    - stationLongitude: double
-    + getStationID(): int
-}
-
-class Line{
+class ConnectionData{
     - distance: double
     - capacity: double
     - cost: double
-    + getCost(): double
 }
 
-class BellmanFord{
-    + shortestPath(graph: Graph<V, E>, vOrigin: V , vTarget: V): LinkedList<V>
-    - relaxesEdges(graph: Graph<V, E>, distance: Map<V, Double>, predecessor: Map<V, V>): void
-    - checkNegative(graph: Graph<V, E>, distance: Map<V, Double>): boolean
+class Station{
+    - nodeID: String
+    - stationName: String
+    - stationLatitude: double
 }
 
-interface Graph<V, E>{
-    + numVertices(): int
-    + vertices(): Iterable<V>
-    + edges(): Iterable<Edge<V, E>>
-    + incomingEdges(vertice: V): Iterable<Edge<V, E>>
+class Algorithms{
+    - relaxation(...)
+    - checkNegativeCycles(...)
+}
+
+interface Graph <V, E>{
 }
 
 class Edge <V, E>{
-    - weight: double
-    + getWeight(): double
-    + getVOrigin(): V
-    + getVTarget(): V
+    - vOrigin: V
+    - vDestination: V
+    - weight: E
 }
 
-class PathResult{
-    - path: List<Station>
-    - totalCost: double
-    - hasNegativeCycle: boolean
-    + toString(): String
-}
 
-'relationships
-RoutePlannerController ..> FreightNetwork : uses
-FreightNetwork "1" o-- "1" Graph: holds >
-FreightNetwork ..> BellmanFord : invokes
-FreightNetwork ..> PathResult : creates >
-BellmanFord ..> Graph : traverses
+' Relationships
 
-Graph "1" *-- "*" Edge: contains
-Edge "1" --> "1" Line: wraps >
-Graph "1" --> "*" Station: contains vertices
+' UI and Controller
+NetworkUI ..> NetworkController
+
+' Controller and Graph/Algorithms
+NetworkController "1" *-- "1" Graph : owns (network)
+NetworkController ..> Algorithms : uses (shortestPathBellmanFord)
+
+' Graph Structure
+Graph "1" *-- "*" Edge : contains
+Graph "1" *-- "*" Station : vertices are
+
+' Edge Payload
+Edge "1" --> "1" ConnectionData : wraps/weight
+
+' Algorithms Dependencies
+Algorithms ..> Graph : traverses
+Algorithms ..> Edge : reads weight
+Algorithms ..> Station : manipulates path (V)
 
 @enduml
