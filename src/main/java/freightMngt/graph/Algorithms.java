@@ -211,35 +211,51 @@ public class Algorithms {
                                                int[] state, V[] parent,
                                                ArrayList<LinkedList<V>> cycles) {
         int vKey = g.key(vertex);
-        state[vKey] = 1; // GRAY
+        state[vKey] = 1; // GRAY - mark as being processed
 
         for (V neighbor : g.adjVertices(vertex)) {
             int nKey = g.key(neighbor);
-            parent[nKey] = vertex;
 
             if (state[nKey] == 1) {
-                // Back edge found - reconstruct cycle
+                // Back edge found - cycle detected
+                // Reconstruct the cycle from vertex back to neighbor
                 LinkedList<V> cycle = new LinkedList<>();
+
+                // Use a set to detect if we're stuck in a loop during reconstruction
+                Set<V> visited = new HashSet<>();
                 V current = vertex;
+
+                // Build cycle path
                 cycle.addFirst(current);
+                visited.add(current);
 
                 while (current != null && !current.equals(neighbor)) {
                     int currentKey = g.key(current);
                     current = parent[currentKey];
+
                     if (current != null) {
+                        // Prevent infinite loop during reconstruction
+                        if (visited.contains(current)) {
+                            break;
+                        }
                         cycle.addFirst(current);
+                        visited.add(current);
                     }
                 }
 
-                cycle.add(vertex); // Close the cycle
+                // Close the cycle by adding the starting vertex again
+                cycle.add(vertex);
                 cycles.add(cycle);
 
             } else if (state[nKey] == 0) {
+                // Only set parent when we're about to visit (WHITE -> GRAY)
+                parent[nKey] = vertex;
                 detectCyclesDFS(g, neighbor, state, parent, cycles);
             }
+            // If state[nKey] == 2 (BLACK), do nothing - already processed
         }
 
-        state[vKey] = 2; // BLACK
+        state[vKey] = 2; // BLACK - mark as fully processed
     }
 
     /**
