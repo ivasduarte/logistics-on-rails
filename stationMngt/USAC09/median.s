@@ -47,8 +47,8 @@ even_length:
 	add t4, s0, t3
 	lw t6, 0(t4)
 
-	# Store the sum to preserve fractional values
 	add s3, t5, t6
+	srai s3, s3, 1
 
 	j store_median
 

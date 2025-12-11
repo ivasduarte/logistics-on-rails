@@ -83,7 +83,7 @@ void test_Three() {
 
 void test_Four() {
     int input[] = {-1, -3, -4, -2};
-    test_median("test_Four (Negative Numbers - Even)", input, 4, 1, -5);
+    test_median("test_Four (Negative Numbers - Even)", input, 4, 1, -3);
 }
 
 void test_Five() {
@@ -93,7 +93,7 @@ void test_Five() {
 
 void test_Six() {
     int input[] = {0, 3000, 10, 20, 0, 300};
-    test_median("test_Six (Mixed Values - Even)", input, 6, 1, 30);
+    test_median("test_Six (Mixed Values - Even)", input, 6, 1, 15);
 }
 
 int main() {
