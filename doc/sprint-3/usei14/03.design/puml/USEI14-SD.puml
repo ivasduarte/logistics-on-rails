@@ -1,0 +1,53 @@
+@startuml
+
+skinparam sequenceMessageAlign left
+skinparam responseMessageBelowArrow true
+skinparam maxMessageSize 250
+
+actor "Operations\nAnalyst" as analyst
+participant ":MaximumFlowUI" as ui
+participant ":MaximumFlow" as max
+participant ":Graph" as graph
+participant ":Edge" as edge
+
+autonumber
+
+activate analyst
+
+analyst -> ui : requests max flow calculation
+activate ui
+
+ui --> analyst : asks for source and sink stations
+deactivate ui
+
+analyst -> ui : provides source and sink stations
+activate ui
+
+ui -> max : maxFlow(graph, source, sink)
+activate max
+
+max -> graph : maxFlow(graph, source, sink)
+activate graph
+
+graph --> max : cloned Graph object
+deactivate graph
+
+loop while there is a path from source to sink
+    max -> edge : findAugmentationPath(graph, source, sink)
+    activate edge
+
+    edge --> max : found path
+    deactivate edge
+
+    max -> max : getPathMinCap(graph, path)
+    max -> max : updateResidualGraph(graph, source, sink)
+    max -> max : increment totalFlow by minCap
+end
+
+max --> ui : returns totalFlow value
+deactivate max
+
+ui --> analyst : displays max flow summary
+deactivate ui
+
+@enduml
