@@ -1,6 +1,7 @@
 package ui;
 
 import freightMngt.domain.ConnectionData;
+import freightMngt.domain.UpgradeOrderResult;
 import freightMngt.domain.HubMetrics;
 import freightMngt.domain.Station;
 import freightMngt.graph.Edge;
@@ -10,6 +11,8 @@ import freightMngt.controller.NetworkController;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Scanner;
 
@@ -42,7 +45,7 @@ public class NetworkUI implements Runnable {
                     exportNetworkToSVG();
                     break;
                 case "3":
-                    System.out.println("Not implemented yet!");
+                    directedLineUpgradePlan();
                     break;
                 case "4":
                     System.out.println("Not implemented yet!");
@@ -63,11 +66,6 @@ public class NetworkUI implements Runnable {
                 default:
                     showError("Invalid option.");
                     break;
-            }
-
-            if (!exit) {
-                System.out.println("\nPress ENTER to continue...");
-                scanner.nextLine();
             }
         }
     }
@@ -143,6 +141,215 @@ public class NetworkUI implements Runnable {
 
     private void showError(String message) {
         System.out.println("[X] " + message);
+    }
+
+    /**
+     * USEI11 - Directed Line Upgrade Plan
+     *
+     * Computes an ordering of Belgian stations based on directed track dependencies
+     * for scheduling station upgrades that respect all directional dependencies.
+     * If cycles exist, displays which stations and links are involved.
+     */
+    private void directedLineUpgradePlan() {
+        // Check if network is loaded
+        if (networkController.getGraph().numVertices() == 0) {
+            showError("Network not loaded! Please load the network first (option 1).");
+            return;
+        }
+
+        System.out.println("     USEI11 - Directed Line Upgrade Plan                    ");
+
+        System.out.println("\nAnalyzing directed dependencies in the railway network...");
+        System.out.println("Note: Each edge A→B means 'B requires A to be upgraded first'\n");
+
+
+        // Compute upgrade order using controller (returns DTO)
+        UpgradeOrderResult result = networkController.computeUpgradeOrder();
+
+
+        // Display results based on DTO data
+        printUpgradeOrderResult(result);
+
+        // Handle different result scenarios
+        if (result.hasError()) {
+            showError(result.getErrorMessage());
+            return;
+        }
+
+        if (result.isSuccess()) {
+            handleSuccessfulUpgradeOrder(result);
+        } else if (result.hasCycles()) {
+            handleCyclesDetected(result);
+        }
+    }
+
+    /**
+     * Prints the result summary from the DTO.
+     */
+    private void printUpgradeOrderResult(UpgradeOrderResult result) {
+        System.out.println("╔════════════════════════════════════════════════════════════╗");
+        System.out.println("║          UPGRADE ORDER ANALYSIS RESULT                     ║");
+        System.out.println("╚════════════════════════════════════════════════════════════╝");
+
+        if (result.hasError()) {
+            System.out.println("\nERROR: " + result.getErrorMessage());
+            return;
+        }
+
+        if (result.isSuccess()) {
+            LinkedList<Station> order = result.getUpgradeOrder();
+            System.out.println("\nStatus: SUCCESS - Valid upgrade order found (DAG)");
+            System.out.println("  Total Stations: " + order.size());
+
+            if (!order.isEmpty()) {
+                System.out.println("\n  First 5 stations in upgrade sequence:");
+                int count = 0;
+                for (Station station : order) {
+                    if (count >= 5) break;
+                    System.out.printf("    %d. %s (ID: %s)\n",
+                            count + 1, station.getStationName(), station.getNodeID());
+                    count++;
+                }
+
+                if (order.size() > 5) {
+                    System.out.println("    ... and " + (order.size() - 5) + " more");
+                }
+            }
+        } else if (result.hasCycles()) {
+            ArrayList<LinkedList<Station>> cycles = result.getCycles();
+            System.out.println("\nFAILURE - Cycles detected in dependency graph");
+            System.out.println("  Total Cycles: " + cycles.size());
+            System.out.println("  Stations Involved in Cycles: " + result.getStationsInCycles().size());
+
+            if (!cycles.isEmpty()) {
+                System.out.println("\n  Sample cycles detected:");
+                int cycleCount = 0;
+                for (LinkedList<Station> cycle : cycles) {
+                    if (cycleCount >= 3) break;
+                    System.out.printf("    Cycle #%d (length %d): ",
+                            cycleCount + 1, cycle.size() - 1);
+
+                    int nodeCount = 0;
+                    for (Station station : cycle) {
+                        if (nodeCount >= 4) {
+                            System.out.print("...");
+                            break;
+                        }
+                        System.out.print(station.getStationName());
+                        if (nodeCount < cycle.size() - 1) {
+                            System.out.print(" → ");
+                        }
+                        nodeCount++;
+                    }
+                    System.out.println();
+                    cycleCount++;
+                }
+
+                if (cycles.size() > 3) {
+                    System.out.println("    ... and " + (cycles.size() - 3) + " more cycles");
+                }
+            }
+        }
+
+        System.out.println("─────────────────────────────────────────────────────────────\n");
+    }
+
+    /**
+     * Handles the case where topological sort succeeded (no cycles).
+     */
+    private void handleSuccessfulUpgradeOrder(UpgradeOrderResult result) {
+        LinkedList<Station> order = result.getUpgradeOrder();
+
+        showSuccess("Valid upgrade order computed successfully!");
+        System.out.println("\n┌─────────────────────────────────────────────────────────────┐");
+        System.out.println("│              COMPLETE STATION UPGRADE ORDER                 │");
+        System.out.println("└─────────────────────────────────────────────────────────────┘");
+        System.out.printf("Total stations: %d\n\n", order.size());
+
+        // Display preview (first 20 stations)
+        int previewLimit = Math.min(20, order.size());
+        System.out.println("Preview of upgrade sequence (first " + previewLimit + " stations):");
+        System.out.println("╔═══════╦═══════════╦══════════════════════════════════════════╗");
+        System.out.println("║ Order ║ Station ID║ Station Name                             ║");
+        System.out.println("╠═══════╬═══════════╬══════════════════════════════════════════╣");
+
+        int orderNum = 1;
+        for (Station station : order) {
+            if (orderNum > previewLimit) break;
+
+            String name = station.getStationName();
+            if (name.length() > 38) name = name.substring(0, 35) + "...";
+
+            System.out.printf("║ %-5d ║ %-9s ║ %-40s ║\n",
+                    orderNum, station.getNodeID(), name);
+            orderNum++;
+        }
+
+        System.out.println("╚═══════╩═══════════╩══════════════════════════════════════════╝");
+
+    }
+
+    /**
+     * Handles the case where cycles were detected in the graph.
+     */
+    private void handleCyclesDetected(UpgradeOrderResult result) {
+        ArrayList<LinkedList<Station>> cycles = result.getCycles();
+        List<Station> stationsInCycles = result.getStationsInCycles();
+
+        showError("CYCLES DETECTED! Cannot compute valid upgrade order.");
+        System.out.println("\n┌─────────────────────────────────────────────────────────────┐");
+        System.out.println("│         DEPENDENCY CYCLES FOUND IN NETWORK                  │");
+        System.out.println("└─────────────────────────────────────────────────────────────┘");
+        System.out.printf("Total cycles detected: %d\n", cycles.size());
+        System.out.printf("Unique stations involved in cycles: %d\n\n", stationsInCycles.size());
+
+        System.out.println("These stations have circular dependencies and must be addressed:");
+        System.out.println("╔════════════════════════════════════════════════════════════╗");
+        System.out.println("║              STATIONS INVOLVED IN CYCLES                   ║");
+        System.out.println("╠═══════════╦════════════════════════════════════════════════╣");
+        System.out.println("║ Station ID║ Station Name                                   ║");
+        System.out.println("╠═══════════╬════════════════════════════════════════════════╣");
+
+        int displayLimit = Math.min(15, stationsInCycles.size());
+        for (int i = 0; i < displayLimit; i++) {
+            Station station = stationsInCycles.get(i);
+            String name = station.getStationName();
+            if (name.length() > 48) name = name.substring(0, 45) + "...";
+
+            System.out.printf("║ %-9s ║ %-48s ║\n", station.getNodeID(), name);
+        }
+
+        System.out.println("╚═══════════╩════════════════════════════════════════════════╝");
+
+        if (stationsInCycles.size() > displayLimit) {
+            System.out.printf("\n... and %d more stations\n", stationsInCycles.size() - displayLimit);
+        }
+
+        // Display cycle details
+        System.out.println("\n─────────────────────────────────────────────────────────────");
+        System.out.println("CYCLE DETAILS:");
+        System.out.println("─────────────────────────────────────────────────────────────");
+
+        int cycleNum = 1;
+        int maxCyclesToShow = Math.min(5, cycles.size());
+
+        for (LinkedList<Station> cycle : cycles) {
+            if (cycleNum > maxCyclesToShow) break;
+
+            System.out.printf("\n[Cycle #%d] Length: %d stations\n", cycleNum, cycle.size() - 1);
+            System.out.print("Path: ");
+
+            for (int i = 0; i < cycle.size(); i++) {
+                Station station = cycle.get(i);
+                System.out.print(station.getStationName());
+
+                if (i < cycle.size() - 1) {
+                    System.out.print(" → ");
+                }
+            }
+            System.out.println();
+            cycleNum++;
+        }
     }
 
     private void riskAware() {
