@@ -1,0 +1,51 @@
+@startuml
+
+!theme plain
+skinparam classAttributeSize 0
+skinparam defaultTextAlignment center
+skinparam packageStyle rectangle
+skinparam Shadowing false
+skinparam ArrowFontSize 12
+skinparam nodesep 80
+skinparam ranksep 80
+
+class MaximumFlowUI {
+    + computeMaxFlow(): void
+    - showSuccess(msg: String): void
+    - showError(msg: String): void
+}
+
+class MaximumFlow {
+    + findAugmentationPath(graph: Graph, currentVertex: V, sink: V, visited: boolean[], path: LinkedList<V>): List<Edge<V, E>>
+    + getPathMinCap(graph: Graph, path: LinkedList<V>): int
+    + updateResidualGraph(graph: Graph, path: LinkedList<V>, flow: int): void
+    + maxFlow(graph: Graph, source: V, sink: V): Integer
+}
+
+class Station {
+    - id: String
+    - name: String
+    - latitude: double
+    - longitude: double
+    + getNodeID(): String
+}
+
+interface Graph<V, E> {
+    + vertices(): Iterable<V>
+    + edges(): Iterable<Edge<V, E>>
+    + adjVertices(v: V): Collection<V>
+}
+
+class Edge<V, E> {
+    - weight: E
+    + getWeight(): E
+}
+
+MaximumFlowUI ..> MaximumFlow : invokes
+
+MaximumFlow ..> Graph : processes
+
+Graph "1" *- "*" Edge : contains
+Graph "1" *-- "*" Station : contains vertices
+
+@enduml
