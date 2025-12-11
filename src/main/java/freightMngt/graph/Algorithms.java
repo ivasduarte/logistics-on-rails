@@ -102,6 +102,147 @@ public class Algorithms {
     }
 
     /**
+     * Performs topological sort on a directed acyclic graph (DAG).
+     * If the graph contains cycles, returns null.
+     *
+     * @param g Graph instance (must be directed)
+     * @return LinkedList with vertices in topological order, or null if cycles exist
+     * @throws IllegalArgumentException if graph is not directed
+     */
+    public static <V, E> LinkedList<V> topologicalSort(Graph<V, E> g) {
+        if (g == null) {
+            throw new IllegalArgumentException("Graph is null.");
+        }
+
+        if (!g.isDirected()) {
+            throw new IllegalArgumentException("Topological sort only applies to directed graphs.");
+        }
+
+        int n = g.numVertices();
+        if (n == 0) return new LinkedList<>();
+
+        // State: 0 = WHITE (not visited), 1 = GRAY (in progress), 2 = BLACK (done)
+        int[] state = new int[n];
+        LinkedList<V> result = new LinkedList<>();
+        boolean[] hasCycle = {false};
+
+        // Process all vertices (handles disconnected components)
+        for (V vertex : g.vertices()) {
+            if (state[g.key(vertex)] == 0) {
+                topologicalSortDFS(g, vertex, state, result, hasCycle);
+                if (hasCycle[0]) {
+                    return null; // Cycle detected
+                }
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * DFS helper for topological sort with cycle detection.
+     */
+    private static <V, E> void topologicalSortDFS(Graph<V, E> g, V vertex,
+                                                  int[] state,
+                                                  LinkedList<V> result,
+                                                  boolean[] hasCycle) {
+        int vKey = g.key(vertex);
+        state[vKey] = 1; // GRAY - mark as being processed
+
+        for (V neighbor : g.adjVertices(vertex)) {
+            int nKey = g.key(neighbor);
+
+            if (state[nKey] == 1) {
+                // Back edge detected -> cycle found
+                hasCycle[0] = true;
+                return;
+            }
+
+            if (state[nKey] == 0) {
+                topologicalSortDFS(g, neighbor, state, result, hasCycle);
+                if (hasCycle[0]) return;
+            }
+        }
+
+        state[vKey] = 2; // BLACK - mark as processed
+        result.addFirst(vertex); // Add to front (reverse finish order)
+    }
+
+    /**
+     * Detects all cycles in a directed graph.
+     *
+     * @param g Graph instance (must be directed)
+     * @return ArrayList containing all detected cycles. Each cycle is a LinkedList of vertices.
+     *         Returns empty list if no cycles exist.
+     * @throws IllegalArgumentException if graph is not directed
+     */
+    public static <V, E> ArrayList<LinkedList<V>> detectCycles(Graph<V, E> g) {
+        if (g == null) {
+            throw new IllegalArgumentException("Graph is null.");
+        }
+
+        if (!g.isDirected()) {
+            throw new IllegalArgumentException("Cycle detection for directed graphs only.");
+        }
+
+        ArrayList<LinkedList<V>> cycles = new ArrayList<>();
+        int n = g.numVertices();
+        if (n == 0) return cycles;
+
+        // State: 0 = WHITE, 1 = GRAY, 2 = BLACK
+        int[] state = new int[n];
+
+        @SuppressWarnings("unchecked")
+        V[] parent = (V[]) new Object[n];
+
+        for (V vertex : g.vertices()) {
+            if (state[g.key(vertex)] == 0) {
+                detectCyclesDFS(g, vertex, state, parent, cycles);
+            }
+        }
+
+        return cycles;
+    }
+
+    /**
+     * DFS helper for cycle detection.
+     */
+    private static <V, E> void detectCyclesDFS(Graph<V, E> g, V vertex,
+                                               int[] state, V[] parent,
+                                               ArrayList<LinkedList<V>> cycles) {
+        int vKey = g.key(vertex);
+        state[vKey] = 1; // GRAY
+
+        for (V neighbor : g.adjVertices(vertex)) {
+            int nKey = g.key(neighbor);
+            parent[nKey] = vertex;
+
+            if (state[nKey] == 1) {
+                // Back edge found - reconstruct cycle
+                LinkedList<V> cycle = new LinkedList<>();
+                V current = vertex;
+                cycle.addFirst(current);
+
+                while (current != null && !current.equals(neighbor)) {
+                    int currentKey = g.key(current);
+                    current = parent[currentKey];
+                    if (current != null) {
+                        cycle.addFirst(current);
+                    }
+                }
+
+                cycle.add(vertex); // Close the cycle
+                cycles.add(cycle);
+
+            } else if (state[nKey] == 0) {
+                detectCyclesDFS(g, neighbor, state, parent, cycles);
+            }
+        }
+
+        state[vKey] = 2; // BLACK
+    }
+
+    /**
      * Returns all paths from vOrig to vDest
      *
      * @param g       Graph instance
