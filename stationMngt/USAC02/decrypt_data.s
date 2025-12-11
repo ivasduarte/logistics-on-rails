@@ -74,5 +74,6 @@ decrypt_error_clear:
     sb zero, 0(a2)
     # Fall through to decrypt_error
 decrypt_error:
+    sb zero, 0(a2)
     li a0, 0
     ret

@@ -60,5 +60,6 @@ error_clear:
     sb zero, 0(a2)
 
 error:
+    sb zero, 0(a2)
     li a0, 0
     ret
