@@ -1,9 +1,6 @@
 package freightMngt.controller;
 
-import freightMngt.domain.ConnectionData;
-import freightMngt.domain.HubMetrics;
-import freightMngt.domain.HubService;
-import freightMngt.domain.Station;
+import freightMngt.domain.*;
 import freightMngt.graph.Algorithms;
 import freightMngt.graph.Edge;
 import freightMngt.graph.Graph;
@@ -127,6 +124,36 @@ public class NetworkController {
             System.out.println("Graph exported to " + outputFile);
         } catch (IOException e) {
             e.printStackTrace();
+        }
+    }
+
+    /**
+     * Computes upgrade order by calling Algorithms.topologicalSort and Algorithms.detectCycles.
+     */
+    public UpgradeOrderResult computeUpgradeOrder() {
+        if (graph == null || graph.numVertices() == 0) {
+            return UpgradeOrderResult.error("Network not loaded");
+        }
+        if (!graph.isDirected()) {
+            return UpgradeOrderResult.error("Graph must be directed for upgrade planning");
+        }
+
+        // Attempt topological sort using Algorithms class
+        LinkedList<Station> order = Algorithms.topologicalSort(graph);
+
+        if (order != null) {
+            // Success - no cycles detected
+            return UpgradeOrderResult.success(order);
+        } else {
+            // Cycles detected - use Algorithms.detectCycles
+            ArrayList<LinkedList<Station>> cycles = Algorithms.detectCycles(graph);
+
+            Set<Station> stationsInCycles = new HashSet<>();
+            for (LinkedList<Station> cycle : cycles) {
+                stationsInCycles.addAll(cycle);
+            }
+
+            return UpgradeOrderResult.withCycles(cycles, new ArrayList<>(stationsInCycles));
         }
     }
 
