@@ -1,0 +1,22 @@
+# --- UTILIZADORES ---
+# Requisito: A password deve ser LETRAS MAIUSCULAS (A-Z)
+USER;Admin System;admin;SECRETKEY;5
+USER;Operador Estacao;operador;TRAFFIC;10
+
+# --- VIAS (TRACKS) ---
+# Contexto: Simulação Arduino limitada a 2 vias fisicas.
+# Os IDs devem corresponder ao que o Arduino espera receber nos comandos (ex: "RE, 1").
+TRACK;1
+TRACK;2
+
+# --- COMBOIOS (TRAINS) ---
+# Comboios iniciais para teste
+TRAIN;101
+TRAIN;205
+
+# --- CONFIGURACAO SENSORES ---
+# Sensor Temp: Buffer de 10 posicoes, Mediana dos ultimos 5 (exemplo)
+SENSOR_TEMP;10;5
+
+# Sensor Humidade
+SENSOR_HUM;10;5

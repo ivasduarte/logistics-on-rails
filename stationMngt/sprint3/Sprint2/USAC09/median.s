@@ -1,0 +1,72 @@
+.text
+.globl median
+
+median:
+	blez a1, median_fail
+
+	addi sp, sp, -20
+	sw ra, 16(sp)
+	sw s0, 12(sp)
+	sw s1, 8(sp)
+	sw s2, 4(sp)
+	sw s3, 0(sp)
+
+	mv s0, a0
+	mv s1, a1
+	mv s2, a2
+
+	mv a0, s0
+	mv a1, s1
+	li a2, 1
+	call sort_array
+
+	beqz a0, median_restore
+
+	andi t0, s1, 1
+	bnez t0, odd_length
+
+even_length:
+	srli t1, s1, 1
+	addi t2, t1, -1
+
+	slli t3, t2, 2
+	add t4, s0, t3
+	lw t5, 0(t4)
+
+	slli t3, t1, 2
+	add t4, s0, t3
+	lw t6, 0(t4)
+
+	add s3, t5, t6
+	j store_median
+
+odd_length:
+	srli t1, s1, 1
+	slli t3, t1, 2
+	add t4, s0, t3
+	lw s3, 0(t4)
+
+store_median:
+	sw s3, 0(s2)
+
+	lw ra, 16(sp)
+	lw s0, 12(sp)
+	lw s1, 8(sp)
+	lw s2, 4(sp)
+	lw s3, 0(sp)
+	addi sp, sp, 20
+
+	li a0, 1
+	ret
+
+median_restore:
+	lw ra, 16(sp)
+	lw s0, 12(sp)
+	lw s1, 8(sp)
+	lw s2, 4(sp)
+	lw s3, 0(sp)
+	addi sp, sp, 20
+
+median_fail:
+	li a0, 0
+	ret
