@@ -5,10 +5,20 @@ import freightMngt.graph.Graph;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
-import java.util.List;
 
 public class MaximumFlow {
-
+    /**
+     * Recursive search for a path from source station to sink station in the capacity graph.
+     *
+     * @param graph capacity graph
+     * @param currentVertex current vertex of DFS
+     * @param sink destination vertex
+     * @param visited flag for visited vertices
+     * @param path found path updated on every recursive call
+     *
+     * @return {@code true} if a path from source to sink is found, {@code false} otherwise
+     * @param <V> vertex type
+     */
     private static <V> boolean findAugmentationPath(Graph<V, Integer> graph, V currentVertex, V sink,
                                                     boolean[] visited, LinkedList<V> path) {
 
@@ -40,6 +50,15 @@ public class MaximumFlow {
         return false;
     }
 
+    /**
+     * This method returns the minimum capacity of the edges in the given path.
+     *
+     * @param graph updated residual graph
+     * @param path found augmentation path
+     *
+     * @return minimum capacity found in the path
+     * @param <V> vertex type
+     */
     private static <V> int getPathMinCap(Graph<V, Integer> graph, LinkedList<V> path) {
         int minCap = Integer.MAX_VALUE;
 
@@ -58,6 +77,17 @@ public class MaximumFlow {
         return minCap;
     }
 
+    /**
+     * This method updates the residual graph.
+     * It reduces the capacity of the forward edges by the flow value,
+     * and increases the capacity of the backward edges by the same flow value.
+     *
+     * @param graph updated residual graph
+     * @param path augmentation path found
+     * @param flow flow value to update the capacities
+     *
+     * @param <V> vertex type
+     */
     private static <V> void updateResidualGraph(Graph<V, Integer> graph, LinkedList<V> path, int flow) {
         ArrayList<V> pathList = new ArrayList<>(path);
 
@@ -82,6 +112,17 @@ public class MaximumFlow {
         }
     }
 
+    /**
+     * Computes the maximum flow between two vertices.
+     * Uses the Ford-Fulkerson algorithm with DFS for finding augmentation paths.
+     *
+     * @param graph capacity graph
+     * @param source source vertex
+     * @param sink sink vertex
+     *
+     * @return maximum flow value, or {@code null} if one of the vertices is invalid
+     * @param <V> vertex type
+     */
     public static <V> Integer maxFlow(Graph<V, Integer> graph, V source, V sink) {
 
         if (!graph.validVertex(source) || !graph.validVertex(sink)) return null;
