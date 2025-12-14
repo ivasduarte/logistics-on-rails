@@ -1,5 +1,6 @@
 package ui;
 
+import freightMngt.controller.MaximumFlow;
 import freightMngt.domain.ConnectionData;
 import freightMngt.domain.UpgradeOrderResult;
 import freightMngt.domain.HubMetrics;
@@ -54,7 +55,7 @@ public class NetworkUI implements Runnable {
                     railHubAnalysis();
                     break;
                 case "6":
-                    System.out.println("Not implemented yet!");
+                    computeMaxFlow();
                     break;
                 case "7":
                     riskAware();
@@ -662,5 +663,80 @@ public class NetworkUI implements Runnable {
             System.out.printf("%s%s", station.getStationName(), arrow);
         }
         System.out.println("\n------------------------------------------------------------------");
+    }
+
+    private void computeMaxFlow() {
+
+        // check if network is loaded
+        if (networkController.getGraph().numVertices() == 0) {
+            showError("Network not loaded! Please load the network first (option 1).");
+            return;
+        }
+
+        System.out.println("\n╔═══════════════════════════════════════════════════════════╗");
+        System.out.println("║      USEI14 - Maximum Throughput Between Two Hubs         ║");
+        System.out.println("╚═══════════════════════════════════════════════════════════╝");
+
+        // get source station
+        int sourceStation = getValidStationNumber("source");
+        if (sourceStation == -1) return;
+
+        // get sink station
+        int sinkStation = getValidStationNumber("sink");
+        if (sinkStation == -1) return;
+
+        // display selected stations
+        printStationsList(sourceStation, sinkStation);
+
+        // get Station objects
+        Station source = getStationFromLineNumber(sourceStation);
+        Station sink = getStationFromLineNumber(sinkStation);
+
+        if (source == null || sink == null) {
+            showError("Could not find stations in the loaded network.");
+            return;
+        }
+
+        // check if stations are the same
+        if (source.equals(sink)) {
+            showError("Source and sink stations must be different!");
+            return;
+        }
+
+        processMaxFlow(source, sink);
+    }
+
+    private void processMaxFlow(Station source, Station sink) {
+        System.out.println("\n--- Calculating Maximum Flow ---");
+        System.out.println("Source: " + source.getStationName() + " (" + source.getNodeID() + ")");
+        System.out.println("Sink: " + sink.getStationName() + " (" + sink.getNodeID() + ")\n");
+        System.out.println("Analysing network capacity...");
+
+        try {
+            // get capacity graph
+            Graph<Station, Integer> capacityGraph = networkController.getCapacityGraph();
+
+            // calculate max flow
+            Integer maxFlowValue = MaximumFlow.maxFlow(capacityGraph, source, sink);
+
+            if (maxFlowValue == null) {
+                showError("Unable to calculate maximum flow. Stations may be disconnected.");
+                return;
+            }
+
+            // display result
+            System.out.println("\nStatus: SUCCESS - Maximum throughput calculated");
+            System.out.println("────────────────────────────────────────────────────────────");
+            System.out.println("Source Station:  " + source.getStationName());
+            System.out.println("Target Station:  " + sink.getStationName());
+            System.out.println();
+            System.out.println("--> MAXIMUM THROUGHPUT: " + maxFlowValue + " trains/day");
+            System.out.println();
+            System.out.println("────────────────────────────────────────────────────────────");
+
+        } catch (Exception e) {
+            showError("Error during maximum flow calculation: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 }

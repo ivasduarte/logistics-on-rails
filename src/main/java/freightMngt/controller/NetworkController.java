@@ -292,4 +292,24 @@ public class NetworkController {
         }
         return null;
     }
+
+    public Graph<Station, Integer> getCapacityGraph() {
+        Graph<Station, ConnectionData> originalGraph = this.getGraph();
+        Graph<Station, Integer> capacityGraph = new MapGraph<>(originalGraph.isDirected());
+
+        for (Station station : originalGraph.vertices()) {
+            capacityGraph.addVertex(station);
+        }
+
+        for (Edge<Station, ConnectionData> edge : originalGraph.edges()) {
+            Station origin = edge.getVOrigin();
+            Station target = edge.getVTarget();
+
+            Integer capacity = (int) edge.getWeight().getCapacity();
+
+            capacityGraph.addEdge(origin, target, capacity);
+        }
+
+        return capacityGraph;
+    }
 }
