@@ -293,6 +293,12 @@ public class NetworkController {
         return null;
     }
 
+    /**
+     * This method creates a new graph from the original graph.
+     * The edges weight of this graph represent the capacities.
+     *
+     * @return capacity graph
+     */
     public Graph<Station, Integer> getCapacityGraph() {
         Graph<Station, ConnectionData> originalGraph = this.getGraph();
         Graph<Station, Integer> capacityGraph = new MapGraph<>(originalGraph.isDirected());
