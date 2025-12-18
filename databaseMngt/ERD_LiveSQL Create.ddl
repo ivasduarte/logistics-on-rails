@@ -15,7 +15,7 @@
 -- DROP TABLE Locomotive_Model CASCADE CONSTRAINTS;
 -- DROP TABLE Locomotive_Train CASCADE CONSTRAINTS;
 -- DROP TABLE Operator CASCADE CONSTRAINTS;
--- DROP TABLE Operator_Locomotive CASCADE CONSTRAINTS;
+-- DROP TABLE Operator_Train CASCADE CONSTRAINTS;
 -- DROP TABLE Operator_Wagon CASCADE CONSTRAINTS;
 -- DROP TABLE Owner CASCADE CONSTRAINTS;
 -- DROP TABLE Path CASCADE CONSTRAINTS;
@@ -66,7 +66,7 @@ CREATE TABLE Endpoint_Type (
 
 CREATE TABLE Freight (
   id number(10),
-  data date NOT NULL,
+  "date" date NOT NULL,
   origin number(10) NOT NULL,
   destination number(10) NOT NULL,
   trainID number(10),
@@ -112,12 +112,10 @@ CREATE TABLE Location (
 
 CREATE TABLE Locomotive (
   id number(10),
-  rollingStockID number(10) NOT NULL,
   name varchar2(255) NOT NULL UNIQUE,
   make varchar2(255) NOT NULL,
   modelID number(10) NOT NULL,
   entryDate date NOT NULL,
-  gauge number(10) NOT NULL,
   startEndpoint number(10) NOT NULL,
   PRIMARY KEY (id)
 );
@@ -125,7 +123,6 @@ CREATE TABLE Locomotive (
 CREATE TABLE Locomotive_Diesel (
   id number(10),
   maxFuelCapacity number(10) NOT NULL,
-  typeID number(10) NOT NULL,
   PRIMARY KEY (id)
 );
 
@@ -133,7 +130,6 @@ CREATE TABLE Locomotive_Electric (
   id number(10),
   voltage number(10) NOT NULL,
   frequency number(10) NOT NULL,
-  typeID number(10) NOT NULL,
   PRIMARY KEY (id)
 );
 
@@ -149,7 +145,6 @@ CREATE TABLE Locomotive_Model (
   maxSpeed number(10) NOT NULL,
   operationalSpeed number(10) NOT NULL,
   traction number(10) NOT NULL,
-  typeID number(10) NOT NULL,
   weight number(10) NOT NULL,
   dieselID number(10) NOT NULL,
   electricID number(10) NOT NULL,
@@ -169,10 +164,10 @@ CREATE TABLE Operator (
   PRIMARY KEY (shortName)
 );
 
-CREATE TABLE Operator_Locomotive (
+CREATE TABLE Operator_Train (
   OperatorshortName varchar2(255) NOT NULL,
-  Locomotiveid number(10) NOT NULL,
-  PRIMARY KEY (OperatorshortName, Locomotiveid)
+  Trainid number(10) NOT NULL,
+  PRIMARY KEY (OperatorshortName, Trainid)
 );
 
 CREATE TABLE Operator_Wagon (
@@ -206,7 +201,9 @@ CREATE TABLE Rail_Line (
 CREATE TABLE Rail_Line_Path (
   Rail_Lineid number(10) NOT NULL,
   Pathid number(10) NOT NULL,
-  "order" number(10) NOT NULL UNIQUE,
+  "order" number(10) NOT NULL,
+  arrivalTime timestamp(0) NOT NULL,
+  departureTime timestamp(0) NOT NULL,
   PRIMARY KEY (Rail_Lineid, Pathid)
 );
 
@@ -220,7 +217,6 @@ CREATE TABLE Siding (
 
 CREATE TABLE Train (
   id number(10),
-  operator varchar2(255) NOT NULL,
   "date" date NOT NULL,
   pathID number(10) NOT NULL,
   PRIMARY KEY (id)
@@ -228,9 +224,8 @@ CREATE TABLE Train (
 
 CREATE TABLE Wagon (
   id number(10),
-  rollingStockID number(10) NOT NULL,
   modelID number(10) NOT NULL,
-  entryDate number(10) NOT NULL,
+  entryDate date NOT NULL,
   gauge number(10) NOT NULL,
   startEndpoint number(10) NOT NULL,
   PRIMARY KEY (id)
@@ -239,7 +234,6 @@ CREATE TABLE Wagon (
 CREATE TABLE Wagon_Boxcar (
   id number(10),
   storedGeneralGoods number(10) NOT NULL,
-  typeID number(10) NOT NULL,
   PRIMARY KEY (id)
 );
 
@@ -248,7 +242,6 @@ CREATE TABLE Wagon_Flatcar (
   storedContainers number(10) NOT NULL,
   storedVehicles number(10) NOT NULL,
   storedMachinery number(10) NOT NULL,
-  typeID number(10) NOT NULL,
   PRIMARY KEY (id)
 );
 
@@ -263,7 +256,6 @@ CREATE TABLE Wagon_Hopper_Car (
   storedCoal number(10) NOT NULL,
   storedGrains number(10) NOT NULL,
   storedMinerals number(10) NOT NULL,
-  typeID number(10) NOT NULL,
   PRIMARY KEY (id)
 );
 
@@ -280,7 +272,6 @@ CREATE TABLE Wagon_Model (
   maxSpeed number(10) NOT NULL,
   payload number(10) NOT NULL,
   volume number(10) NOT NULL,
-  typeID number(10) NOT NULL,
   flatcarID number(10) NOT NULL,
   tankcarID number(10) NOT NULL,
   hoppercarID number(10) NOT NULL,
@@ -292,7 +283,6 @@ CREATE TABLE Wagon_Model (
 CREATE TABLE Wagon_Refrigerated_Car (
   id number(10),
   storedPerishableGoods number(10) NOT NULL,
-  typeID number(10) NOT NULL,
   PRIMARY KEY (id)
 );
 
@@ -301,7 +291,6 @@ CREATE TABLE Wagon_Tank_Car (
   storedLiquids number(10) NOT NULL,
   storedChemicals number(10) NOT NULL,
   storedFuel number(10) NOT NULL,
-  typeID number(10) NOT NULL,
   PRIMARY KEY (id)
 );
 
@@ -334,12 +323,6 @@ ALTER TABLE Operator_Wagon
 
 ALTER TABLE Operator_Wagon
   ADD CONSTRAINT FKOperator_W424175 FOREIGN KEY (Wagonid) REFERENCES Wagon (id);
-
-ALTER TABLE Operator_Locomotive
-  ADD CONSTRAINT FKOperator_L744142 FOREIGN KEY (OperatorshortName) REFERENCES Operator (shortName);
-
-ALTER TABLE Operator_Locomotive
-  ADD CONSTRAINT FKOperator_L333656 FOREIGN KEY (Locomotiveid) REFERENCES Locomotive (id);
 
 ALTER TABLE Gauge_Locomotive
   ADD CONSTRAINT FKGauge_Loco300090 FOREIGN KEY (Gauge) REFERENCES Gauge (gaugeNumber);
@@ -424,3 +407,9 @@ ALTER TABLE Locomotive
 
 ALTER TABLE Wagon
   ADD CONSTRAINT FKWagon551511 FOREIGN KEY (startEndpoint) REFERENCES Endpoint (endpointID);
+
+ALTER TABLE Operator_Train
+  ADD CONSTRAINT FKOperator_T788688 FOREIGN KEY (OperatorshortName) REFERENCES Operator (shortName);
+
+ALTER TABLE Operator_Train
+  ADD CONSTRAINT FKOperator_T653494 FOREIGN KEY (Trainid) REFERENCES Train (id);
