@@ -296,7 +296,9 @@ void wait_for_data_from_sensors(char *buffer) {
 
     // Format and send GTH command (USAC04)
     char cmd[20];
-    int res = format_command("gTh", 0, cmd); // becomes GTH
+    char op_buffer[20];
+    strcpy(op_buffer, "gTh"); // copia a constante para um array na stack
+    int res = format_command(op_buffer, 0, cmd);
 
     if (!res) {
         printf("[ERROR] Unable to format GTH command!\n");

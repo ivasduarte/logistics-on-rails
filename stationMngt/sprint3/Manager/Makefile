@@ -6,6 +6,8 @@ CFLAGS = -Wall -Wextra -fanalyzer -g -I. -I../Sprint2/USAC01
 ARCHFLAGS = -march=rv32imd -mabi=ilp32d
 LIBRV32 = $(HOME)/bin/bootlin/riscv32-buildroot-linux-gnu/sysroot
 
+GDB = riscv32-linux-gdb
+
 # Directories
 SPRINT2_DIR = ../Sprint2
 SPRINT3_DIR = ../Sprint3
@@ -52,6 +54,12 @@ run: $(EXEC)
 	qemu-riscv32 -L $(LIBRV32) ./$(EXEC)
 
 debug: $(EXEC)
-	@echo "On other terminal window do:"
+	@echo "A iniciar o QEMU em modo de espera (porta 1234)..."
+	@echo "Num outro terminal, correr: gdb-connect"
 	@echo "riscv-linux-gdb -tui ./$(EXEC)"
 	qemu-riscv32 -L $(LIBRV32) -g 1234 ./$(EXEC) -S
+
+gdb-connect:
+	$(GDB) -tui -ex "set sysroot $(LIBRV32)"
+			-ex "target remote :1234"
+			./$(EXEC)
