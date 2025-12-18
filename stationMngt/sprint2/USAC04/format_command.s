@@ -97,46 +97,42 @@ format_command:
 # Output: a0 = pointer to trimmed string
 
 trim:
-	mv t0, a0 # t0 = original pointer
-	mv t1, a0 # t1 = scan pointer
+    mv t0, a0           # t0 = ponteiro original
+    mv t1, a0           # t1 = ponteiro de leitura
 
 skip_leading:
-	lb t2, 0(t1) # load string character
-	beqz t2, empty_string # if null, string is empty
-
-	li t3, 33 # char <= 32 = whitespace
-	bge t2, t3, found_start # if char >= 33, found first non whitespace
-
-	addi t1, t1, 1 # move to next character
-	j skip_leading
+    lb t2, 0(t1)
+    beqz t2, trim_done  # Se string vazia, termina
+    li t3, 33
+    bge t2, t3, found_start
+    addi t1, t1, 1
+    j skip_leading
 
 found_start:
-	mv a0, t1 # a0 = start of trimmed string
-	mv t4, t1 # t4 = pointer to scan for end
+    mv t0, t1           # t0 agora guarda o NOVO início (sem espaços à esquerda)
+    mv t4, t1           # t4 vai procurar o fim
+find_end_loop:
+    lb t2, 0(t4)
+    beqz t2, start_trim_back
+    addi t4, t4, 1
+    j find_end_loop
 
-find_end:
-	lb t2, 0(t4) # loads byte from memory into t2
-	beqz t2, trim_trailing # found null terminator
-	addi t4, t4, 1 # move to next character
-	j find_end
+start_trim_back:
+    addi t4, t4, -1     # Volta para o último caractere antes do nulo
+trim_back_loop:
+    blt t4, t0, trim_done # Se voltámos antes do início, a string ficou vazia
+    lb t2, 0(t4)
+    li t3, 33
+    bge t2, t3, finalize_trim # Se encontramos caractere visível, paramos
+    addi t4, t4, -1
+    j trim_back_loop
 
-trim_trailing:
-	addi t4, t4, -1 # moves back one character
-	blt t4, t1, place_null # if before start, done
+finalize_trim:
+    sb zero, 1(t4)      # Coloca o nulo IMEDIATAMENTE após o último caractere válido
 
-	lb t2, 0(t4) # load character (fixed: removed comma)
-	li t3, 33
-	bge t2, t3, place_null # if non whitespace, done
-
-	j trim_trailing
-
-place_null:
-	addi t4, t4, 1 # moves to position after last non whitespace
-	sb zero, 0(t4) # place null terminator
-	ret            # return from trim
-
-empty_string:
-	ret
+trim_done:
+    mv a0, t0           # Retorna o ponteiro onde a string realmente começa
+    ret
 
 # ===== END OF TRIM FUNCTION =====
 

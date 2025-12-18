@@ -19,10 +19,10 @@ int extract_data(char* str, char* token, char* unit, int* value);
 int format_command(char* op, int n, char *cmd);
 
 // USAC05: Inserir valor no Buffer Circular
-int enqueue_value(int* buffer, int length, int *nelem, int* tail, int head, int value);
+int enqueue_value(int* buffer, int length, int *nelem, int* tail, int* head, int value);
 
 // USAC06: Remover valor do Buffer Circular
-int dequeue_value(int* buffer, int length, int *nelem, int* tail, int head, int *value);
+int dequeue_value(int* buffer, int length, int *nelem, int* tail, int* head, int *value);
 
 // USAC07: Mover N elementos mais antigos para um array
 int move_n_to_array(int* buffer, int length, int *nelem, int *tail, int *head, int n, int *array);

@@ -34,6 +34,8 @@ typedef struct {
   int head;
   int tail;
   int nelem;
+
+  int last_median; // Última mediana calculada
 } Sensor;
 
 typedef struct {

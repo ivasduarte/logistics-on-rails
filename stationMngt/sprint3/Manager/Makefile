@@ -12,7 +12,7 @@ SPRINT3_DIR = ../Sprint3
 
 # Source Files
 SRC = manager.c ui.c
-ASM_SRC_LOCAL = 
+ASM_SRC_LOCAL =
 ASM_SRC_SPRINT2 = \
 	$(SPRINT2_DIR)/USAC01/encrypt_data.s \
 	$(SPRINT2_DIR)/USAC02/decrypt_data.s \
@@ -50,3 +50,8 @@ clean:
 
 run: $(EXEC)
 	qemu-riscv32 -L $(LIBRV32) ./$(EXEC)
+
+debug: $(EXEC)
+	@echo "On other terminal window do:"
+	@echo "riscv-linux-gdb -tui ./$(EXEC)"
+	qemu-riscv32 -L $(LIBRV32) -g 1234 ./$(EXEC) -S
