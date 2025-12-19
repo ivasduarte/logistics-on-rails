@@ -1,5 +1,14 @@
+.section .text
 .globl extract_data
-.type extract_data, @function
+
+# int extract_data(char* str, char* token, char* unit, int* value)
+# a0 = str (input string)
+# a1 = token (TOKEN to search for: "TEMP" or "HUM")
+# a2 = unit (output string for unit)
+# a3 = value (output pointer for value)
+#
+# Format: TEMP&unit:celsius&value:35#HUM&unit:percentage&value:65
+# Returns: 1 on success, 0 on failure
 
 extract_data:
     addi sp, sp, -32
@@ -9,171 +18,214 @@ extract_data:
     sw s2, 16(sp)
     sw s3, 12(sp)
     sw s4, 8(sp)
+    sw s5, 4(sp)
     
-    mv s0, a0
-    mv s1, a1
-    mv s2, a2
-    mv s3, a3
+    # Save parameters
+    mv s0, a0        # s0 = str
+    mv s1, a1        # s1 = token
+    mv s2, a2        # s2 = unit (output)
+    mv s3, a3        # s3 = value (output pointer)
     
-    mv t0, s0
+    # Find token in string
+    mv a0, s0        # str
+    mv a1, s1        # token
+    call find_token
     
-search_token:
-    lb t1, 0(t0)
-    beqz t1, fail
+    beqz a0, extract_fail   # Token not found
+    mv s4, a0        # s4 = position after token
     
-    mv t2, t0
-    mv t3, s1
+    # Now s4 points to '&unit:...'
+    # Skip '&unit:'
+    li t0, '&'
+    lb t1, 0(s4)
+    bne t1, t0, extract_fail
+    addi s4, s4, 1       # Skip '&'
     
-compare_loop:
-    lb t4, 0(t3)
-    beqz t4, token_found
-    lb t5, 0(t2)
-    bne t4, t5, next_pos
-    addi t2, t2, 1
-    addi t3, t3, 1
-    j compare_loop
+    # Check for 'unit:'
+    li t0, 'u'
+    lb t1, 0(s4)
+    bne t1, t0, extract_fail
+    addi s4, s4, 1
     
-next_pos:
-    addi t0, t0, 1
-    j search_token
+    li t0, 'n'
+    lb t1, 0(s4)
+    bne t1, t0, extract_fail
+    addi s4, s4, 1
     
-token_found:
-    beq t0, s0, check_suffix
-    lb t5, -1(t0)
-    li t6, '#'
-    bne t5, t6, next_pos
-
-check_suffix:
-    lb t1, 0(t2)
-    li t4, '&'
-    bne t1, t4, next_pos
+    li t0, 'i'
+    lb t1, 0(s4)
+    bne t1, t0, extract_fail
+    addi s4, s4, 1
     
-    mv t0, t2
-find_unit_label:
-    lb t1, 0(t0)
-    beqz t1, fail
-    li t2, '&'
-    bne t1, t2, skip_char
+    li t0, 't'
+    lb t1, 0(s4)
+    bne t1, t0, extract_fail
+    addi s4, s4, 1
     
-    lb t1, 1(t0)
-    li t2, 'u'
-    bne t1, t2, skip_char
-    lb t1, 2(t0)
-    li t2, 'n'
-    bne t1, t2, skip_char
-    lb t1, 3(t0)
-    li t2, 'i'
-    bne t1, t2, skip_char
-    lb t1, 4(t0)
-    li t2, 't'
-    bne t1, t2, skip_char
-    lb t1, 5(t0)
-    li t2, ':'
-    bne t1, t2, skip_char
+    li t0, ':'
+    lb t1, 0(s4)
+    bne t1, t0, extract_fail
+    addi s4, s4, 1       # Skip ':'
     
-    addi t0, t0, 6
-    j extract_unit
+    # Now s4 points to the unit value (e.g., "celsius&value:...")
+    # Extract unit until '&'
+    mv s5, s2            # s5 = unit output pointer
     
-skip_char:
-    li t2, '#'
-    beq t1, t2, fail
-    addi t0, t0, 1
-    j find_unit_label
+extract_unit_loop:
+    lb t0, 0(s4)
+    beqz t0, extract_fail    # End of string
+    li t1, '&'
+    beq t0, t1, extract_unit_done
+    sb t0, 0(s5)
+    addi s4, s4, 1
+    addi s5, s5, 1
+    j extract_unit_loop
     
-extract_unit:
-    mv t1, s2
-copy_unit:
-    lb t2, 0(t0)
-    beqz t2, fail
-    li t3, '&'
-    beq t2, t3, end_unit
-    li t3, '#'
-    beq t2, t3, fail
-    sb t2, 0(t1)
-    addi t1, t1, 1
-    addi t0, t0, 1
-    j copy_unit
+extract_unit_done:
+    # Null-terminate unit string
+    sb zero, 0(s5)
     
-end_unit:
-    sb zero, 0(t1)
+    # Now s4 points to '&value:XX'
+    # Skip '&value:'
+    li t0, '&'
+    lb t1, 0(s4)
+    bne t1, t0, extract_fail
+    addi s4, s4, 1       # Skip '&'
     
-find_value_label:
-    lb t1, 0(t0)
-    beqz t1, fail
+    # Check for 'value:'
+    li t0, 'v'
+    lb t1, 0(s4)
+    bne t1, t0, extract_fail
+    addi s4, s4, 1
     
-    lb t1, 0(t0)
-    li t2, 'v'
-    bne t1, t2, skip_value_char
-    lb t1, 1(t0)
-    li t2, 'a'
-    bne t1, t2, skip_value_char
-    lb t1, 2(t0)
-    li t2, 'l'
-    bne t1, t2, skip_value_char
-    lb t1, 3(t0)
-    li t2, 'u'
-    bne t1, t2, skip_value_char
-    lb t1, 4(t0)
-    li t2, 'e'
-    bne t1, t2, skip_value_char
-    lb t1, 5(t0)
-    li t2, ':'
-    bne t1, t2, skip_value_char
+    li t0, 'a'
+    lb t1, 0(s4)
+    bne t1, t0, extract_fail
+    addi s4, s4, 1
     
-    addi t0, t0, 6
-    j parse_value
+    li t0, 'l'
+    lb t1, 0(s4)
+    bne t1, t0, extract_fail
+    addi s4, s4, 1
     
-skip_value_char:
-    li t2, '#'
-    beq t1, t2, fail
-    addi t0, t0, 1
-    j find_value_label
+    li t0, 'u'
+    lb t1, 0(s4)
+    bne t1, t0, extract_fail
+    addi s4, s4, 1
     
-parse_value:
-    mv t1, zero
-    mv t2, zero
-    lb t3, 0(t0)
-    li t4, '-'
-    bne t3, t4, parse_digits
-    li t2, 1
-    addi t0, t0, 1
+    li t0, 'e'
+    lb t1, 0(s4)
+    bne t1, t0, extract_fail
+    addi s4, s4, 1
     
-parse_digits:
-    lb t3, 0(t0)
-    li t4, '#'
-    beq t3, t4, end_parse
-    li t4, '0'
-    blt t3, t4, end_parse
-    li t4, '9'
-    bgt t3, t4, end_parse
+    li t0, ':'
+    lb t1, 0(s4)
+    bne t1, t0, extract_fail
+    addi s4, s4, 1       # Skip ':'
     
-    li t5, 10
-    mul t1, t1, t5
-    addi t3, t3, -'0'
-    add t1, t1, t3
-    addi t0, t0, 1
-    j parse_digits
+    # Now s4 points to the numeric value
+    # Parse integer until '#' or end of string
+    li t2, 0             # t2 = accumulated value
+    li t6, 0             # t6 = digit count
     
-end_parse:
-    beqz t2, store_value
-    neg t1, t1
+extract_value_loop:
+    lb t0, 0(s4)
+    beqz t0, extract_value_done    # End of string
+    li t1, '#'
+    beq t0, t1, extract_value_done # End marker for next token
+    li t1, ' '
+    beq t0, t1, extract_value_done # Space (shouldn't happen but safe)
     
-store_value:
-    sw t1, 0(s3)
+    # Check if digit
+    li t1, '0'
+    blt t0, t1, extract_fail
+    li t1, '9'
+    bgt t0, t1, extract_fail
+    
+    # Convert char to digit and accumulate
+    addi t0, t0, -48     # Convert ASCII to digit
+    li t3, 10
+    mul t2, t2, t3       # value *= 10
+    add t2, t2, t0       # value += digit
+    
+    addi s4, s4, 1
+    addi t6, t6, 1       # Increment digit count
+    j extract_value_loop
+    
+extract_value_done:
+    # Check if we got at least one digit
+    beqz t6, extract_fail
+    
+    # Store value
+    sw t2, 0(s3)
+    
+    # Success
     li a0, 1
-    j cleanup
+    j extract_cleanup
     
-fail:
+extract_fail:
+    # Set value to 0 and unit to empty string
     sw zero, 0(s3)
     sb zero, 0(s2)
     li a0, 0
     
-cleanup:
+extract_cleanup:
     lw ra, 28(sp)
     lw s0, 24(sp)
     lw s1, 20(sp)
     lw s2, 16(sp)
     lw s3, 12(sp)
     lw s4, 8(sp)
+    lw s5, 4(sp)
     addi sp, sp, 32
+    ret
+
+# Helper function: find_token
+# a0 = str
+# a1 = token
+# Returns: pointer to character after token, or 0 if not found
+find_token:
+    addi sp, sp, -16
+    sw s0, 12(sp)
+    sw s1, 8(sp)
+    sw s2, 4(sp)
+    
+    mv s0, a0        # s0 = str
+    mv s1, a1        # s1 = token
+    
+find_token_loop:
+    lb t0, 0(s0)
+    beqz t0, find_token_fail    # End of string
+    
+    # Check if current position matches token
+    mv s2, s0        # s2 = current position in str
+    mv t1, s1        # t1 = token pointer
+    
+find_token_match:
+    lb t2, 0(t1)
+    beqz t2, find_token_found   # End of token = match!
+    lb t3, 0(s2)
+    bne t2, t3, find_token_next # Mismatch
+    
+    addi t1, t1, 1
+    addi s2, s2, 1
+    j find_token_match
+    
+find_token_next:
+    addi s0, s0, 1
+    j find_token_loop
+    
+find_token_found:
+    # Return pointer to character after token
+    mv a0, s2
+    j find_token_cleanup
+    
+find_token_fail:
+    li a0, 0
+    
+find_token_cleanup:
+    lw s0, 12(sp)
+    lw s1, 8(sp)
+    lw s2, 4(sp)
+    addi sp, sp, 16
     ret

@@ -286,7 +286,6 @@ void close_serial_port() {
     }
 }
 
-// TODO: Serial comms (USAC13)
 void wait_for_data_from_sensors(char *buffer) {
     if (serial_fd == -1) {
         printf("[ERROR] Serial port is not opened...\n");
@@ -363,10 +362,8 @@ void wait_for_data_from_sensors(char *buffer) {
     buffer[total_bytes] = '\0';
 }
 
-// TODO: Update structs (USAC05/06)
 void update_sensors_data(StationManager *mgr, char *data) {
     if (!data || strlen(data) == 0) {
-        printf("[WARNING] Sensors data is empty...\n");
         return;
     }
 
@@ -499,10 +496,66 @@ void update_sensors_data(StationManager *mgr, char *data) {
 }
 
 void process_instruction(StationManager *mgr, int instruction) {
-    (void) mgr;
-    if (instruction == -1)
-        return;
-    // TODO: Logic (USAC13-16)
+    if (instruction == -1) return;
+
+    switch (instruction) {
+    	case 1:
+    		printf("=== SENSOR DATA ===\n");
+
+    		// Display buffer contents
+    		printf("--> Temperature <--\n");
+    		
+    		if (mgr->sensor_temp.nelem > 0) {
+			printf("Last %d readings:\n", mgr->sensor_temp.nelem);
+			for (int i = 0; i < mgr->sensor_temp.nelem && i < 10; i++) {
+				printf("- [%d] = %dºC\n", i + 1, mgr->sensor_temp.values[i]);
+			}
+
+			if (mgr->sensor_temp.nelem >= mgr->sensor_temp.window_len) {
+				printf("\nMoving Median: %dºC\n", mgr->sensor_temp.last_median);
+			} else {
+				printf("\nNot enough data for median yet (%d samples needed)!\n", mgr->sensor_temp.window_len);
+			}
+    		} else {
+			printf("No temperature data available!\n");
+    		}
+
+    		printf("\n--> Humidity <--\n");
+
+    		if (mgr->sensor_hum.nelem > 0) {
+			printf("Last %d readings:\n", mgr->sensor_hum.nelem);
+			for (int i = 0; i < mgr->sensor_hum.nelem && i < 10; i++) {
+				printf("- [%d] = %d percent\n", i + 1, mgr->sensor_hum.values[i]);
+			}
+
+			if (mgr->sensor_hum.nelem >= mgr->sensor_hum.window_len) {
+				printf("\nMoving Median: %d percent\n", mgr->sensor_hum.last_median);
+			} else {
+				printf("\nNot enough data for median yet (%d samples needed)!\n", mgr->sensor_hum.window_len);
+			}
+    		} else {
+			printf("No humidity data available!\n");
+    		}
+
+    		break;
+
+    	case 2:
+    		printf("Not implemented yet!");
+    		break;
+
+    	case 3:
+    		printf("Not implemented yet!");
+		break;
+
+	case 4:
+		printf("Not implemented yet!");
+		break;
+
+	default:
+		printf("Unknown instruction!\n");
+		break;
+
+     }	
 }
 
 void send_data_to_board(void *data) {
