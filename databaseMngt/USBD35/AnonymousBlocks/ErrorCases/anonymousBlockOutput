@@ -1,0 +1,11 @@
+Statement processed.
+========================================
+USBD35: Testing Error Scenarios
+========================================
+Scenario 1: Testing NULL Latitude
+Caught Expected Error: ORA-20003: Error registering facility: ORA-20001: All parameters except entry_date are required
+----------------------------------------
+Scenario 2: Testing Invalid Type ID (9999)
+Caught Expected Error: ORA-20003: Error registering facility: ORA-20002: Invalid endpoint type ID: 9999
+----------------------------------------
+Error testing complete. No data was committed.
