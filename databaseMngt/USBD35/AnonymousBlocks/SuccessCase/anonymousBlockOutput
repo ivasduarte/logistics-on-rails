@@ -1,0 +1,233 @@
+Statement processed.
+========================================
+USBD35: Register New Facility Test
+========================================
+Total facilities before: 27
+========================================
+FACILITIES BEFORE REGISTRATION
+========================================
+Facility ID: 1
+  Name: São Romão
+  Type: Station
+  Location: 100, 100
+----------------------------------------
+Facility ID: 2
+  Name: Tamel
+  Type: Station
+  Location: 200, 200
+----------------------------------------
+Facility ID: 3
+  Name: Senhora das Dores
+  Type: Station
+  Location: 300, 300
+----------------------------------------
+Facility ID: 4
+  Name: Lousado
+  Type: Station
+  Location: 400, 400
+----------------------------------------
+Facility ID: 5
+  Name: Porto Campanhã
+  Type: Freight Yard
+  Location: 500, 500
+----------------------------------------
+Facility ID: 6
+  Name: Leandro
+  Type: Station
+  Location: 600, 600
+----------------------------------------
+Facility ID: 7
+  Name: Porto São Bento
+  Type: Not Intermodal Terminal
+  Location: 700, 700
+----------------------------------------
+Facility ID: 8
+  Name: Barcelos
+  Type: Not Intermodal Terminal
+  Location: 800, 800
+----------------------------------------
+Facility ID: 9
+  Name: Vila Nova da Cerveira
+  Type: Station
+  Location: 900, 900
+----------------------------------------
+Facility ID: 10
+  Name: Midões
+  Type: Station
+  Location: 1000, 1000
+----------------------------------------
+Facility ID: 11
+  Name: Valença
+  Type: Freight Yard
+  Location: 1100, 1100
+----------------------------------------
+Facility ID: 12
+  Name: Darque
+  Type: Freight Yard
+  Location: 1200, 1200
+----------------------------------------
+Facility ID: 13
+  Name: Contumil
+  Type: Freight Yard
+  Location: 1300, 1300
+----------------------------------------
+Facility ID: 14
+  Name: Ermesinde
+  Type: Station
+  Location: 1400, 1400
+----------------------------------------
+Facility ID: 15
+  Name: São Frutuoso
+  Type: Station
+  Location: 1500, 1500
+----------------------------------------
+Facility ID: 16
+  Name: São Pedro da Torre
+  Type: Not Intermodal Terminal
+  Location: 1600, 1600
+----------------------------------------
+Facility ID: 17
+  Name: Viana do Castelo
+  Type: Not Intermodal Terminal
+  Location: 1700, 1700
+----------------------------------------
+Facility ID: 18
+  Name: Famalicão
+  Type: Station
+  Location: 1800, 1800
+----------------------------------------
+Facility ID: 19
+  Name: Barroselas
+  Type: Station
+  Location: 1900, 1900
+----------------------------------------
+Facility ID: 20
+  Name: Nine
+  Type: Freight Yard
+  Location: 2000, 2000
+----------------------------------------
+Facility ID: 21
+  Name: Caminha
+  Type: Freight Yard
+  Location: 2100, 2100
+----------------------------------------
+Facility ID: 22
+  Name: Carvalha
+  Type: Station
+  Location: 2200, 2200
+----------------------------------------
+Facility ID: 23
+  Name: Carreção
+  Type: Station
+  Location: 2300, 2300
+----------------------------------------
+Facility ID: 43
+  Name: São Gemil
+  Type: Not Intermodal Terminal
+  Location: 4300, 4300
+----------------------------------------
+Facility ID: 45
+  Name: São Mamede de Infesta
+  Type: Not Intermodal Terminal
+  Location: 4500, 4500
+----------------------------------------
+Facility ID: 48
+  Name: Leça do Balio
+  Type: Intermodal Terminal
+  Location: 4800, 4800
+----------------------------------------
+Facility ID: 50
+  Name: Leixões
+  Type: Freight Yard
+  Location: 5000, 5000
+----------------------------------------
+New facility registered successfully!
+New Endpoint ID: 51
+========================================
+FACILITIES AFTER REGISTRATION
+========================================
+Facility ID: 1
+  Name: São Romão
+----------------------------------------
+Facility ID: 2
+  Name: Tamel
+----------------------------------------
+Facility ID: 3
+  Name: Senhora das Dores
+----------------------------------------
+Facility ID: 4
+  Name: Lousado
+----------------------------------------
+Facility ID: 5
+  Name: Porto Campanhã
+----------------------------------------
+Facility ID: 6
+  Name: Leandro
+----------------------------------------
+Facility ID: 7
+  Name: Porto São Bento
+----------------------------------------
+Facility ID: 8
+  Name: Barcelos
+----------------------------------------
+Facility ID: 9
+  Name: Vila Nova da Cerveira
+----------------------------------------
+Facility ID: 10
+  Name: Midões
+----------------------------------------
+Facility ID: 11
+  Name: Valença
+----------------------------------------
+Facility ID: 12
+  Name: Darque
+----------------------------------------
+Facility ID: 13
+  Name: Contumil
+----------------------------------------
+Facility ID: 14
+  Name: Ermesinde
+----------------------------------------
+Facility ID: 15
+  Name: São Frutuoso
+----------------------------------------
+Facility ID: 16
+  Name: São Pedro da Torre
+----------------------------------------
+Facility ID: 17
+  Name: Viana do Castelo
+----------------------------------------
+Facility ID: 18
+  Name: Famalicão
+----------------------------------------
+Facility ID: 19
+  Name: Barroselas
+----------------------------------------
+Facility ID: 20
+  Name: Nine
+----------------------------------------
+Facility ID: 21
+  Name: Caminha
+----------------------------------------
+Facility ID: 22
+  Name: Carvalha
+----------------------------------------
+Facility ID: 23
+  Name: Carreção
+----------------------------------------
+Facility ID: 43
+  Name: São Gemil
+----------------------------------------
+Facility ID: 45
+  Name: São Mamede de Infesta
+----------------------------------------
+Facility ID: 48
+  Name: Leça do Balio
+----------------------------------------
+Facility ID: 50
+  Name: Leixões
+----------------------------------------
+Facility ID: 51
+  Name: Porto Intermodal Terminal
+  >>> NEWLY REGISTERED <<<
+----------------------------------------
