@@ -364,6 +364,7 @@ void wait_for_data_from_sensors(char *buffer) {
 
 void update_sensors_data(StationManager *mgr, char *data) {
     if (!data || strlen(data) == 0) {
+        printf("[WARNING] Sensors data is empty\n");
         return;
     }
 
@@ -371,72 +372,82 @@ void update_sensors_data(StationManager *mgr, char *data) {
     char unit[20];
     int value;
 
-    // Extract TEMPERATURE (USAC03)
+    // ===== TEMPERATURE =====
     int temp_result = extract_data(data, "TEMP", unit, &value);
 
     if (temp_result == 1) {
         printf("[INFO] Extracted temperature: %d %s\n", value, unit);
 
-        // add to circular buffer (USAC05)
-        int buffer_full = enqueue_value(mgr->sensor_temp.values,
-                                        mgr->sensor_temp.buffer_len,
-                                        &mgr->sensor_temp.nelem,
-                                        &mgr->sensor_temp.tail,
-                                        &mgr->sensor_temp.head,
-                                        value
+        // Add to circular buffer (USAC05)
+        int buffer_full = enqueue_value(
+            mgr->sensor_temp.values,
+            mgr->sensor_temp.buffer_len,
+            &mgr->sensor_temp.nelem,
+            &mgr->sensor_temp.tail,
+            &mgr->sensor_temp.head,
+            value
         );
 
-        if (buffer_full) {
-            printf("[INFO] Temperature buffer is full. Oldest value removed!\n");
-        }
-
-        // Calculate moving median (if enough samples exist)
+        // Calculate moving median if we have enough samples
         if (mgr->sensor_temp.nelem >= mgr->sensor_temp.window_len) {
-            // Extract last N values for median calculation
-            int *median_array = (int *) malloc(mgr->sensor_temp.window_len * sizeof(int));
+            printf("[INFO] Calculating median with %d samples...\n", mgr->sensor_temp.window_len);
 
-            if (median_array) {
-                int extracted = move_n_to_array(mgr->sensor_temp.values,
-                                                mgr->sensor_temp.buffer_len,
-                                                &mgr->sensor_temp.nelem,
-                                                &mgr->sensor_temp.tail,
-                                                &mgr->sensor_temp.head,
-                                                mgr->sensor_temp.window_len,
-                                                median_array);
+            // Create array with last window_len values
+            int *temp_array = (int *) malloc(mgr->sensor_temp.window_len * sizeof(int));
 
-                if (extracted) {
-                    int temp_median;
-                    int median_result = median(median_array, mgr->sensor_temp.window_len, &temp_median);
-
-                    if (median_result) {
-                        printf("[INFO] Temperature median: %d %s\n", temp_median, unit);
-                        mgr->sensor_temp.last_median = temp_median;
-
-                        for (int i = 0; i < mgr->sensor_temp.window_len; i++) {
-                            enqueue_value(mgr->sensor_temp.values,
-                                          mgr->sensor_temp.buffer_len,
-                                          &mgr->sensor_temp.nelem,
-                                          &mgr->sensor_temp.tail,
-                                          &mgr->sensor_temp.head,
-                                          median_array[i]);
-                        }
-                    }
+            if (temp_array) {
+                // Calculate starting index for the window
+                // If we have 10 slots and want last 5 values, and head is at 7:
+                // We want indices: 2, 3, 4, 5, 6 (the 5 values before position 7)
+                int start_idx;
+                if (mgr->sensor_temp.nelem < mgr->sensor_temp.buffer_len) {
+                    // Buffer not yet full, values are from 0 to head-1
+                    start_idx = mgr->sensor_temp.head - mgr->sensor_temp.window_len;
+                    if (start_idx < 0) start_idx = 0; // Safety check
+                } else {
+                    // Buffer is full, use circular indexing
+                    start_idx = (mgr->sensor_temp.head - mgr->sensor_temp.window_len + mgr->sensor_temp.buffer_len) %
+                                mgr->sensor_temp.buffer_len;
                 }
 
-                free(median_array);
+                // Copy values
+                for (int i = 0; i < mgr->sensor_temp.window_len; i++) {
+                    int idx = (start_idx + i) % mgr->sensor_temp.buffer_len;
+                    temp_array[i] = mgr->sensor_temp.values[idx];
+                }
+
+                // Calculate median
+                int temp_median;
+                int median_result = median(temp_array, mgr->sensor_temp.window_len, &temp_median);
+
+                if (median_result) {
+                    printf("[INFO] Temperature median: %d %s\n", temp_median, unit);
+                    mgr->sensor_temp.last_median = temp_median;
+                } else {
+                    printf("[ERROR] Median calculation failed!\n");
+                }
+
+                free(temp_array);
+            } else {
+                printf("[ERROR] Failed to allocate memory for median calculation\n");
             }
+        } else {
+            printf("[INFO] Need %d more samples for median (%d/%d)\n",
+                   mgr->sensor_temp.window_len - mgr->sensor_temp.nelem,
+                   mgr->sensor_temp.nelem,
+                   mgr->sensor_temp.window_len);
         }
     } else {
-        printf("[WARNING] Unable to extract temperature data...\n");
+        printf("[WARNING] Unable to extract temperature data\n");
     }
 
-    // Extract HUMIDITY (USAC03)
+    // ===== HUMIDITY =====
     int hum_result = extract_data(data, "HUM", unit, &value);
 
     if (hum_result == 1) {
-        printf("[INFO] Extracted Humidity: %d %s\n", value, unit);
+        printf("[INFO] Extracted humidity: %d %s\n", value, unit);
 
-        // Add to circular buffer (USAC05)
+        // Add to circular buffer
         int buffer_full = enqueue_value(
             mgr->sensor_hum.values,
             mgr->sensor_hum.buffer_len,
@@ -446,49 +457,46 @@ void update_sensors_data(StationManager *mgr, char *data) {
             value
         );
 
-        if (buffer_full) {
-            printf("[INFO] Humidity buffer full\n");
-        }
-
-        // Calculate moving median if we have enough samples
+        // Calculate moving median
         if (mgr->sensor_hum.nelem >= mgr->sensor_hum.window_len) {
-            int *median_array = (int *) malloc(mgr->sensor_hum.window_len * sizeof(int));
+            printf("[INFO] Calculating median with %d samples...\n", mgr->sensor_hum.window_len);
 
-            if (median_array) {
-                int extracted = move_n_to_array(
-                    mgr->sensor_hum.values,
-                    mgr->sensor_hum.buffer_len,
-                    &mgr->sensor_hum.nelem,
-                    &mgr->sensor_hum.tail,
-                    &mgr->sensor_hum.head,
-                    mgr->sensor_hum.window_len,
-                    median_array
-                );
+            int *temp_array = (int *) malloc(mgr->sensor_hum.window_len * sizeof(int));
 
-                if (extracted) {
-                    int hum_median;
-                    int median_result = median(median_array, mgr->sensor_hum.window_len, &hum_median);
-
-                    if (median_result) {
-                        printf("[INFO] Humidity median: %d %s\n", hum_median, unit);
-                        mgr->sensor_hum.last_median = hum_median;
-
-                        // Put values back into buffer
-                        for (int i = 0; i < mgr->sensor_hum.window_len; i++) {
-                            enqueue_value(
-                                mgr->sensor_hum.values,
-                                mgr->sensor_hum.buffer_len,
-                                &mgr->sensor_hum.nelem,
-                                &mgr->sensor_hum.tail,
-                                &mgr->sensor_hum.head,
-                                median_array[i]
-                            );
-                        }
-                    }
+            if (temp_array) {
+                int start_idx;
+                if (mgr->sensor_hum.nelem < mgr->sensor_hum.buffer_len) {
+                    start_idx = mgr->sensor_hum.head - mgr->sensor_hum.window_len;
+                    if (start_idx < 0) start_idx = 0;
+                } else {
+                    start_idx = (mgr->sensor_hum.head - mgr->sensor_hum.window_len + mgr->sensor_hum.buffer_len) % mgr->
+                                sensor_hum.buffer_len;
                 }
 
-                free(median_array);
+                for (int i = 0; i < mgr->sensor_hum.window_len; i++) {
+                    int idx = (start_idx + i) % mgr->sensor_hum.buffer_len;
+                    temp_array[i] = mgr->sensor_hum.values[idx];
+                }
+
+                int hum_median;
+                int median_result = median(temp_array, mgr->sensor_hum.window_len, &hum_median);
+
+                if (median_result) {
+                    printf("[INFO] Humidity median: %d %s\n", hum_median, unit);
+                    mgr->sensor_hum.last_median = hum_median;
+                } else {
+                    printf("[ERROR] Median calculation failed!\n");
+                }
+
+                free(temp_array);
+            } else {
+                printf("[ERROR] Failed to allocate memory for median calculation\n");
             }
+        } else {
+            printf("[INFO] Need %d more samples for median (%d/%d)\n",
+                   mgr->sensor_hum.window_len - mgr->sensor_hum.nelem,
+                   mgr->sensor_hum.nelem,
+                   mgr->sensor_hum.window_len);
         }
     } else {
         printf("[WARNING] Unable to extract humidity data\n");
@@ -499,68 +507,226 @@ void process_instruction(StationManager *mgr, int instruction) {
     if (instruction == -1) return;
 
     switch (instruction) {
-    	case 1:
-    		printf("=== SENSOR DATA ===\n");
+        case 1: // USAC13
+            printf("\n========================================\n");
+            printf("       SENSOR DATA (USAC13)\n");
+            printf("========================================\n");
 
-    		// Display buffer contents
-    		printf("--> Temperature <--\n");
-    		
-    		if (mgr->sensor_temp.nelem > 0) {
-			printf("Last %d readings:\n", mgr->sensor_temp.nelem);
-			for (int i = 0; i < mgr->sensor_temp.nelem && i < 10; i++) {
-				printf("- [%d] = %dºC\n", i + 1, mgr->sensor_temp.values[i]);
-			}
+            // Temperature
+            printf("\n--- Temperature Readings ---\n");
+            if (mgr->sensor_temp.nelem > 0) {
+                printf("Total samples collected: %d/%d\n",
+                       mgr->sensor_temp.nelem,
+                       mgr->sensor_temp.buffer_len);
 
-			if (mgr->sensor_temp.nelem >= mgr->sensor_temp.window_len) {
-				printf("\nMoving Median: %dºC\n", mgr->sensor_temp.last_median);
-			} else {
-				printf("\nNot enough data for median yet (%d samples needed)!\n", mgr->sensor_temp.window_len);
-			}
-    		} else {
-			printf("No temperature data available!\n");
-    		}
+                printf("\nAll values in buffer:\n");
+                for (int i = 0; i < mgr->sensor_temp.nelem && i < mgr->sensor_temp.buffer_len; i++) {
+                    printf("  [%d] = %d C\n", i, mgr->sensor_temp.values[i]);
+                }
 
-    		printf("\n--> Humidity <--\n");
+                if (mgr->sensor_temp.nelem >= mgr->sensor_temp.window_len) {
+                    printf("\n** Moving Median: %d C **\n", mgr->sensor_temp.last_median);
+                } else {
+                    printf("\n(Need %d samples for median, have %d)\n",
+                           mgr->sensor_temp.window_len,
+                           mgr->sensor_temp.nelem);
+                }
+            } else {
+                printf("No temperature data available.\n");
+            }
 
-    		if (mgr->sensor_hum.nelem > 0) {
-			printf("Last %d readings:\n", mgr->sensor_hum.nelem);
-			for (int i = 0; i < mgr->sensor_hum.nelem && i < 10; i++) {
-				printf("- [%d] = %d percent\n", i + 1, mgr->sensor_hum.values[i]);
-			}
+            // Humidity
+            printf("\n--- Humidity Readings ---\n");
+            if (mgr->sensor_hum.nelem > 0) {
+                printf("Total samples collected: %d/%d\n",
+                       mgr->sensor_hum.nelem,
+                       mgr->sensor_hum.buffer_len);
 
-			if (mgr->sensor_hum.nelem >= mgr->sensor_hum.window_len) {
-				printf("\nMoving Median: %d percent\n", mgr->sensor_hum.last_median);
-			} else {
-				printf("\nNot enough data for median yet (%d samples needed)!\n", mgr->sensor_hum.window_len);
-			}
-    		} else {
-			printf("No humidity data available!\n");
-    		}
+                printf("\nAll values in buffer:\n");
+                for (int i = 0; i < mgr->sensor_hum.nelem && i < mgr->sensor_hum.buffer_len; i++) {
+                    printf("  [%d] = %d %%\n", i, mgr->sensor_hum.values[i]);
+                }
 
-    		break;
+                if (mgr->sensor_hum.nelem >= mgr->sensor_hum.window_len) {
+                    printf("\n** Moving Median: %d %% **\n", mgr->sensor_hum.last_median);
+                } else {
+                    printf("\n(Need %d samples for median, have %d)\n",
+                           mgr->sensor_hum.window_len,
+                           mgr->sensor_hum.nelem);
+                }
+            } else {
+                printf("No humidity data available.\n");
+            }
 
-    	case 2:
-    		printf("Not implemented yet!");
-    		break;
+            printf("\n========================================\n");
+            break;
 
-    	case 3:
-    		printf("Not implemented yet!");
-		break;
+        case 2:
+            printf("Not implemented yet!");
+            break;
 
-	case 4:
-		printf("Not implemented yet!");
-		break;
+        case 3:
+            printf("[USAC15] Displaying synoptic board...\n");
+            send_data_to_board(mgr);
+            break;
 
-	default:
-		printf("Unknown instruction!\n");
-		break;
+        case 4:
+            printf("Not implemented yet!");
+            break;
 
-     }	
+        default:
+            printf("Unknown instruction!\n");
+            break;
+    }
 }
 
 void send_data_to_board(void *data) {
-    (void) data;
-    // TODO: Board output (USAC15)
+    StationManager *mgr = (StationManager *) data;
+
+    if (!mgr) {
+        printf("[ERROR] No data to display on board\n");
+        return;
+    }
+
+    // Clear screen effect (print some newlines for separation)
+    printf("\n\n");
+
+    // Top border
+    printf("╔══════════════════════════════════════════════════════════════════╗\n");
+    printf("║             == RAILWAY STATION SYNOPTIC BOARD ==                 ║\n");
+    printf("╠══════════════════════════════════════════════════════════════════╣\n");
+
+    // Sensor Data Section
+    printf("║                        SENSOR READINGS                           ║\n");
+    printf("╠══════════════════════════════════════════════════════════════════╣\n");
+
+    // Temperature display with visual bar
+    // Temperature display
+    printf("║ TEMPERATURE:                                                     ║\n");
+    if (mgr->sensor_temp.nelem > 0) {
+        // Get most recent value - it's at index (head - 1)
+        int last_idx = (mgr->sensor_temp.head - 1 + mgr->sensor_temp.buffer_len) % mgr->sensor_temp.buffer_len;
+        int last_temp = mgr->sensor_temp.values[last_idx];
+
+        printf("║ ->   Current: %2d C  ", last_temp);
+
+        // Visual temperature bar (scaled 0-50°C)
+        int bar_len = (last_temp * 20) / 50;
+        if (bar_len < 0) bar_len = 0;
+        if (bar_len > 20) bar_len = 20;
+
+        printf("[");
+        for (int i = 0; i < bar_len; i++) printf("█");
+        for (int i = bar_len; i < 20; i++) printf("░");
+        printf("]");
+        printf("            ║\n");
+
+        if (mgr->sensor_temp.nelem >= mgr->sensor_temp.window_len) {
+            printf("║      Median:  %2d C  (last %d samples)                       ║\n",
+                   mgr->sensor_temp.last_median,
+                   mgr->sensor_temp.window_len);
+        } else {
+            printf("║      Median:  N/A   (need %d samples)                        ║\n",
+                   mgr->sensor_temp.window_len);
+        }
+    } else {
+        printf("║      Current: -- C  [No data available]                        ║\n");
+        printf("║      Median:  -- C                                             ║\n");
+    }
+
+    printf("║                                                                  ║\n");
+
+    // Humidity display with visual bar
+    // Humidity display
+    printf("║  ->  HUMIDITY:                                                   ║\n");
+    if (mgr->sensor_hum.nelem > 0) {
+        // Get most recent value
+        int last_idx = (mgr->sensor_hum.head - 1 + mgr->sensor_hum.buffer_len) % mgr->sensor_hum.buffer_len;
+        int last_hum = mgr->sensor_hum.values[last_idx];
+
+        printf("║      Current: %2d%%   ", last_hum);
+
+        // Visual humidity bar (scaled 0-100%)
+        int bar_len = (last_hum * 20) / 100;
+        if (bar_len < 0) bar_len = 0;
+        if (bar_len > 20) bar_len = 20;
+
+        printf("[");
+        for (int i = 0; i < bar_len; i++) printf("█");
+        for (int i = bar_len; i < 20; i++) printf("░");
+        printf("]");
+        printf("            ║\n");
+
+        if (mgr->sensor_hum.nelem >= mgr->sensor_hum.window_len) {
+            printf("║      Median:  %2d%%   (last %d samples)                       ║\n",
+                   mgr->sensor_hum.last_median,
+                   mgr->sensor_hum.window_len);
+        } else {
+            printf("║      Median:  N/A   (need %d samples)                        ║\n",
+                   mgr->sensor_hum.window_len);
+        }
+    } else {
+        printf("║      Current: --%%   [No data available]                        ║\n");
+        printf("║      Median:  --%%                                             ║\n");
+    }
+
+    printf("╠══════════════════════════════════════════════════════════════════╣\n");
+
+    // Track Status Section
+    printf("║                        TRACK STATUS                              ║\n");
+    printf("╠══════════════════════════════════════════════════════════════════╣\n");
+
+    if (mgr->num_tracks > 0) {
+        for (int i = 0; i < mgr->num_tracks; i++) {
+            printf("║  Track %d: ", mgr->tracks[i].id);
+
+            switch (mgr->tracks[i].state) {
+                case 0: // Free
+                    printf("🟢 FREE         ");
+                    break;
+                case 1: // Busy
+                    printf("🔴 BUSY         ");
+                    break;
+                case 2: // Assigned
+                    printf("🟡 ASSIGNED     ");
+                    break;
+                case 3: // Inoperative
+                    printf("⚫ INOPERATIVE  ");
+                    break;
+                default:
+                    printf("⚪ UNKNOWN      ");
+                    break;
+            }
+
+            if (mgr->tracks[i].train_id >= 0) {
+                printf("Train: %d", mgr->tracks[i].train_id);
+                // Padding
+                int train_id_len = 0;
+                int temp_id = mgr->tracks[i].train_id;
+                do {
+                    train_id_len++;
+                    temp_id /= 10;
+                } while (temp_id > 0);
+                for (int j = 0; j < (20 - train_id_len); j++) printf(" ");
+                printf("║\n");
+            } else {
+                printf("Train: ---              ║\n");
+            }
+        }
+    } else {
+        printf("║      No tracks configured                                       ║\n");
+    }
+
+    printf("╠══════════════════════════════════════════════════════════════════╣\n");
+
+    // System Info
+    printf("║  ℹ️  Buffer Status: Temp: %d/%d  |  Hum: %d/%d                 ║\n",
+           mgr->sensor_temp.nelem, mgr->sensor_temp.buffer_len,
+           mgr->sensor_hum.nelem, mgr->sensor_hum.buffer_len);
+
+    // Bottom border
+    printf("╚══════════════════════════════════════════════════════════════════╝\n");
+    printf("\n");
 }
 
 void send_cmd_to_lightsigns(void *cmd) {
@@ -585,8 +751,8 @@ int main() {
 
     // Inicializar Serial Port
     if (!init_serial_port(SERIAL_PORT)) {
-	printf("[ERRO] Falha ao inicializar serial port!");
-	return 1;
+        printf("[ERRO] Falha ao inicializar serial port!");
+        return 1;
     }
 
     // 1. LOGIN
@@ -594,13 +760,22 @@ int main() {
 
     // 2. MAIN LOOP
     char sensor_buffer[100];
+    int first_read = 1; // Flag to do initial read
 
     while (1) {
-        // A. Wait for Sensors
-        wait_for_data_from_sensors(sensor_buffer);
+        // A. Wait for Sensors (only on first iteration or when needed)
+        if (first_read) {
+            printf("\n[INFO] Performing initial sensor reading...\n");
+            wait_for_data_from_sensors(sensor_buffer);
 
-        // B. Extract & Update
-        update_sensors_data(&mgr, sensor_buffer);
+            if (strlen(sensor_buffer) > 0) {
+                update_sensors_data(&mgr, sensor_buffer);
+            } else {
+                printf("[WARNING] Initial sensor read failed\n");
+            }
+
+            first_read = 0;
+        }
 
         // C. Wait for UI Instruction
         int inst = ui_get_instruction();
@@ -608,13 +783,21 @@ int main() {
         if (inst == 0)
             break; // Sair
 
-        // D. Process
+        // D. Process instruction
         process_instruction(&mgr, inst);
 
-        // E. Output & Log
-        send_data_to_board(NULL);
-        send_cmd_to_lightsigns(NULL);
+        // E. Log (removed board call here - it's called inside process_instruction)
         record_log(active_user, inst);
+
+        // Read sensors again for next iteration (after user sees results)
+        printf("\n[INFO] Reading sensors for next cycle...\n");
+        wait_for_data_from_sensors(sensor_buffer);
+
+        if (strlen(sensor_buffer) > 0) {
+            update_sensors_data(&mgr, sensor_buffer);
+        } else {
+            printf("[WARNING] Sensor read returned no data\n");
+        }
     }
 
     close_serial_port();
