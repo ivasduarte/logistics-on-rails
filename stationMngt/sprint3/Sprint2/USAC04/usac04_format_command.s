@@ -212,7 +212,6 @@ append_two_digits:
 	addi t2, t2, '0'
 	sb t1, 0(a1)
 	sb t2, 1(a1)
-	sb zero, 2(a1)
 	ret
 
 success:

@@ -32,6 +32,8 @@ void send_cmd_to_lightsigns(void *cmd);
 
 void record_log(User *user, int instruction);
 
+void interactive_lightsign_control(void);
+
 // Helper to remove newline
 void trim_newline(char *str) {
     char *pos;
@@ -503,6 +505,101 @@ void update_sensors_data(StationManager *mgr, char *data) {
     }
 }
 
+void send_cmd_to_lightsigns(void *cmd) {
+    if (!cmd) {
+        printf("[ERRO] Comando nulo recebido!\n");
+        return;
+    }
+
+    // Verificar se a porta serial está aberta
+    if (serial_fd == -1) {
+        printf("[ERRO] Porta serial não está aberta!\n");
+        return;
+    }
+
+    char *cmd_str = (char *)cmd;
+    printf("[LIGHTSIGNS] Processando comando: %s\n", cmd_str);
+
+    // Fazer parse ao comando para extrair a cor e qual a track
+    char operation[10];
+    int track_number = -1;
+
+    if (sscanf(cmd_str, "%[^,],%d", operation, &track_number) != 2) {
+        printf("[ERRO] Formato de comando inválido! Use: CMD,XX\n");
+        printf("[EXEMPLO] RE,01 ou GE,02\n");
+        return;
+    }
+
+    // Validar número da track
+    if (track_number < 1 || track_number > 2) {
+        printf("[ERRO] Track inválida! Use apenas 1 ou 2.\n");
+        return;
+    }
+
+    // Formatar comando usando a função Assembly (USAC04)
+    char formatted_cmd[20];
+    int result = format_command(operation, track_number, formatted_cmd);
+
+    if (!result) {
+        printf("[ERRO] Falha ao formatar comando!\n");
+        printf("[INFO] Operação: %s | Via: %d\n", operation, track_number);
+        return;
+    }
+
+    printf("[LIGHTSIGNS] Comando formatado: %s\n", formatted_cmd);
+
+    // Adicionar newline ao comando (Arduino espera por um \n)
+    strcat(formatted_cmd, "\n");
+
+    // Enviar comando via Serial
+    ssize_t bytes_written = write(serial_fd, formatted_cmd, strlen(formatted_cmd));
+
+    if (bytes_written < 0) {
+        printf("[ERRO] Não foi possível enviar comando: %s\n", strerror(errno));
+        return;
+    }
+
+    printf("[SUCESSO] Comando enviado para Arduino: %s", formatted_cmd);
+    usleep(100000); // 100ms
+}
+
+void interactive_lightsign_control(void) {
+    char operation[10];
+    int track_number;
+    char cmd_buffer[20];
+
+    printf("\n=== CONTROLO DE SINAIS LUMINOSOS ===\n");
+    printf("Comandos disponíveis:\n");
+    printf("  RE - LED Vermelho\n");
+    printf("  YE - LED Amarelo\n");
+    printf("  GE - LED Verde\n");
+    printf("  RB - LED Vermelho A Piscar\n");
+    printf("\n");
+
+    printf("Operação (RE/YE/GE/RB): ");
+    if (scanf("%9s", operation) != 1) {
+        printf("[ERRO] Falha na leitura da operação!\n");
+        return;
+    }
+
+    printf("Número da Track (1-2): ");
+    if (scanf("%d", &track_number) != 1) {
+        printf("[ERRO] Falha na leitura do número da track!\n");
+        return;
+    }
+
+    // Limpar buffer do stdin
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF);
+
+    // Construir comando
+    snprintf(cmd_buffer, sizeof(cmd_buffer), "%s,%02d", operation, track_number);
+
+    // Enviar comando
+    send_cmd_to_lightsigns(cmd_buffer);
+}
+
+
 void process_instruction(StationManager *mgr, int instruction) {
     if (instruction == -1) return;
 
@@ -562,7 +659,7 @@ void process_instruction(StationManager *mgr, int instruction) {
             break;
 
         case 2:
-            printf("Not implemented yet!");
+            interactive_lightsign_control();
             break;
 
         case 3:
@@ -727,11 +824,6 @@ void send_data_to_board(void *data) {
     // Bottom border
     printf("╚══════════════════════════════════════════════════════════════════╝\n");
     printf("\n");
-}
-
-void send_cmd_to_lightsigns(void *cmd) {
-    (void) cmd;
-    // TODO: LightSigns cmd (USAC14)
 }
 
 void record_log(User *user, int instruction) {

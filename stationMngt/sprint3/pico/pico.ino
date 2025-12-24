@@ -17,6 +17,12 @@
 #define T2_AMARELO 18
 #define T2_VERMELHO 19
 
+// --- NOVAS VARIÁVEIS PARA O RB ---
+bool track1_blinking = false;
+bool track2_blinking = false;
+unsigned long last_blink_time = 0;
+bool blink_state = LOW;
+
 // --- 2. CONFIGURAÇÃO DA MOVING MEDIAN ---
 #define MEDIAN_WINDOW 5
 
@@ -134,7 +140,7 @@ void processCommand(String cmd) {
     setTrackLight(track, 'G');
   } else if (cmd.startsWith("RB,")) {
     int track = cmd.substring(3).toInt();
-    setTrackLight(track, 'B');
+    setTrackLight(cmd.substring(3).toInt(), 'B');
   } else {
     Serial.print("[AVISO] Comando desconhecido: ");
     Serial.println(cmd);
@@ -143,58 +149,31 @@ void processCommand(String cmd) {
 
 // Controla LEDs de uma track específica
 void setTrackLight(int track, char color) {
-  // Determinar pinos baseado na track
-  int pin_verde, pin_amarelo, pin_vermelho;
+  int pin_v, pin_a, pin_r;
+
+  // Ao mudar de cor, desligamos sempre o modo blinking daquela track
+  if (track == 1) track1_blinking = false;
+  if (track == 2) track2_blinking = false;
 
   if (track == 1) {
-    pin_verde = T1_VERDE;
-    pin_amarelo = T1_AMARELO;
-    pin_vermelho = T1_VERMELHO;
+    pin_v = T1_VERDE; pin_a = T1_AMARELO; pin_r = T1_VERMELHO;
   } else if (track == 2) {
-    pin_verde = T2_VERDE;
-    pin_amarelo = T2_AMARELO;
-    pin_vermelho = T2_VERMELHO;
-  } else {
-    Serial.println("[ERRO] Track inválida. Use 1 ou 2.");
-    return;
-  }
+    pin_v = T2_VERDE; pin_a = T2_AMARELO; pin_r = T2_VERMELHO;
+  } else return;
 
-  // Desligar todos os LEDs da track primeiro
-  digitalWrite(pin_verde, LOW);
-  digitalWrite(pin_amarelo, LOW);
-  digitalWrite(pin_vermelho, LOW);
+  // Desliga tudo antes de aplicar a nova cor
+  digitalWrite(pin_v, LOW);
+  digitalWrite(pin_a, LOW);
+  digitalWrite(pin_r, LOW);
 
-  // Ligar LED apropriado
   switch (color) {
-    case 'G':
-      digitalWrite(pin_verde, HIGH);
-      Serial.print("[LED] Track ");
-      Serial.print(track);
-      Serial.println(" - VERDE ligado");
-      break;
-
-    case 'Y':
-      digitalWrite(pin_amarelo, HIGH);
-      Serial.print("[LED] Track ");
-      Serial.print(track);
-      Serial.println(" - AMARELO ligado");
-      break;
-
-    case 'R':
-      digitalWrite(pin_vermelho, HIGH);
-      Serial.print("[LED] Track ");
-      Serial.print(track);
-      Serial.println(" - VERMELHO ligado");
-      break;
-
+    case 'G': digitalWrite(pin_v, HIGH); break;
+    case 'Y': digitalWrite(pin_a, HIGH); break;
+    case 'R': digitalWrite(pin_r, HIGH); break;
     case 'B':
-      Serial.print("[LED] Track ");
-      Serial.print(track);
-      Serial.println(" - VERMELHO PISCANTE ativado");
-      break;
-
-    default:
-      Serial.println("[ERRO] Cor inválida");
+      if (track == 1) track1_blinking = true;
+      if (track == 2) track2_blinking = true;
+      Serial.print("[LED] Track "); Serial.print(track); Serial.println(" - RB Ativado");
       break;
   }
 }
@@ -252,12 +231,17 @@ void setup() {
 
 // --- 6. LOOP PRINCIPAL ---
 void loop() {
-  // Verificar se há comandos disponíveis na Serial
   if (Serial.available() > 0) {
     String cmd = Serial.readStringUntil('\n');
     processCommand(cmd);
   }
 
-  // Pequeno delay para não sobrecarregar
-  delay(10);
+  // LÓGICA DE PISCAR
+  if (millis() - last_blink_time >= 500) {
+    last_blink_time = millis();
+    blink_state = !blink_state;
+
+    if (track1_blinking) digitalWrite(T1_VERMELHO, blink_state);
+    if (track2_blinking) digitalWrite(T2_VERMELHO, blink_state);
+  }
 }
