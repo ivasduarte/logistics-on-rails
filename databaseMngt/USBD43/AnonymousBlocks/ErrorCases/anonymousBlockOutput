@@ -1,0 +1,14 @@
+Statement processed.
+========================================
+USBD43: Testing Error Scenarios
+========================================
+Scenario 1: Testing NULL Voltage
+Caught Expected Error: ORA-20003: Error adding electric locomotive model: ORA-20001: All parameters are required for electric locomotive model
+----------------------------------------
+Scenario 2: Testing Negative Voltage Value
+Caught Expected Error: ORA-20003: Error adding electric locomotive model: ORA-20002: Voltage and frequency must be positive values
+----------------------------------------
+Scenario 3: Testing Zero Frequency
+Caught Expected Error: ORA-20003: Error adding electric locomotive model: ORA-20002: Voltage and frequency must be positive values
+----------------------------------------
+Error testing complete. All changes rolled back.
