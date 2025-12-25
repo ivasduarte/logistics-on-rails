@@ -1,0 +1,26 @@
+Statement processed.
+========================================
+USBD43: Add Electric Locomotive Model Test
+========================================
+Total electric locomotives before: 1
+========================================
+ELECTRIC LOCOMOTIVES BEFORE REGISTRATION
+========================================
+Electric Locomotive ID: 1
+  Voltage: 25 V
+  Frequency: 50 Hz
+----------------------------------------
+New electric locomotive registered successfully!
+Total electric locomotives after: 2
+========================================
+ELECTRIC LOCOMOTIVES AFTER REGISTRATION
+========================================
+Electric Locomotive ID: 1
+  Voltage: 25 V
+  Frequency: 50 Hz
+----------------------------------------
+Electric Locomotive ID: 2
+  Voltage: 25000 V
+  Frequency: 50 Hz
+  >>> NEWLY REGISTERED <<<
+----------------------------------------
