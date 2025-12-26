@@ -1,0 +1,33 @@
+========================================
+USBD44: Add Segment & Siding to Line Test
+========================================
+========================================
+LINE DETAILS BEFORE INSERTION
+========================================
+Checking Line ID: 1
+Existing Segments:
+----------------------------------------
+  Seg ID: 1 | Order: 1 | Len: 2618 | Type: 1
+  Seg ID: 37 | Order: 2 | Len: 1500 | Type: 1
+Existing Sidings on this Line:
+----------------------------------------
+  Siding ID: 26 | Linked to Seg ID: 37 | Len: 300
+========================================
+Attempting to add new Segment (Len: 1500) with Siding (Len: 300)...
+Function executed successfully!
+Return value (New Segment ID): 38
+========================================
+LINE DETAILS AFTER INSERTION
+========================================
+Segments (Check if new one appears at the end):
+----------------------------------------
+  Seg ID: 1 | Order: 1 | Len: 2618
+  Seg ID: 37 | Order: 2 | Len: 1500
+  Seg ID: 38 | Order: 3 | Len: 1500
+  >>> STATUS: NEW SEGMENT FOUND <<<
+Sidings (Check if new Siding was created):
+----------------------------------------
+  Siding ID: 26 | Linked to Seg ID: 37 | Len: 300
+  Siding ID: 27 | Linked to Seg ID: 38 | Len: 300
+  >>> STATUS: SUCCESS (Siding created for new segment) <<<
+========================================
