@@ -1,0 +1,20 @@
+========================================
+USBD34: Testing Error Scenarios
+========================================
+Scenario 1: Testing NULL Freight ID
+Caught Expected Error: ORA-20001: All parameters are required for freight-train association
+----------------------------------------
+Scenario 2: Testing NULL Train ID
+Caught Expected Error: ORA-20001: All parameters are required for freight-train association
+----------------------------------------
+Scenario 3: Testing Non-existent Freight ID
+Caught Expected Error: ORA-20002: Freight ID does not exist
+----------------------------------------
+Scenario 4: Testing Non-existent Train ID
+Caught Expected Error: ORA-20003: Train ID does not exist
+----------------------------------------
+Scenario 5: Testing Freight Already Associated with Different Train
+Attempting to move Freight 2001 (currently on 5421) to Train 5435
+Caught Expected Error (Business Rule): ORA-20004: Freight is already associated with another train (Train ID: 5421)
+----------------------------------------
+Error testing complete. All changes rolled back.
