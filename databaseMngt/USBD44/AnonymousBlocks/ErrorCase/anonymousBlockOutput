@@ -1,0 +1,20 @@
+========================================
+USBD44: Testing Error Scenarios
+========================================
+Scenario 1: Testing NULL Mandatory Parameters
+Caught Expected Error: ORA-20001: Rail Line, Line Type, Length, and Max Weight are required.
+----------------------------------------
+Scenario 2: Testing Non-existent Rail Line ID
+Caught Expected Error: ORA-20002: Rail Line ID does not exist.
+----------------------------------------
+Scenario 3: Testing Non-existent Line Type ID
+Caught Expected Error: ORA-20003: Line Type ID does not exist.
+----------------------------------------
+Scenario 4: Testing Siding active but missing details
+Caught Expected Error: ORA-20004: Siding Length and Position are required when Siding is active.
+----------------------------------------
+Scenario 5: Testing Siding length >= Segment length
+Attempting to add Segment(100m) with Siding(150m)...
+Caught Expected Error (Business Rule): ORA-20005: Siding length cannot be greater than or equal to the Segment length.
+----------------------------------------
+Error testing complete. All transactions rolled back.
