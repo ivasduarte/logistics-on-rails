@@ -1,0 +1,28 @@
+========================================
+USBD34: Associate Freight with Train Test
+========================================
+========================================
+FREIGHT DETAILS BEFORE ASSOCIATION
+========================================
+Freight ID: 2001
+  Date: 03-OCT-25
+  Origin Endpoint: 50
+  Destination Endpoint: 12
+  Current Train ID: 5421
+  Number of Wagons: 5
+Wagons in this freight:
+----------------------------------------
+  Wagon ID: 3330001 | Model: 1212 | Gauge: 1668
+  Wagon ID: 3330002 | Model: 1212 | Gauge: 1668
+  Wagon ID: 3330004 | Model: 1212 | Gauge: 1668
+  Wagon ID: 3330005 | Model: 1212 | Gauge: 1668
+  Wagon ID: 3330006 | Model: 1212 | Gauge: 1668
+========================================
+Attempting to associate Freight 2001 to Train 5435...
+========================================
+ERROR DURING TEST
+========================================
+Error Code: -20004
+Error Message: ORA-20004: Freight is already associated with another train (Train ID: 5421)
+Test Status: FAILED
+========================================
