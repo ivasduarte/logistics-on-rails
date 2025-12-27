@@ -1,0 +1,90 @@
+@startuml
+!theme plain
+skinparam classAttributeSize 0
+skinparam defaultTextAlignment center
+skinparam packageStyle rectangle
+skinparam Shadowing false
+skinparam ArrowFontSize 12
+skinparam nodesep 80
+skinparam ranksep 80
+
+class NetworkUI {
+    + directedLineUpgradePlan(): void
+    - handleSuccessfulUpgradeOrder(result: UpgradeOrderResult): void
+    - handleCyclesDetected(result: UpgradeOrderResult): void
+    - showSuccess(msg: String): void
+    - showError(msg: String): void
+}
+
+class NetworkController {
+    - graph: Graph<Station, ConnectionData>
+    + computeUpgradeOrder(): UpgradeOrderResult
+}
+
+class UpgradeOrderResult {
+    - success: boolean
+    - upgradeOrder: LinkedList<Station>
+    - cycles: ArrayList<LinkedList<Station>>
+    - stationsInCycles: List<Station>
+    - errorMessage: String
+    + isSuccess(): boolean
+    + hasCycles(): boolean
+    + hasError(): boolean
+    + getUpgradeOrder(): LinkedList<Station>
+    + getCycles(): ArrayList<LinkedList<Station>>
+    + getStationsInCycles(): List<Station>
+    + {static} success(order: LinkedList): UpgradeOrderResult
+    + {static} withCycles(cycles: ArrayList, stations: List): UpgradeOrderResult
+    + {static} error(message: String): UpgradeOrderResult
+}
+
+class Algorithms {
+    + {static} topologicalSort(g: Graph): LinkedList<V>
+    + {static} detectCycles(g: Graph): ArrayList<LinkedList<V>>
+}
+
+class Station {
+    - id: String
+    - name: String
+    - latitude: double
+    - longitude: double
+    + getNodeID(): String
+    + getStationName(): String
+}
+
+class ConnectionData {
+    - distance: double
+    - capacity: double
+    - cost: double
+}
+
+interface Graph<V, E> {
+    + isDirected(): boolean
+    + vertices(): ArrayList<V>
+    + edges(): Collection<Edge<V, E>>
+    + numVertices(): int
+}
+
+class Edge<V, E> {
+    - vOrigin: V
+    - vTarget: V
+    - weight: E
+    + getVOrigin(): V
+    + getVTarget(): V
+}
+
+' Relationships
+NetworkUI ..> NetworkController : invokes
+NetworkController "1" o-- "1" Graph : holds >
+NetworkController ..> UpgradeOrderResult : creates >
+NetworkController ..> Algorithms : invokes
+
+Algorithms ..> Graph : processes
+
+Graph "1" *-- "*" Edge : contains
+Graph "1" --> "*" Station : contains vertices
+Edge "1" --> "1" ConnectionData : wraps >
+
+UpgradeOrderResult "1" --> "*" Station : references
+
+@enduml
