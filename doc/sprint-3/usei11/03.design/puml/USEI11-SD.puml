@@ -1,0 +1,104 @@
+@startuml
+skinparam sequenceMessageAlign left
+skinparam responseMessageBelowArrow true
+skinparam maxMessageSize 250
+
+actor "Infrastructure\nPlanner" as IP
+participant ":NetworkUI" as UI
+participant ":Network\nController" as C
+participant ":Algorithms" as ALG
+participant ":Graph" as G
+participant ":UpgradeOrder\nResult" as UOR
+
+autonumber
+
+activate IP
+IP -> UI : requests directed line upgrade plan
+activate UI
+
+UI -> C : computeUpgradeOrder()
+activate C
+
+    C -> G : isDirected()
+    activate G
+    G --> C : true
+    deactivate G
+
+    ' Attempt topological sort
+    C -> ALG : topologicalSort(graph)
+    activate ALG
+
+        ALG -> G : vertices()
+        activate G
+        G --> ALG : vertex list
+        deactivate G
+
+        ALG -> ALG : DFS with state tracking \n(WHITE, GRAY, BLACK)
+
+        alt No cycles detected
+            ALG --> C : LinkedList<Station> order
+            deactivate ALG
+
+            C -> UOR ** : success(order)
+            C --> UI : UpgradeOrderResult (success)
+
+            UI -> UOR : isSuccess()
+            activate UOR
+            UOR --> UI : true
+            deactivate UOR
+
+            UI -> UOR : getUpgradeOrder()
+            activate UOR
+            UOR --> UI : LinkedList<Station>
+            deactivate UOR
+
+            UI -> UI : display order of all vertices
+
+        else Cycles detected
+            ALG --> C : null
+            deactivate ALG
+
+            ' Perform cycle detection
+            C -> ALG : detectCycles(graph)
+            activate ALG
+
+                ALG -> G : vertices()
+                activate G
+                G --> ALG : vertex list
+                deactivate G
+
+                ALG -> ALG : DFS with back edge detection
+
+            ALG --> C : ArrayList<LinkedList<Station>> cycles
+            deactivate ALG
+
+            C -> C : extract unique stations from cycles
+
+            C -> UOR ** : withCycles(cycles, stationsInCycles)
+            C --> UI : UpgradeOrderResult (cycles)
+
+            UI -> UOR : hasCycles()
+            activate UOR
+            UOR --> UI : true
+            deactivate UOR
+
+            UI -> UOR : getStationsInCycles()
+            activate UOR
+            UOR --> UI : List<Station>
+            deactivate UOR
+
+            UI -> UOR : getCycles()
+            activate UOR
+            UOR --> UI : ArrayList<LinkedList<Station>>
+            deactivate UOR
+
+            UI -> UI : display stations involved in cycles \nand cycle details
+        end
+
+deactivate C
+
+UI --> IP : displays result
+deactivate UI
+deactivate IP
+
+@enduml

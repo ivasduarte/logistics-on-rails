@@ -1,0 +1,66 @@
+@startuml
+skinparam classAttributeSize 8
+skinparam linetype ortho
+
+class NetworkUI{
+    + directedLineUpgradePlan(): void
+    - handleSuccessfulUpgradeOrder(result: UpgradeOrderResult): void
+    - handleCyclesDetected(result: UpgradeOrderResult): void
+}
+
+class NetworkController{
+    - graph: Graph<Station, ConnectionData>
+    + computeUpgradeOrder(): UpgradeOrderResult
+}
+
+class UpgradeOrderResult{
+    - success: boolean
+    - upgradeOrder: LinkedList<Station>
+    - cycles: ArrayList<LinkedList<Station>>
+    - stationsInCycles: List<Station>
+    - errorMessage: String
+    + {static} success(order: LinkedList): UpgradeOrderResult
+    + {static} withCycles(cycles: ArrayList, stations: List): UpgradeOrderResult
+    + {static} error(message: String): UpgradeOrderResult
+}
+
+class Algorithms {
+    + {static} topologicalSort(g: Graph): LinkedList<V>
+    + {static} detectCycles(g: Graph): ArrayList<LinkedList<V>>
+}
+
+interface Graph <V, E>{
+    + isDirected(): boolean
+    + numVertices(): int
+    + vertices(): ArrayList<V>
+    + key(v: V): int
+    + adjVertices(v: V): Collection<V>
+}
+
+class Station{
+    - id: String
+    - name: String
+    + getNodeID(): String
+    + getStationName(): String
+}
+
+class ConnectionData{
+    - distance: double
+    - capacity: double
+    - cost: double
+}
+
+'relationships
+NetworkUI ..> NetworkController
+NetworkController ..> UpgradeOrderResult : creates
+NetworkController ..> Algorithms : invokes
+NetworkController o-- Graph : holds >
+
+Algorithms ..> Graph : processes
+
+Graph "1" *-- "*" Station : contains vertices
+Graph "1" --> "1" ConnectionData : edge data
+
+UpgradeOrderResult "1" --> "*" Station : references
+
+@enduml
