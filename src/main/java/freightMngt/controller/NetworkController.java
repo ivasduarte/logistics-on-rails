@@ -81,39 +81,47 @@ public class NetworkController {
         }
     }
 
-    /**
-     * Exports graph to file .dot
-     */
     public void exportToGraphviz(String outputFile) {
-
         StringBuilder sb = new StringBuilder();
 
         sb.append("graph BelgianRailNetwork {\n");
         sb.append("    layout=neato;\n");
-        sb.append("    node [shape=circle style=filled fillcolor=\"#66ccff\" fixedsize=true width=0.3 label=\"\"];\n");
-        sb.append("    edge [color=\"#555555\" penwidth=1.0];\n\n");
+        sb.append("    overlap=false;\n"); // Remove sobreposições
+        sb.append("    sep=\"+25\";\n");   // Dá espaço extra para as etiquetas
+        sb.append("    splines=true;\n"); // Linhas curvas para evitar passar por cima de nós
 
-        double scaleFactor = 0.01;
+        // Definição global: fixedsize=false permite que o círculo cresça conforme o nome
+        sb.append("    node [shape=circle, style=filled, fillcolor=\"#66ccff\", fixedsize=false, fontsize=11, fontname=\"Arial\"];\n");
+        sb.append("    edge [color=\"#888888\", penwidth=1.0, fontsize=9];\n\n");
 
-        for(Station s : graph.vertices()) {
+        double scaleFactor = 0.08; // Escala maior para um mapa mais arejado
+
+        for (Station s : graph.vertices()) {
             String safeName = s.getStationName().replaceAll("\"", "\\\"");
 
-            sb.append(String.format(Locale.US, "    \"%s\" [pos=\"%.2f, %.2f!\" tooltip=\"%s\"];\n",
+            // Etiqueta com ID em destaque e Nome em baixo
+            String label = String.format("%s\\n%s", s.getNodeID(), safeName);
+
+            sb.append(String.format(Locale.US, "    \"%s\" [pos=\"%.2f, %.2f!\", label=\"%s\"];\n",
                     s.getNodeID(),
                     s.getX() * scaleFactor,
                     s.getY() * scaleFactor,
-                    safeName));
+                    label));
         }
 
         sb.append("\n");
 
-        for(Edge<Station, ConnectionData> e : graph.edges()) {
+        for (Edge<Station, ConnectionData> e : graph.edges()) {
             Station vOrig = e.getVOrigin();
             Station vDest = e.getVTarget();
 
-            if(vOrig.getNodeID().compareTo(vDest.getNodeID()) < 0) {
-                sb.append(String.format(Locale.US, "  \"%s\" -- \"%s\" [len=%.2f];\n",
-                        vOrig.getNodeID(), vDest.getNodeID(), e.getWeight().getDistance() * scaleFactor));
+            if (vOrig.getNodeID().compareTo(vDest.getNodeID()) < 0) {
+                double distance = e.getWeight().getDistance();
+                // Garante um comprimento mínimo visual para as linhas
+                double visualLen = Math.max(distance * scaleFactor, 2.0);
+
+                sb.append(String.format(Locale.US, "  \"%s\" -- \"%s\" [len=%.2f, label=\"%.1f\"];\n",
+                        vOrig.getNodeID(), vDest.getNodeID(), visualLen, distance));
             }
         }
 
@@ -121,7 +129,7 @@ public class NetworkController {
 
         try (FileWriter fw = new FileWriter(outputFile)) {
             fw.write(sb.toString());
-            System.out.println("Graph exported to " + outputFile);
+            System.out.println("Graph updated and exported to " + outputFile);
         } catch (IOException e) {
             e.printStackTrace();
         }
