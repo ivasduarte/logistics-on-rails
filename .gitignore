@@ -36,3 +36,6 @@ build/
 
 ### Mac OS ###
 .DS_Store
+
+# Configurações de Base de Dados (LAPR3)
+application.properties

@@ -1,0 +1,6 @@
+// Cada membro deve copiar esta informação para o arquivo application.properties
+// de modo a conseguir conectar o projeto à base de dados, visa testar/correr a USLP08
+
+db.url=jdbc:oracle:thin:@localhost:1521:xe
+db.username=YOUR_USERNAME
+db.password=YOUR_PASSWORD
