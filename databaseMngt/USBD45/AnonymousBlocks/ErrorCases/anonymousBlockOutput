@@ -1,0 +1,26 @@
+Statement processed.
+========================================
+USBD45: Testing Error Scenarios
+========================================
+Scenario 1: Testing NULL Line Name
+Caught Expected Error: ORA-20001: All parameters are required
+----------------------------------------
+Scenario 2: Testing Duplicate Line Name
+Caught Expected Error: ORA-20002: Rail Line with name Ramal São Bento - Campanhã already exists
+----------------------------------------
+Scenario 3: Testing Non-existent Owner ID
+Caught Expected Error: ORA-20003: Owner with ID INVALID does not exist
+----------------------------------------
+Scenario 4: Testing Non-existent Start Endpoint
+Caught Expected Error: ORA-20004: Start Endpoint with ID 99999 does not exist
+----------------------------------------
+Scenario 5: Testing Non-existent End Endpoint
+Caught Expected Error: ORA-20005: End Endpoint with ID 99999 does not exist
+----------------------------------------
+Scenario 6: Testing Non-existent Gauge
+Caught Expected Error: ORA-20006: Gauge with number 99999 does not exist
+----------------------------------------
+Scenario 7: Testing Non-existent Line Type
+Caught Expected Error: ORA-20007: Line Type with ID 99999 does not exist
+----------------------------------------
+Error testing complete. All transactions rolled back.
