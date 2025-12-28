@@ -1,0 +1,170 @@
+Statement processed.
+========================================
+USBD45: Add New Rail Line Test
+========================================
+========================================
+RAIL LINES BEFORE INSERTION
+========================================
+Line ID: 1
+  Name: Ramal São Bento - Campanhã
+  Owner: IP
+  Route: Porto São Bento -> Porto Campanhã
+  Gauge: 1668
+----------------------------------------
+Line ID: 2
+  Name: Ramal Campanhã - Contumil
+  Owner: IP
+  Route: Porto Campanhã -> Contumil
+  Gauge: 1668
+----------------------------------------
+Line ID: 3
+  Name: Ramal Contumil - Nine
+  Owner: IP
+  Route: Contumil -> Nine
+  Gauge: 1668
+----------------------------------------
+Line ID: 4
+  Name: Ramal Nine - Barcelos
+  Owner: IP
+  Route: Nine -> Barcelos
+  Gauge: 1668
+----------------------------------------
+Line ID: 5
+  Name: Ramal Barcelos - Darque
+  Owner: IP
+  Route: Barcelos -> Darque
+  Gauge: 1668
+----------------------------------------
+Line ID: 6
+  Name: Ramal Darque - Viana
+  Owner: IP
+  Route: Darque -> Viana do Castelo
+  Gauge: 1668
+----------------------------------------
+Line ID: 7
+  Name: Ramal Viana - Caminha
+  Owner: IP
+  Route: Viana do Castelo -> Caminha
+  Gauge: 1668
+----------------------------------------
+Line ID: 8
+  Name: Ramal Caminha - Torre
+  Owner: IP
+  Route: Caminha -> São Pedro da Torre
+  Gauge: 1668
+----------------------------------------
+Line ID: 9
+  Name: Ramal Torre - Valença
+  Owner: IP
+  Route: São Pedro da Torre -> Valença
+  Gauge: 1668
+----------------------------------------
+Line ID: 21
+  Name: Ramal Contumil - São Gemil
+  Owner: IP
+  Route: Contumil -> São Gemil
+  Gauge: 1668
+----------------------------------------
+Line ID: 22
+  Name: Ramal São Gemil - São Mamede de Infesta
+  Owner: IP
+  Route: São Gemil -> São Mamede de Infesta
+  Gauge: 1668
+----------------------------------------
+Line ID: 23
+  Name: Ramal São Mamede de Infesta - Leça do Balio
+  Owner: IP
+  Route: São Mamede de Infesta -> Leça do Balio
+  Gauge: 1668
+----------------------------------------
+Line ID: 24
+  Name: Ramal Leça do Balio - Leixões
+  Owner: IP
+  Route: Leça do Balio -> Leixões
+  Gauge: 1668
+----------------------------------------
+========================================
+Attempting to add new Rail Line: Test Line Porto-Braga
+With first segment (Length: 5000m)...
+Function executed successfully!
+Return value (New Rail Line ID): 25
+========================================
+RAIL LINES AFTER INSERTION
+========================================
+Line ID: 1
+  Name: Ramal São Bento - Campanhã
+  Owner: IP
+  Route: Porto São Bento -> Porto Campanhã
+----------------------------------------
+Line ID: 2
+  Name: Ramal Campanhã - Contumil
+  Owner: IP
+  Route: Porto Campanhã -> Contumil
+----------------------------------------
+Line ID: 3
+  Name: Ramal Contumil - Nine
+  Owner: IP
+  Route: Contumil -> Nine
+----------------------------------------
+Line ID: 4
+  Name: Ramal Nine - Barcelos
+  Owner: IP
+  Route: Nine -> Barcelos
+----------------------------------------
+Line ID: 5
+  Name: Ramal Barcelos - Darque
+  Owner: IP
+  Route: Barcelos -> Darque
+----------------------------------------
+Line ID: 6
+  Name: Ramal Darque - Viana
+  Owner: IP
+  Route: Darque -> Viana do Castelo
+----------------------------------------
+Line ID: 7
+  Name: Ramal Viana - Caminha
+  Owner: IP
+  Route: Viana do Castelo -> Caminha
+----------------------------------------
+Line ID: 8
+  Name: Ramal Caminha - Torre
+  Owner: IP
+  Route: Caminha -> São Pedro da Torre
+----------------------------------------
+Line ID: 9
+  Name: Ramal Torre - Valença
+  Owner: IP
+  Route: São Pedro da Torre -> Valença
+----------------------------------------
+Line ID: 21
+  Name: Ramal Contumil - São Gemil
+  Owner: IP
+  Route: Contumil -> São Gemil
+----------------------------------------
+Line ID: 22
+  Name: Ramal São Gemil - São Mamede de Infesta
+  Owner: IP
+  Route: São Gemil -> São Mamede de Infesta
+----------------------------------------
+Line ID: 23
+  Name: Ramal São Mamede de Infesta - Leça do Balio
+  Owner: IP
+  Route: São Mamede de Infesta -> Leça do Balio
+----------------------------------------
+Line ID: 24
+  Name: Ramal Leça do Balio - Leixões
+  Owner: IP
+  Route: Leça do Balio -> Leixões
+----------------------------------------
+Line ID: 25
+  Name: Test Line Porto-Braga
+  Owner: IP
+  Route: Ermesinde -> Famalicão
+  >>> NEWLY CREATED LINE <<<
+  Line Segments:
+    Segment ID: 37 | Order: 1 | Length: 5000m
+    >>> FIRST SEGMENT CREATED <<<
+----------------------------------------
+========================================
+Test Status: SUCCESS
+========================================
