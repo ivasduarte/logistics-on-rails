@@ -1,0 +1,17 @@
+Statement processed.
+========================================
+USBD36: Testing Error Scenarios
+========================================
+Scenario 1: Testing NULL Facility ID
+Caught Expected Error: ORA-20004: Error adding building to facility: ORA-20001: Facility ID and Building Type ID are required
+----------------------------------------
+Scenario 2: Testing NULL Building Type ID
+Caught Expected Error: ORA-20004: Error adding building to facility: ORA-20001: Facility ID and Building Type ID are required
+----------------------------------------
+Scenario 3: Testing Non-existent Facility (ID 99999)
+Caught Expected Error: ORA-20004: Error adding building to facility: ORA-20002: Facility with ID 99999 does not exist
+----------------------------------------
+Scenario 4: Testing Invalid Building Type ID (9999)
+Caught Expected Error: ORA-20004: Error adding building to facility: ORA-20003: Invalid building type ID: 9999
+----------------------------------------
+Error testing complete.
