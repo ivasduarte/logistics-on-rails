@@ -1,0 +1,235 @@
+Statement processed.
+========================================
+USBD36: Add Building to Facility Test
+========================================
+Total buildings before: 3
+========================================
+BUILDINGS BEFORE REGISTRATION
+========================================
+Building ID: 1 | Type ID: 1
+  Type: Warehouse
+  Facility: São Romão (ID: 1)
+----------------------------------------
+Building ID: 1 | Type ID: 1
+  Type: Warehouse
+  Facility: Tamel (ID: 2)
+----------------------------------------
+Building ID: 1 | Type ID: 1
+  Type: Warehouse
+  Facility: Senhora das Dores (ID: 3)
+----------------------------------------
+Building ID: 1 | Type ID: 1
+  Type: Warehouse
+  Facility: Lousado (ID: 4)
+----------------------------------------
+Building ID: 1 | Type ID: 1
+  Type: Warehouse
+  Facility: Porto Campanhã (ID: 5)
+----------------------------------------
+Building ID: 1 | Type ID: 1
+  Type: Warehouse
+  Facility: Leandro (ID: 6)
+----------------------------------------
+Building ID: 1 | Type ID: 1
+  Type: Warehouse
+  Facility: Porto São Bento (ID: 7)
+----------------------------------------
+Building ID: 1 | Type ID: 1
+  Type: Warehouse
+  Facility: Barcelos (ID: 8)
+----------------------------------------
+Building ID: 1 | Type ID: 1
+  Type: Warehouse
+  Facility: Vila Nova da Cerveira (ID: 9)
+----------------------------------------
+Building ID: 2 | Type ID: 2
+  Type: Refrigerated Area
+  Facility: Midões (ID: 10)
+----------------------------------------
+Building ID: 2 | Type ID: 2
+  Type: Refrigerated Area
+  Facility: Valença (ID: 11)
+----------------------------------------
+Building ID: 2 | Type ID: 2
+  Type: Refrigerated Area
+  Facility: Darque (ID: 12)
+----------------------------------------
+Building ID: 2 | Type ID: 2
+  Type: Refrigerated Area
+  Facility: Contumil (ID: 13)
+----------------------------------------
+Building ID: 2 | Type ID: 2
+  Type: Refrigerated Area
+  Facility: Ermesinde (ID: 14)
+----------------------------------------
+Building ID: 2 | Type ID: 2
+  Type: Refrigerated Area
+  Facility: São Frutuoso (ID: 15)
+----------------------------------------
+Building ID: 2 | Type ID: 2
+  Type: Refrigerated Area
+  Facility: São Pedro da Torre (ID: 16)
+----------------------------------------
+Building ID: 2 | Type ID: 2
+  Type: Refrigerated Area
+  Facility: Viana do Castelo (ID: 17)
+----------------------------------------
+Building ID: 2 | Type ID: 2
+  Type: Refrigerated Area
+  Facility: Famalicão (ID: 18)
+----------------------------------------
+Building ID: 3 | Type ID: 3
+  Type: Grain Silo
+  Facility: Barroselas (ID: 19)
+----------------------------------------
+Building ID: 3 | Type ID: 3
+  Type: Grain Silo
+  Facility: Nine (ID: 20)
+----------------------------------------
+Building ID: 3 | Type ID: 3
+  Type: Grain Silo
+  Facility: Caminha (ID: 21)
+----------------------------------------
+Building ID: 3 | Type ID: 3
+  Type: Grain Silo
+  Facility: Carvalha (ID: 22)
+----------------------------------------
+Building ID: 3 | Type ID: 3
+  Type: Grain Silo
+  Facility: Carreção (ID: 23)
+----------------------------------------
+Building ID: 3 | Type ID: 3
+  Type: Grain Silo
+  Facility: São Gemil (ID: 43)
+----------------------------------------
+Building ID: 3 | Type ID: 3
+  Type: Grain Silo
+  Facility: São Mamede de Infesta (ID: 45)
+----------------------------------------
+Building ID: 3 | Type ID: 3
+  Type: Grain Silo
+  Facility: Leça do Balio (ID: 48)
+----------------------------------------
+Building ID: 3 | Type ID: 3
+  Type: Grain Silo
+  Facility: Leixões (ID: 50)
+----------------------------------------
+New building registered successfully!
+New Building ID: 4
+========================================
+BUILDINGS AFTER REGISTRATION
+========================================
+Building ID: 1 | Type ID: 1
+  Type: Warehouse
+  Facility: São Romão (ID: 1)
+----------------------------------------
+Building ID: 1 | Type ID: 1
+  Type: Warehouse
+  Facility: Tamel (ID: 2)
+----------------------------------------
+Building ID: 1 | Type ID: 1
+  Type: Warehouse
+  Facility: Senhora das Dores (ID: 3)
+----------------------------------------
+Building ID: 1 | Type ID: 1
+  Type: Warehouse
+  Facility: Lousado (ID: 4)
+----------------------------------------
+Building ID: 1 | Type ID: 1
+  Type: Warehouse
+  Facility: Porto Campanhã (ID: 5)
+----------------------------------------
+Building ID: 1 | Type ID: 1
+  Type: Warehouse
+  Facility: Leandro (ID: 6)
+----------------------------------------
+Building ID: 1 | Type ID: 1
+  Type: Warehouse
+  Facility: Porto São Bento (ID: 7)
+----------------------------------------
+Building ID: 1 | Type ID: 1
+  Type: Warehouse
+  Facility: Barcelos (ID: 8)
+----------------------------------------
+Building ID: 1 | Type ID: 1
+  Type: Warehouse
+  Facility: Vila Nova da Cerveira (ID: 9)
+----------------------------------------
+Building ID: 2 | Type ID: 2
+  Type: Refrigerated Area
+  Facility: Midões (ID: 10)
+----------------------------------------
+Building ID: 2 | Type ID: 2
+  Type: Refrigerated Area
+  Facility: Valença (ID: 11)
+----------------------------------------
+Building ID: 2 | Type ID: 2
+  Type: Refrigerated Area
+  Facility: Darque (ID: 12)
+----------------------------------------
+Building ID: 2 | Type ID: 2
+  Type: Refrigerated Area
+  Facility: Contumil (ID: 13)
+----------------------------------------
+Building ID: 2 | Type ID: 2
+  Type: Refrigerated Area
+  Facility: Ermesinde (ID: 14)
+----------------------------------------
+Building ID: 2 | Type ID: 2
+  Type: Refrigerated Area
+  Facility: São Frutuoso (ID: 15)
+----------------------------------------
+Building ID: 2 | Type ID: 2
+  Type: Refrigerated Area
+  Facility: São Pedro da Torre (ID: 16)
+----------------------------------------
+Building ID: 2 | Type ID: 2
+  Type: Refrigerated Area
+  Facility: Viana do Castelo (ID: 17)
+----------------------------------------
+Building ID: 2 | Type ID: 2
+  Type: Refrigerated Area
+  Facility: Famalicão (ID: 18)
+----------------------------------------
+Building ID: 3 | Type ID: 3
+  Type: Grain Silo
+  Facility: Barroselas (ID: 19)
+----------------------------------------
+Building ID: 3 | Type ID: 3
+  Type: Grain Silo
+  Facility: Nine (ID: 20)
+----------------------------------------
+Building ID: 3 | Type ID: 3
+  Type: Grain Silo
+  Facility: Caminha (ID: 21)
+----------------------------------------
+Building ID: 3 | Type ID: 3
+  Type: Grain Silo
+  Facility: Carvalha (ID: 22)
+----------------------------------------
+Building ID: 3 | Type ID: 3
+  Type: Grain Silo
+  Facility: Carreção (ID: 23)
+----------------------------------------
+Building ID: 3 | Type ID: 3
+  Type: Grain Silo
+  Facility: São Gemil (ID: 43)
+----------------------------------------
+Building ID: 3 | Type ID: 3
+  Type: Grain Silo
+  Facility: São Mamede de Infesta (ID: 45)
+----------------------------------------
+Building ID: 3 | Type ID: 3
+  Type: Grain Silo
+  Facility: Leça do Balio (ID: 48)
+----------------------------------------
+Building ID: 3 | Type ID: 3
+  Type: Grain Silo
+  Facility: Leixões (ID: 50)
+----------------------------------------
+Building ID: 4 | Type ID: 1
+  Type: Warehouse
+  Facility: São Romão (ID: 1)
+  >>> NEWLY REGISTERED <<<
+----------------------------------------
+Test complete. Changes rolled back.
