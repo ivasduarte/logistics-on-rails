@@ -64,3 +64,41 @@ BEGIN
     RETURN v_cursor;
 END;
 /
+
+-- Procedure to assign a route (Endpoints of a Rail_Line) to a freight
+CREATE OR REPLACE PROCEDURE pr_assign_route_by_line(
+    p_id_freight   IN Freight.ID%TYPE,
+    p_id_rail_line IN RAIL_LINE.ID%TYPE
+) IS
+    v_start_node Endpoint.endpointID%TYPE;
+    v_end_node   Endpoint.endpointID%TYPE;
+    v_train_id   Train.id%TYPE;
+BEGIN
+    -- Directly obtain the start and end endpoints of the Rail_Line defined in the template.
+    SELECT startID, endID INTO v_start_node, v_end_node
+    FROM Rail_Line
+    WHERE id = p_id_rail_line;
+
+    -- Get a train associated with this line (via Rail_Line_Path)
+    SELECT t.id INTO v_train_id
+    FROM Train t
+             JOIN Rail_Line_Path rlp ON t.pathID = rlp.Pathid
+    WHERE rlp.Rail_Lineid = p_id_rail_line
+      AND ROWNUM = 1;
+
+    -- Update the freight with the line endpoints and the train found.
+    UPDATE Freight
+    SET origin = v_start_node,
+        destination = v_end_node,
+        trainID = v_train_id
+    WHERE id = p_id_freight;
+
+    COMMIT;
+EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+        RAISE_APPLICATION_ERROR(-20001, 'Insufficient data found to assign route to freight.');
+    WHEN OTHERS THEN
+        ROLLBACK;
+        RAISE;
+END;
+/

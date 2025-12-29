@@ -80,4 +80,23 @@ public class FreightDAO {
         }
         return freights;
     }
+
+    /**
+     * Assigns the route and train to a freight shipment.
+     */
+    public boolean assignRouteToFreight(int freightId, int railLineId) {
+        String sql = "{ call pr_assign_route_by_line(?, ?) }";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             CallableStatement stmt = conn.prepareCall(sql)) {
+
+            stmt.setInt(1, freightId);
+            stmt.setInt(2, railLineId);
+            stmt.execute();
+            return true;
+        } catch (SQLException e) {
+            System.err.println("[ERROR] Couldn't assign route: " + e.getMessage());
+            return false;
+        }
+    }
 }
