@@ -166,6 +166,121 @@ public class NetworkController {
     }
 
     /**
+     * Computes the Minimum Spanning Tree (MST) of the railway network.
+     * Uses distance as the weight criterion.
+     *
+     * @return Graph representing the Minimal Backbone Network
+     */
+    public Graph<Station, ConnectionData> computeMinimalBackbone() {
+        if (this.graph == null || this.graph.numVertices() == 0) {
+            return new MapGraph<>(false);
+        }
+
+        // Use distance as the comparison criterion
+        Comparator<ConnectionData> distanceComparator =
+                Comparator.comparingDouble(ConnectionData::getDistance);
+
+        return Algorithms.minimumSpanningTree(this.graph, distanceComparator);
+    }
+
+    /**
+     * Exports the Minimal Backbone Network to a Graphviz DOT file.
+     *
+     * @param mst      The minimal spanning tree graph
+     * @param filename Output filename
+     */
+    public void exportMinimalBackboneToGraphviz(Graph<Station, ConnectionData> mst, String filename) {
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("graph MinimalBackboneNetwork {\n");
+        sb.append("    layout=neato;\n");
+        sb.append("    overlap=false;\n"); // Remove sobreposições
+        sb.append("    sep=\"+25\";\n");   // Dá espaço extra para as etiquetas
+        sb.append("    splines=true;\n"); // Linhas curvas para evitar passar por cima de nós
+
+        // Updated node definition: fixedsize=true and empty label makes them uniform circles
+        sb.append("    node [shape=circle, style=filled, fillcolor=\"#66ccff\", fixedsize=true, width=0.2, label=\"\"];\n");
+        sb.append("    edge [color=\"#888888\", penwidth=1.0];\n\n");
+
+        double scaleFactor = 0.08;
+
+        // Add vertices: removing the label string entirely to keep nodes as clean circles
+        for (Station s : mst.vertices()) {
+            String safeName = s.getStationName().replaceAll("\"", "\\\"");
+
+            sb.append(String.format(Locale.US, "    \"%s\" [pos=\"%.2f,%.2f!\", tooltip=\"%s\"];\n",
+                    s.getNodeID(),
+                    s.getX() * scaleFactor,
+                    s.getY() * scaleFactor,
+                    safeName)); // tooltip allows you to still see the name when hovering in some viewers
+        }
+
+        sb.append("\n");
+
+        // Add MST edges: removing labels and length hints for a minimal look
+        Set<String> addedEdges = new HashSet<>();
+        for (Edge<Station, ConnectionData> e : mst.edges()) {
+            Station vOrig = e.getVOrigin();
+            Station vDest = e.getVTarget();
+
+            String id1 = vOrig.getNodeID();
+            String id2 = vDest.getNodeID();
+            String edgeKey = (id1.compareTo(id2) < 0) ? id1 + "--" + id2 : id2 + "--" + id1;
+
+            if (addedEdges.add(edgeKey)) {
+                // No labels or extra attributes here as requested
+                sb.append(String.format(Locale.US, "    \"%s\" -- \"%s\";\n", id1, id2));
+            }
+        }
+
+        sb.append("}\n");
+
+        try (FileWriter fw = new FileWriter(filename)) {
+            fw.write(sb.toString());
+            System.out.println("Minimal Backbone Network (Clean Version) exported to " + filename);
+        } catch (IOException e) {
+            System.err.println("Error exporting MST: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Calculates statistics about the Minimal Backbone Network.
+     *
+     * @param mst The minimal spanning tree graph
+     * @return Map containing statistics (totalDistance, numEdges, numStations)
+     */
+    public Map<String, Double> calculateMSTStatistics(Graph<Station, ConnectionData> mst) {
+        Map<String, Double> stats = new HashMap<>();
+
+        double totalDistance = 0.0;
+        int edgeCount = 0;
+        Set<String> countedEdges = new HashSet<>();
+
+        // Calculate total distance (avoiding double-counting in undirected graph)
+        for (Edge<Station, ConnectionData> edge : mst.edges()) {
+            String edgeKey;
+            if (edge.getVOrigin().getNodeID().compareTo(edge.getVTarget().getNodeID()) < 0) {
+                edgeKey = edge.getVOrigin().getNodeID() + "--" + edge.getVTarget().getNodeID();
+            } else {
+                edgeKey = edge.getVTarget().getNodeID() + "--" + edge.getVOrigin().getNodeID();
+            }
+
+            if (!countedEdges.contains(edgeKey)) {
+                totalDistance += edge.getWeight().getDistance();
+                edgeCount++;
+                countedEdges.add(edgeKey);
+            }
+        }
+
+        stats.put("totalDistance", totalDistance);
+        stats.put("numEdges", (double) edgeCount);
+        stats.put("numStations", (double) mst.numVertices());
+
+        return stats;
+    }
+
+    /**
      * Computes the shortest path between two stations using the Bellman-Ford algorithm.
      * Uses ABSOLUTE VALUE of costs to avoid negative cycles in the network data.
      *

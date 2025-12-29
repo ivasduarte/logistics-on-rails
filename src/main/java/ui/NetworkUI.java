@@ -12,10 +12,7 @@ import freightMngt.controller.NetworkController;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
 
 public class NetworkUI implements Runnable {
     private final Scanner scanner;
@@ -49,7 +46,7 @@ public class NetworkUI implements Runnable {
                     directedLineUpgradePlan();
                     break;
                 case "4":
-                    System.out.println("Not implemented yet!");
+                    minimalBackboneNetwork();
                     break;
                 case "5":
                     railHubAnalysis();
@@ -224,6 +221,75 @@ public class NetworkUI implements Runnable {
             System.out.println();
         }
         System.out.println();
+    }
+
+    /**
+     * USEI12 - Minimal Backbone Network
+     *
+     * Computes a minimum spanning tree over the rail network to identify
+     * a minimal backbone that connects all stations with minimum total track length.
+     */
+    private void minimalBackboneNetwork() {
+        // Check if network is loaded
+        if (networkController.getGraph().numVertices() == 0) {
+            showError("Network not loaded! Please load the network first (option 1).");
+            return;
+        }
+
+        System.out.println("\n--- USEI12: Minimal Backbone Network ---\n");
+
+        try {
+            // Compute MST
+            Graph<Station, ConnectionData> mst = networkController.computeMinimalBackbone();
+
+            if (mst.numVertices() == 0) {
+                showError("Failed to compute Minimal Backbone Network.");
+                return;
+            }
+
+            // Export to DOT file
+            String dotFilename = "minimal_backbone.dot";
+            networkController.exportMinimalBackboneToGraphviz(mst, dotFilename);
+
+            System.out.println("Status: SUCCESS - Minimal Backbone Network computed\n");
+
+            // EXPECTED RETURN 1: A graph representing the Minimal Backbone Network
+            System.out.println("Minimal Backbone Network Graph:");
+            System.out.printf("  Stations: %d\n", mst.numVertices());
+            System.out.printf("  Edges: %d\n", countUniqueEdges(mst));
+
+            // Calculate and display total distance
+            Map<String, Double> stats = networkController.calculateMSTStatistics(mst);
+            System.out.printf("  Total Track Length: %.2f km\n\n", stats.get("totalDistance"));
+
+            // EXPECTED RETURN 2: DOT file representation
+            System.out.println("DOT file representation: " + dotFilename);
+            System.out.println("  - Vertices positioned at XY coordinates");
+            System.out.println("  - Similar to Belgium train global map\n");
+
+            // EXPECTED RETURN 3: SVG file generation instructions
+            System.out.println("To generate SVG visualization:");
+            System.out.println("  neato -Tsvg " + dotFilename + " -o minimal_backbone.svg\n");
+
+        } catch (Exception e) {
+            showError("Error computing Minimal Backbone Network: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Helper method to count unique edges in an undirected graph.
+     * Avoids double-counting edges.
+     */
+    private int countUniqueEdges(Graph<Station, ConnectionData> graph) {
+        Set<String> uniqueEdges = new HashSet<>();
+        for (Edge<Station, ConnectionData> edge : graph.edges()) {
+            String key = edge.getVOrigin().getNodeID().compareTo(edge.getVTarget().getNodeID()) < 0
+                    ? edge.getVOrigin().getNodeID() + "-" + edge.getVTarget().getNodeID()
+                    : edge.getVTarget().getNodeID() + "-" + edge.getVOrigin().getNodeID();
+            uniqueEdges.add(key);
+        }
+        return uniqueEdges.size();
     }
 
     private void riskAware() {

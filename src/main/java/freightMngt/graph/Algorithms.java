@@ -259,6 +259,101 @@ public class Algorithms {
     }
 
     /**
+     * Computes the Minimum Spanning Tree (MST) using Prim's algorithm.
+     * Treats the graph as undirected regardless of its actual directedness.
+     *
+     * @param g    Graph instance
+     * @param ce   Comparator between elements of type E
+     * @return A new graph representing the MST, or empty graph if input is empty/null
+     */
+    public static <V, E> Graph<V, E> minimumSpanningTree(Graph<V, E> g, Comparator<E> ce) {
+        if (g == null || g.numVertices() == 0) {
+            return new MapGraph<>(false); // Return empty undirected graph
+        }
+
+        // Create result graph (always undirected for MST)
+        Graph<V, E> mst = new MapGraph<>(false);
+
+        // Add all vertices to MST
+        for (V vertex : g.vertices()) {
+            mst.addVertex(vertex);
+        }
+
+        // If only one vertex, return
+        if (g.numVertices() == 1) {
+            return mst;
+        }
+
+        // Track visited vertices
+        Set<V> visited = new HashSet<>();
+
+        // Priority queue to select minimum weight edge
+        PriorityQueue<Edge<V, E>> pq = new PriorityQueue<>((e1, e2) ->
+                ce.compare(e1.getWeight(), e2.getWeight()));
+
+        // Start from first vertex
+        V start = g.vertices().get(0);
+        visited.add(start);
+
+        // Add all edges from start vertex to priority queue
+        addEdgesToQueue(g, start, visited, pq);
+
+        // Process edges until MST is complete or no more edges
+        while (!pq.isEmpty() && visited.size() < g.numVertices()) {
+            Edge<V, E> edge = pq.poll();
+
+            V vOrig = edge.getVOrigin();
+            V vDest = edge.getVTarget();
+
+            // Determine which vertex is new (not yet visited)
+            V newVertex = null;
+            if (!visited.contains(vDest)) {
+                newVertex = vDest;
+            } else if (!visited.contains(vOrig)) {
+                newVertex = vOrig;
+            }
+
+            // If both vertices already visited, skip this edge
+            if (newVertex == null) {
+                continue;
+            }
+
+            // Add edge to MST (undirected)
+            mst.addEdge(vOrig, vDest, edge.getWeight());
+
+            // Mark new vertex as visited
+            visited.add(newVertex);
+
+            // Add all edges from new vertex
+            addEdgesToQueue(g, newVertex, visited, pq);
+        }
+
+        return mst;
+    }
+
+    /**
+     * Helper method to add all edges from a vertex to the priority queue.
+     * Only adds edges that lead to unvisited vertices.
+     */
+    private static <V, E> void addEdgesToQueue(Graph<V, E> g, V vertex,
+                                               Set<V> visited,
+                                               PriorityQueue<Edge<V, E>> pq) {
+        // Add outgoing edges
+        for (Edge<V, E> edge : g.outgoingEdges(vertex)) {
+            if (!visited.contains(edge.getVTarget())) {
+                pq.offer(edge);
+            }
+        }
+
+        // Add incoming edges (to handle undirected nature)
+        for (Edge<V, E> edge : g.incomingEdges(vertex)) {
+            if (!visited.contains(edge.getVOrigin())) {
+                pq.offer(edge);
+            }
+        }
+    }
+
+    /**
      * Returns all paths from vOrig to vDest
      *
      * @param g       Graph instance
