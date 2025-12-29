@@ -1,0 +1,24 @@
+@startuml
+skinparam monochrome true
+skinparam packageStyle rectangle
+skinparam shadowing false
+
+autonumber
+
+actor "Infrastructure Planner" as Planner
+participant ":System" as System
+
+activate Planner
+
+Planner -> System : asks to compute minimal backbone network
+    activate System
+
+    System --> Planner : outputs MST graph structure
+    System --> Planner : outputs DOT file representation
+    System --> Planner : provides SVG generation instructions
+
+    deactivate System
+
+deactivate Planner
+
+@enduml
