@@ -1,0 +1,66 @@
+@startuml
+skinparam classAttributeSize 8
+skinparam linetype ortho
+
+class NetworkUI{
+    + minimalBackboneNetwork(): void
+}
+
+class NetworkController{
+    - graph: Graph<Station, ConnectionData>
+    + computeMinimalBackbone(): Graph<Station, ConnectionData>
+    + exportMinimalBackboneToGraphviz(mst: Graph, filename: String): void
+    + calculateMSTStatistics(mst: Graph): Map<String, Double>
+}
+
+class Algorithms {
+    + {static} minimumSpanningTree(g: Graph, ce: Comparator): Graph
+    - {static} addEdgesToQueue(g: Graph, v: V, visited: Set, pq: PriorityQueue): void
+}
+
+interface Graph <V, E>{
+    + numVertices(): int
+    + vertices(): ArrayList<V>
+    + edges(): Collection<Edge<V, E>>
+    + outgoingEdges(v: V): Collection<Edge<V, E>>
+    + incomingEdges(v: V): Collection<Edge<V, E>>
+}
+
+class Station{
+    - id: String
+    - name: String
+    - x: double
+    - y: double
+    + getNodeID(): String
+    + getX(): double
+    + getY(): double
+}
+
+class ConnectionData{
+    - distance: double
+    - capacity: double
+    - cost: double
+    + getDistance(): double
+}
+
+class Edge<V, E>{
+    - vOrigin: V
+    - vTarget: V
+    - weight: E
+    + getVOrigin(): V
+    + getVTarget(): V
+    + getWeight(): E
+}
+
+'relationships
+NetworkUI ..> NetworkController
+NetworkController ..> Algorithms : invokes
+NetworkController o-- Graph : holds >
+
+Algorithms ..> Graph : processes
+
+Graph "1" *-- "*" Station : contains vertices
+Graph "1" *-- "*" Edge : contains edges
+Edge "1" --> "1" ConnectionData : edge data
+
+@enduml

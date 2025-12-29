@@ -1,0 +1,121 @@
+@startuml
+skinparam sequenceMessageAlign left
+skinparam responseMessageBelowArrow true
+skinparam maxMessageSize 250
+
+actor "Infrastructure\nPlanner" as IP
+participant ":NetworkUI" as UI
+participant ":Network\nController" as C
+participant ":Algorithms" as ALG
+participant ":Graph" as G
+participant "mst:Graph" as MST
+
+autonumber
+
+activate IP
+IP -> UI : requests minimal backbone network
+activate UI
+
+UI -> C : computeMinimalBackbone()
+activate C
+
+    ' Call Algorithms
+    C -> ALG : minimumSpanningTree(graph, distanceComparator)
+    activate ALG
+
+        ' Create MST graph
+        ALG -> MST ** : create(undirected)
+
+        ' Add vertices
+        ALG -> G : vertices()
+        activate G
+        G --> ALG : vertex list
+        deactivate G
+
+        loop for each vertex
+            ALG -> MST : addVertex(v)
+        end
+
+        ' Initialize data structures
+        ALG -> ALG : visited = new HashSet()
+        ALG -> ALG : pq = new PriorityQueue(by distance)
+
+        ' Start from first vertex
+        ALG -> G : vertices().get(0)
+        activate G
+        G --> ALG : startVertex
+        deactivate G
+
+        ALG -> ALG : visited.add(startVertex)
+        ALG -> ALG : addEdgesToQueue(startVertex)
+
+        ' Main MST loop
+        loop while pq not empty AND not all visited
+            ALG -> ALG : edge = pq.poll()
+
+            alt edge connects to unvisited vertex
+                ALG -> MST : addEdge(vOrig, vDest, weight)
+                ALG -> ALG : visited.add(newVertex)
+                ALG -> ALG : addEdgesToQueue(newVertex)
+            else both vertices visited
+                ALG -> ALG : skip edge (would create cycle)
+            end
+        end
+
+    ALG --> C : mst (Graph<Station, ConnectionData>)
+    deactivate ALG
+
+C --> UI : mst
+deactivate C
+
+' Calculate statistics
+UI -> C : calculateMSTStatistics(mst)
+activate C
+
+    C -> MST : edges()
+    activate MST
+    MST --> C : edge collection
+    deactivate MST
+
+    loop for each edge
+        C -> C : sum distances (avoiding duplicates)
+    end
+
+C --> UI : stats (totalDistance, numEdges, numStations)
+deactivate C
+
+' Display results
+UI -> UI : display statistics
+
+' Export to DOT
+UI -> C : exportMinimalBackboneToGraphviz(mst, filename)
+activate C
+
+    C -> MST : vertices()
+    activate MST
+    MST --> C : vertex list
+    deactivate MST
+
+    loop for each vertex
+        C -> C : append vertex with XY coordinates
+    end
+
+    C -> MST : edges()
+    activate MST
+    MST --> C : edge list
+    deactivate MST
+
+    loop for each edge
+        C -> C : append edge with distance label
+    end
+
+    C -> C : write to DOT file
+
+C --> UI : success (DOT file created)
+deactivate C
+
+UI --> IP : displays MST statistics and export confirmation
+deactivate UI
+deactivate IP
+
+@enduml
