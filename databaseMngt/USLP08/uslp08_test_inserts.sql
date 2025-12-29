@@ -1,3 +1,6 @@
+INSERT INTO Wagon (id, modelID, entryDate, gauge, startEndpoint)
+VALUES (10, 1212, TO_DATE('2005-01-01', 'YYYY-MM-DD'), 1668, 9);
+
 INSERT INTO Freight (id, "date", origin, destination, trainID)
 VALUES (901, NULL, 7, 5, 5421);
 
