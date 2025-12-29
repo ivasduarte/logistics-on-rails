@@ -1,0 +1,13 @@
+========================================
+USBD38: Testing Error Scenarios
+========================================
+Scenario 1: Testing NULL Gauge
+Caught Expected Error: ORA-20010: Gauge number is required.
+----------------------------------------
+Scenario 2: Testing Invalid Gauge (0)
+Caught Expected Error: ORA-20012: Gauge number must be greater than 0.
+----------------------------------------
+Scenario 3: Testing Existing Gauge (1668)
+Caught Expected Error: ORA-20011: Gauge already exists.
+----------------------------------------
+Error testing complete.
