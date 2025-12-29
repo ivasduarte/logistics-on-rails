@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="DataSourcePerFileMappings">
+    <file url="file://$APPLICATION_CONFIG_DIR$/consoles/db/95acad1a-d3ea-466c-886e-3b307068baf5/console.sql" value="95acad1a-d3ea-466c-886e-3b307068baf5" />
     <file url="file://$PROJECT_DIR$/databaseMngt/ERD_LiveSQL Create.ddl" value="95acad1a-d3ea-466c-886e-3b307068baf5" />
     <file url="file://$PROJECT_DIR$/databaseMngt/ERD_LiveSQL Delete.ddl" value="95acad1a-d3ea-466c-886e-3b307068baf5" />
     <file url="file://$PROJECT_DIR$/databaseMngt/INSERTS/ERD_LiveSQL Inserts1.sql" value="95acad1a-d3ea-466c-886e-3b307068baf5" />
+    <file url="file://$PROJECT_DIR$/databaseMngt/USLP08/uslp08_functions.sql" value="95acad1a-d3ea-466c-886e-3b307068baf5" />
   </component>
 </project>
