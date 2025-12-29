@@ -225,7 +225,6 @@ CREATE TABLE Rail_Line_Path
     Rail_Lineid   number(10)   NOT NULL,
     Pathid        number(10)   NOT NULL,
     "order"       number(10)   NOT NULL,
-    EndpointID    number(10),
     arrivalTime   timestamp(0) NOT NULL,
     departureTime timestamp(0) NOT NULL,
     PRIMARY KEY (Rail_Lineid, Pathid)
@@ -449,5 +448,4 @@ ALTER TABLE Operator_Train
 ALTER TABLE Operator_Train
     ADD CONSTRAINT FKOperator_T653494 FOREIGN KEY (Trainid) REFERENCES Train (id);
 
-ALTER TABLE Rail_Line_Path ADD CONSTRAINT FK_Rail_Line_Path_Endpoint
-    FOREIGN KEY (EndpointID) REFERENCES Endpoint (endpointID);
+ALTER TABLE Freight MODIFY ("date" date NULL);
