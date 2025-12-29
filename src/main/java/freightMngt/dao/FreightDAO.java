@@ -47,4 +47,37 @@ public class FreightDAO {
         return plan;
     }
 
+
+    /**
+     * Get the list of pending shipments for a specific line.
+     */
+    public List<PendingFreight> getPendingFreightsByLine(int railLineId) {
+        List<PendingFreight> freights = new ArrayList<>();
+        String sql = "{ ? = call get_pending_freights_detailed(?) }";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             CallableStatement stmt = conn.prepareCall(sql)) {
+
+            stmt.registerOutParameter(1, OracleTypes.CURSOR);
+            stmt.setInt(2, railLineId);
+            stmt.execute();
+
+            try (ResultSet rs = (ResultSet) stmt.getObject(1)) {
+                while (rs.next()) {
+                    PendingFreight pf = new PendingFreight(
+                            rs.getInt("id"),
+                            rs.getInt("origin_id"),
+                            rs.getInt("dest_id"),
+                            rs.getInt("trainID"),
+                            rs.getString("origin_name"),
+                            rs.getString("dest_name")
+                    );
+                    freights.add(pf);
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("[ERROR] " + e.getMessage());
+        }
+        return freights;
+    }
 }
