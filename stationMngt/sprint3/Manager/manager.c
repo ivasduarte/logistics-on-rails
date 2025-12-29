@@ -24,6 +24,10 @@ void wait_for_data_from_sensors(char *buffer);
 
 void update_sensors_data(StationManager *mgr, char *data);
 
+void initialize_track_lights(StationManager *mgr);
+
+void manage_railway_tracks(StationManager *mgr);
+
 void process_instruction(StationManager *mgr, int instruction);
 
 void send_data_to_board(void *data);
@@ -599,6 +603,197 @@ void interactive_lightsign_control(void) {
     send_cmd_to_lightsigns(cmd_buffer);
 }
 
+void initialize_track_lights(StationManager *mgr) {
+    char cmd_buffer[20];
+
+    printf("[INFO] Initializing track lights...\n");
+
+    for (int i = 0; i < mgr->num_tracks; i++) {
+        // Todas as tracks começam FREE (estado 0), então LED Verde
+        snprintf(cmd_buffer, sizeof(cmd_buffer), "GE,%02d", mgr->tracks[i].id);
+        send_cmd_to_lightsigns(cmd_buffer);
+
+        printf("[INFO] Track %d set to GREEN (FREE)\n", mgr->tracks[i].id);
+
+        // Pequeno delay entre comandos para o Arduino processar
+        usleep(200000); // 200ms
+    }
+
+    printf("[INFO] All track lights initialized!\n\n");
+}
+
+void manage_railway_tracks(StationManager *mgr) {
+    int option = 0;
+    int track_id = 0;
+    int train_id = 0;
+    char cmd_buffer[20];
+
+    printf("\n=== GERIR VIAS FERREAS (USAC16) ===\n");
+    printf("1. Atribuir via a comboio (Chegada)\n");
+    printf("2. Definir via como NAO OPERACIONAL\n");
+    printf("3. Definir via como LIVRE\n");
+    printf("4. Dar ordem de partida\n");
+    printf("5. Confirmar chegada do comboio\n");
+    printf("0. Voltar\n");
+    printf("Opcao: ");
+
+    if (!read_int_robust(&option)) return;
+    if (option == 0) return;
+
+    switch (option) {
+        case 1: // Assign Track (Arrival)
+            printf("ID do Comboio a chegar: ");
+            if (read_int_robust(&train_id)) {
+                int found = 0;
+                for (int i = 0; i < mgr->num_tracks; i++) {
+                    // Procura via LIVRE (Estado 0)
+                    if (mgr->tracks[i].state == 0) {
+                        mgr->tracks[i].state = 2; // 2 = ASSIGNED (Amarelo no teu Board atual)
+                        mgr->tracks[i].train_id = train_id;
+
+                        // Hardware: Vermelho (RE) porque vai ficar ocupada
+                        snprintf(cmd_buffer, sizeof(cmd_buffer), "YE,%02d", mgr->tracks[i].id);
+                        send_cmd_to_lightsigns(cmd_buffer);
+
+                        printf("[SUCESSO] Comboio %d atribuido a Via %d.\n", train_id, mgr->tracks[i].id);
+                        found = 1;
+                        break;
+                    }
+                }
+
+                if (!found) {
+                    printf("[ALERTA] !!! PARAGEM DE EMERGENCIA !!! Nao ha vias disponiveis!\n");
+                    // Hardware: Piscar Vermelho em TODAS as vias
+                    for(int k=0; k < mgr->num_tracks; k++) {
+                         snprintf(cmd_buffer, sizeof(cmd_buffer), "RB,%02d", mgr->tracks[k].id);
+                         send_cmd_to_lightsigns(cmd_buffer);
+                    }
+                }
+            }
+            break;
+
+        case 2: // Set Non-Operational
+            printf("ID da Via a fechar: ");
+            if (read_int_robust(&track_id)) {
+                int found = 0;
+                for (int i = 0; i < mgr->num_tracks; i++) {
+                    if (mgr->tracks[i].id == track_id) {
+                        found = 1;
+                        mgr->tracks[i].state = 3; // 3 = INOPERATIVE
+
+                        // Hardware: Piscar Vermelho (RB)
+                        snprintf(cmd_buffer, sizeof(cmd_buffer), "RB,%02d", track_id);
+                        send_cmd_to_lightsigns(cmd_buffer);
+
+                        printf("[INFO] Via %d marcada como INOPERATIVA.\n", track_id);
+                        break;  // ADICIONAR break aqui!
+                    }
+                }
+
+                if (!found) {
+                    printf("[ERRO] Via %d nao existe!\n", track_id);
+                }
+            }
+            break;
+
+        case 3: // Set Free
+            printf("ID da Via a libertar: ");
+            if (read_int_robust(&track_id)) {
+                int found = 0;
+                for (int i = 0; i < mgr->num_tracks; i++) {
+                    if (mgr->tracks[i].id == track_id) {
+                        found = 1;
+                        mgr->tracks[i].state = 0; // 0 = FREE
+                        mgr->tracks[i].train_id = -1;
+
+                        // Hardware: Verde (GE) - via livre
+                        snprintf(cmd_buffer, sizeof(cmd_buffer), "GE,%02d", track_id);
+                        send_cmd_to_lightsigns(cmd_buffer);
+
+                        printf("[INFO] Via %d esta agora LIVRE.\n", track_id);
+                        break;  // ADICIONAR break aqui!
+                    }
+                }
+
+                if (!found) {
+                    printf("[ERRO] Via %d nao existe!\n", track_id);
+                }
+            }
+            break;
+
+        case 4: // Departure Order
+            printf("ID da Via para partida: ");
+            if (read_int_robust(&track_id)) {
+                int found = 0;
+                for (int i = 0; i < mgr->num_tracks; i++) {
+                    if (mgr->tracks[i].id == track_id) {
+                        found = 1;
+
+                        if (mgr->tracks[i].train_id == -1) {
+                            printf("[ERRO] Nao ha comboio na via %d.\n", track_id);
+                        } else if (mgr->tracks[i].state != 1) {
+                            printf("[AVISO] Via %d nao esta OCUPADA. Estado atual: %d\n",
+                                   track_id, mgr->tracks[i].state);
+                        } else {
+                            printf("[INFO] Ordem de partida dada ao comboio %d na Via %d.\n",
+                                   mgr->tracks[i].train_id, track_id);
+
+                            // Hardware: Verde (GE) para o comboio sair
+                            snprintf(cmd_buffer, sizeof(cmd_buffer), "GE,%02d", track_id);
+                            send_cmd_to_lightsigns(cmd_buffer);
+
+                            // Liberta a via (Estado 0)
+                            mgr->tracks[i].state = 0;
+                            mgr->tracks[i].train_id = -1;
+                        }
+                        break;
+                    }
+                }
+
+                if (!found) {
+                    printf("[ERRO] Via %d nao existe!\n", track_id);
+                }
+            }
+            break;
+
+        case 5: // Confirm train arrival (ASSIGNED → BUSY)
+            printf("ID da Via onde o comboio chegou: ");
+            if (read_int_robust(&track_id)) {
+                int found = 0;
+                for (int i = 0; i < mgr->num_tracks; i++) {
+                    if (mgr->tracks[i].id == track_id) {
+                        found = 1;
+
+                        if (mgr->tracks[i].state != 2) {
+                            printf("[ERRO] A via %d nao tem comboio ATRIBUIDO (estado atual: %d).\n",
+                                   track_id, mgr->tracks[i].state);
+                            break;
+                        }
+
+                        mgr->tracks[i].state = 1; // BUSY
+
+                        // Hardware: Vermelho (RE) - via ocupada
+                        snprintf(cmd_buffer, sizeof(cmd_buffer), "RE,%02d", track_id);
+                        send_cmd_to_lightsigns(cmd_buffer);
+
+                        printf("[INFO] Comboio %d chegou a Via %d (OCUPADA).\n",
+                               mgr->tracks[i].train_id, track_id);
+                        break;
+                    }
+                }
+
+                if (!found) {
+                    printf("[ERRO] Via %d nao existe!\n", track_id);
+                }
+            }
+            break;
+
+        default:
+            printf("Opcao invalida.\n");
+    }
+
+    send_data_to_board(mgr);
+}
 
 void process_instruction(StationManager *mgr, int instruction) {
     if (instruction == -1) return;
@@ -668,7 +863,8 @@ void process_instruction(StationManager *mgr, int instruction) {
             break;
 
         case 4:
-            printf("Not implemented yet!");
+            printf("\n");
+            manage_railway_tracks(mgr);
             break;
 
         default:
@@ -701,8 +897,15 @@ void send_data_to_board(void *data) {
     // Temperature display
     printf("║ TEMPERATURE:                                                     ║\n");
     if (mgr->sensor_temp.nelem > 0) {
-        // Get most recent value - it's at index (head - 1)
-        int last_idx = (mgr->sensor_temp.head - 1 + mgr->sensor_temp.buffer_len) % mgr->sensor_temp.buffer_len;
+        // Get most recent value
+        int last_idx;
+        if (mgr->sensor_temp.nelem < mgr->sensor_temp.buffer_len) {
+            // Buffer not full - last value is at (head - 1), but head might be 0
+            last_idx = (mgr->sensor_temp.head == 0) ? 0 : (mgr->sensor_temp.head - 1);
+        } else {
+            // Buffer is full - use circular indexing
+            last_idx = (mgr->sensor_temp.head - 1 + mgr->sensor_temp.buffer_len) % mgr->sensor_temp.buffer_len;
+        }
         int last_temp = mgr->sensor_temp.values[last_idx];
 
         printf("║ ->   Current: %2d C  ", last_temp);
@@ -716,14 +919,14 @@ void send_data_to_board(void *data) {
         for (int i = 0; i < bar_len; i++) printf("█");
         for (int i = bar_len; i < 20; i++) printf("░");
         printf("]");
-        printf("            ║\n");
+        printf("                       ║\n");
 
         if (mgr->sensor_temp.nelem >= mgr->sensor_temp.window_len) {
-            printf("║      Median:  %2d C  (last %d samples)                       ║\n",
+            printf("║      Median:  %2d C  (last %d samples)                            ║\n",
                    mgr->sensor_temp.last_median,
                    mgr->sensor_temp.window_len);
         } else {
-            printf("║      Median:  N/A   (need %d samples)                        ║\n",
+            printf("║      Median:  N/A   (need %d samples)                             ║\n",
                    mgr->sensor_temp.window_len);
         }
     } else {
@@ -738,7 +941,14 @@ void send_data_to_board(void *data) {
     printf("║  ->  HUMIDITY:                                                   ║\n");
     if (mgr->sensor_hum.nelem > 0) {
         // Get most recent value
-        int last_idx = (mgr->sensor_hum.head - 1 + mgr->sensor_hum.buffer_len) % mgr->sensor_hum.buffer_len;
+        int last_idx;
+        if (mgr->sensor_hum.nelem < mgr->sensor_hum.buffer_len) {
+            // Buffer not full - last value is at (head - 1), but head might be 0
+            last_idx = (mgr->sensor_hum.head == 0) ? 0 : (mgr->sensor_hum.head - 1);
+        } else {
+            // Buffer is full - use circular indexing
+            last_idx = (mgr->sensor_hum.head - 1 + mgr->sensor_hum.buffer_len) % mgr->sensor_hum.buffer_len;
+        }
         int last_hum = mgr->sensor_hum.values[last_idx];
 
         printf("║      Current: %2d%%   ", last_hum);
@@ -752,19 +962,19 @@ void send_data_to_board(void *data) {
         for (int i = 0; i < bar_len; i++) printf("█");
         for (int i = bar_len; i < 20; i++) printf("░");
         printf("]");
-        printf("            ║\n");
+        printf("                       ║\n");
 
         if (mgr->sensor_hum.nelem >= mgr->sensor_hum.window_len) {
-            printf("║      Median:  %2d%%   (last %d samples)                       ║\n",
+            printf("║      Median:  %2d%%   (last %d samples)                           ║\n",
                    mgr->sensor_hum.last_median,
                    mgr->sensor_hum.window_len);
         } else {
-            printf("║      Median:  N/A   (need %d samples)                        ║\n",
+            printf("║      Median:  N/A   (need %d samples)                             ║\n",
                    mgr->sensor_hum.window_len);
         }
     } else {
         printf("║      Current: --%%   [No data available]                        ║\n");
-        printf("║      Median:  --%%                                             ║\n");
+        printf("║      Median:  --%%                                              ║\n");
     }
 
     printf("╠══════════════════════════════════════════════════════════════════╣\n");
@@ -807,7 +1017,7 @@ void send_data_to_board(void *data) {
                 for (int j = 0; j < (20 - train_id_len); j++) printf(" ");
                 printf("║\n");
             } else {
-                printf("Train: ---              ║\n");
+                printf("Train: ---                             ║\n");
             }
         }
     } else {
@@ -817,7 +1027,7 @@ void send_data_to_board(void *data) {
     printf("╠══════════════════════════════════════════════════════════════════╣\n");
 
     // System Info
-    printf("║  ℹ️  Buffer Status: Temp: %d/%d  |  Hum: %d/%d                 ║\n",
+    printf("║  ℹ️  Buffer Status: Temp: %d/%d  |  Hum: %d/%d                      ║\n",
            mgr->sensor_temp.nelem, mgr->sensor_temp.buffer_len,
            mgr->sensor_hum.nelem, mgr->sensor_hum.buffer_len);
 
@@ -846,6 +1056,9 @@ int main() {
         printf("[ERRO] Falha ao inicializar serial port!");
         return 1;
     }
+
+    // Inicializar LEDs a verde
+    initialize_track_lights(&mgr);
 
     // 1. LOGIN
     User *active_user = perform_login(&mgr);

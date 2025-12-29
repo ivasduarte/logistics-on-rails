@@ -55,7 +55,7 @@ int ui_get_instruction() {
   printf("1. USAC13: Obter Dados dos Sensores\n");
   printf("2. USAC14: Controlar Sinais Luminosos\n");
   printf("3. USAC15: Enviar Mensagem para Board\n");
-  printf("4. USAC16: Gerir Vias Ferras\n");
+  printf("4. USAC16: Gerir Vias Ferreas\n");
   printf("0. Sair\n");
   printf("Opcao: ");
 
