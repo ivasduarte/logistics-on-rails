@@ -1,0 +1,20 @@
+========================================
+USBD41: Remove Freight From Planned Train
+ERROR CASES
+========================================
+Scenario 1: Testing NULL Train ID
+Caught Expected Error: ORA-20020: Train ID and Freight ID are required.
+----------------------------------------
+Scenario 2: Testing NULL Freight ID
+Caught Expected Error: ORA-20020: Train ID and Freight ID are required.
+----------------------------------------
+Scenario 3: Testing Non-existent Train (99999)
+Caught Expected Error: ORA-20021: Train ID does not exist.
+----------------------------------------
+Scenario 4: Testing Non-existent Freight (99999)
+Caught Expected Error: ORA-20022: Freight ID does not exist.
+----------------------------------------
+Scenario 5: Testing Freight not associated with Train (Train=5421, Freight=2008)
+Caught Expected Error: ORA-20022: Freight ID does not exist.
+----------------------------------------
+Error testing complete.
