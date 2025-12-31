@@ -103,6 +103,7 @@ public class Algorithms {
 
     /**
      * Performs topological sort on a directed acyclic graph (DAG).
+     * Uses the existing DepthFirstSearch method as foundation.
      * If the graph contains cycles, returns null.
      *
      * @param g Graph instance (must be directed)
@@ -121,59 +122,67 @@ public class Algorithms {
         int n = g.numVertices();
         if (n == 0) return new LinkedList<>();
 
-        // State: 0 = WHITE (not visited), 1 = GRAY (in progress), 2 = BLACK (done)
-        int[] state = new int[n];
-        LinkedList<V> result = new LinkedList<>();
-        boolean[] hasCycle = {false};
-
-        // Process all vertices (handles disconnected components)
-        for (V vertex : g.vertices()) {
-            if (state[g.key(vertex)] == 0) {
-                topologicalSortDFS(g, vertex, state, result, hasCycle);
-                if (hasCycle[0]) {
-                    return null; // Cycle detected
-                }
-            }
+        // First check for cycles using DFS
+        if (hasCyclesUsingDFS(g)) {
+            return null; // Cycles exist
         }
 
-        return result;
+        // Compute topological order using DFS
+        return computeTopologicalOrderWithDFS(g);
     }
 
     /**
-     * DFS helper for topological sort with cycle detection.
+     * Detects if the graph has cycles using DepthFirstSearch.
+     * Uses DFS with three-color marking to detect back edges.
+     *
+     * @param g Graph instance
+     * @return true if cycles exist, false otherwise
      */
-    private static <V, E> void topologicalSortDFS(Graph<V, E> g, V vertex,
-                                                  int[] state,
-                                                  LinkedList<V> result,
-                                                  boolean[] hasCycle) {
+    private static <V, E> boolean hasCyclesUsingDFS(Graph<V, E> g) {
+        int n = g.numVertices();
+        int[] state = new int[n]; // 0=WHITE, 1=GRAY, 2=BLACK
+
+        for (V vertex : g.vertices()) {
+            if (state[g.key(vertex)] == 0) {
+                if (detectCycleViaDFS(g, vertex, state)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Helper for cycle detection using DFS traversal pattern.
+     */
+    private static <V, E> boolean detectCycleViaDFS(Graph<V, E> g, V vertex, int[] state) {
         int vKey = g.key(vertex);
-        state[vKey] = 1; // GRAY - mark as being processed
+        state[vKey] = 1; // GRAY - currently processing
 
         for (V neighbor : g.adjVertices(vertex)) {
             int nKey = g.key(neighbor);
 
             if (state[nKey] == 1) {
-                // Back edge detected -> cycle found
-                hasCycle[0] = true;
-                return;
+                return true; // Back edge found - cycle exists
             }
 
             if (state[nKey] == 0) {
-                topologicalSortDFS(g, neighbor, state, result, hasCycle);
-                if (hasCycle[0]) return;
+                if (detectCycleViaDFS(g, neighbor, state)) {
+                    return true;
+                }
             }
         }
 
-        state[vKey] = 2; // BLACK - mark as processed
-        result.addFirst(vertex); // Add to front (reverse finish order)
+        state[vKey] = 2; // BLACK - fully processed
+        return false;
     }
 
     /**
      * Detects all cycles in a directed graph.
+     * Uses DepthFirstSearch as the foundation for cycle detection.
      *
      * @param g Graph instance (must be directed)
-     * @return ArrayList containing all detected cycles. Each cycle is a LinkedList of vertices.
-     *         Returns empty list if no cycles exist.
+     * @return ArrayList containing all detected cycles
      * @throws IllegalArgumentException if graph is not directed
      */
     public static <V, E> ArrayList<LinkedList<V>> detectCycles(Graph<V, E> g) {
@@ -189,15 +198,15 @@ public class Algorithms {
         int n = g.numVertices();
         if (n == 0) return cycles;
 
-        // State: 0 = WHITE, 1 = GRAY, 2 = BLACK
-        int[] state = new int[n];
+        int[] state = new int[n]; // 0=WHITE, 1=GRAY, 2=BLACK
 
         @SuppressWarnings("unchecked")
         V[] parent = (V[]) new Object[n];
 
+        // Use DFS pattern to detect all cycles
         for (V vertex : g.vertices()) {
             if (state[g.key(vertex)] == 0) {
-                detectCyclesDFS(g, vertex, state, parent, cycles);
+                findCyclesWithDFS(g, vertex, state, parent, cycles);
             }
         }
 
@@ -205,27 +214,25 @@ public class Algorithms {
     }
 
     /**
-     * DFS helper for cycle detection.
+     * Helper method that uses DFS pattern to find cycles.
+     * Follows the same traversal pattern as DepthFirstSearch.
      */
-    private static <V, E> void detectCyclesDFS(Graph<V, E> g, V vertex,
-                                               int[] state, V[] parent,
-                                               ArrayList<LinkedList<V>> cycles) {
+    private static <V, E> void findCyclesWithDFS(Graph<V, E> g, V vertex,
+                                                 int[] state, V[] parent,
+                                                 ArrayList<LinkedList<V>> cycles) {
         int vKey = g.key(vertex);
         state[vKey] = 1; // GRAY - mark as being processed
 
+        // Traverse adjacent vertices (same pattern as DepthFirstSearch)
         for (V neighbor : g.adjVertices(vertex)) {
             int nKey = g.key(neighbor);
 
             if (state[nKey] == 1) {
-                // Back edge found - cycle detected
-                // Reconstruct the cycle from vertex back to neighbor
+                // Back edge found - reconstruct cycle
                 LinkedList<V> cycle = new LinkedList<>();
-
-                // Use a set to detect if we're stuck in a loop during reconstruction
                 Set<V> visited = new HashSet<>();
-                V current = vertex;
 
-                // Build cycle path
+                V current = vertex;
                 cycle.addFirst(current);
                 visited.add(current);
 
@@ -233,29 +240,51 @@ public class Algorithms {
                     int currentKey = g.key(current);
                     current = parent[currentKey];
 
-                    if (current != null) {
-                        // Prevent infinite loop during reconstruction
-                        if (visited.contains(current)) {
-                            break;
-                        }
+                    if (current != null && !visited.contains(current)) {
                         cycle.addFirst(current);
                         visited.add(current);
                     }
                 }
 
-                // Close the cycle by adding the starting vertex again
-                cycle.add(vertex);
+                cycle.add(vertex); // Close the cycle
                 cycles.add(cycle);
 
             } else if (state[nKey] == 0) {
-                // Only set parent when we're about to visit (WHITE -> GRAY)
                 parent[nKey] = vertex;
-                detectCyclesDFS(g, neighbor, state, parent, cycles);
+                findCyclesWithDFS(g, neighbor, state, parent, cycles);
             }
-            // If state[nKey] == 2 (BLACK), do nothing - already processed
         }
 
-        state[vKey] = 2; // BLACK - mark as fully processed
+        state[vKey] = 2; // BLACK - fully processed
+    }
+
+    /**
+     * Computes topological order using the existing DepthFirstSearch method.
+     * Performs DFS from each vertex and collects vertices in reverse finish order.
+     *
+     * @param g Graph instance (must be a DAG)
+     * @return LinkedList with vertices in topological order
+     */
+    private static <V, E> LinkedList<V> computeTopologicalOrderWithDFS(Graph<V, E> g) {
+        int n = g.numVertices();
+        boolean[] globalVisited = new boolean[n];
+        LinkedList<V> result = new LinkedList<>();
+
+        // Process each unvisited vertex using DFS
+        for (V vertex : g.vertices()) {
+            if (!globalVisited[g.key(vertex)]) {
+                // Use existing DepthFirstSearch to get reachable vertices
+                LinkedList<V> dfsOrder = new LinkedList<>();
+                DepthFirstSearch(g, vertex, globalVisited, dfsOrder);
+
+                // Add vertices in reverse order to get topological order
+                for (int i = dfsOrder.size() - 1; i >= 0; i--) {
+                    result.addFirst(dfsOrder.get(i));
+                }
+            }
+        }
+
+        return result;
     }
 
     /**
@@ -268,10 +297,9 @@ public class Algorithms {
      */
     public static <V, E> Graph<V, E> minimumSpanningTree(Graph<V, E> g, Comparator<E> ce) {
         if (g == null || g.numVertices() == 0) {
-            return new MapGraph<>(false); // Return empty undirected graph
+            return new MapGraph<>(false);
         }
 
-        // Create result graph (always undirected for MST)
         Graph<V, E> mst = new MapGraph<>(false);
 
         // Add all vertices to MST
@@ -279,53 +307,59 @@ public class Algorithms {
             mst.addVertex(vertex);
         }
 
-        // If only one vertex, return
         if (g.numVertices() == 1) {
             return mst;
         }
 
-        // Track visited vertices
-        Set<V> visited = new HashSet<>();
+        // Track visited vertices across ALL components
+        Set<V> globalVisited = new HashSet<>();
 
-        // Priority queue to select minimum weight edge
-        PriorityQueue<Edge<V, E>> pq = new PriorityQueue<>((e1, e2) ->
-                ce.compare(e1.getWeight(), e2.getWeight()));
-
-        // Start from first vertex
-        V start = g.vertices().get(0);
-        visited.add(start);
-
-        // Add all edges from start vertex to priority queue
-        addEdgesToQueue(g, start, visited, pq);
-
-        // Process edges until MST is complete or no more edges
-        while (!pq.isEmpty() && visited.size() < g.numVertices()) {
-            Edge<V, E> edge = pq.poll();
-
-            V vOrig = edge.getVOrigin();
-            V vDest = edge.getVTarget();
-
-            // Determine which vertex is new (not yet visited)
-            V newVertex = null;
-            if (!visited.contains(vDest)) {
-                newVertex = vDest;
-            } else if (!visited.contains(vOrig)) {
-                newVertex = vOrig;
-            }
-
-            // If both vertices already visited, skip this edge
-            if (newVertex == null) {
+        // Process each connected component
+        for (V start : g.vertices()) {
+            // Skip if this vertex was already processed in a previous component
+            if (globalVisited.contains(start)) {
                 continue;
             }
 
-            // Add edge to MST (undirected)
-            mst.addEdge(vOrig, vDest, edge.getWeight());
+            // Track visited vertices for THIS component
+            Set<V> componentVisited = new HashSet<>();
+            PriorityQueue<Edge<V, E>> pq = new PriorityQueue<>((e1, e2) ->
+                    ce.compare(e1.getWeight(), e2.getWeight()));
 
-            // Mark new vertex as visited
-            visited.add(newVertex);
+            // Start Prim's algorithm for this component
+            componentVisited.add(start);
+            globalVisited.add(start);
+            addEdgesToQueue(g, start, componentVisited, pq);
 
-            // Add all edges from new vertex
-            addEdgesToQueue(g, newVertex, visited, pq);
+            // Process edges for this component
+            while (!pq.isEmpty()) {
+                Edge<V, E> edge = pq.poll();
+
+                V vOrig = edge.getVOrigin();
+                V vDest = edge.getVTarget();
+
+                // Determine which vertex is new
+                V newVertex = null;
+                if (!componentVisited.contains(vDest)) {
+                    newVertex = vDest;
+                } else if (!componentVisited.contains(vOrig)) {
+                    newVertex = vOrig;
+                }
+
+                if (newVertex == null) {
+                    continue;
+                }
+
+                // Add edge to MST
+                mst.addEdge(vOrig, vDest, edge.getWeight());
+
+                // Mark new vertex as visited
+                componentVisited.add(newVertex);
+                globalVisited.add(newVertex);
+
+                // Add edges from new vertex
+                addEdgesToQueue(g, newVertex, componentVisited, pq);
+            }
         }
 
         return mst;
