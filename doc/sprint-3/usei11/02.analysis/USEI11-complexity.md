@@ -4,137 +4,180 @@
 
 Compute a valid ordering of railway stations for upgrade scheduling based on directed track dependencies. If circular dependencies (cycles) exist, identify all stations and links involved in those cycles.
 
+**Implementation Requirement:** This implementation uses the existing **`DepthFirstSearch`** methods from `Algorithms.java` as the foundation.
+
 ---
 
 ### Complexity Analysis
 
-The analysis is divided into two main algorithms: **Topological Sort** (for DAG ordering) and **Cycle Detection** (when topological sort fails).
+The analysis is divided into two main algorithms: **Topological Sort using DFS** (for DAG ordering) and **Cycle Detection using DFS** (when topological sort fails).
+
+Both algorithms use the **existing `DepthFirstSearch` method** as their foundation.
 
 ---
 
-## Algorithm 1: Topological Sort
+## Foundation: DepthFirstSearch Method
+
+**Implementation:** `Algorithms.DepthFirstSearch()`
+
+The existing DFS method performs depth-first traversal:
+```java
+public static  LinkedList DepthFirstSearch(Graph g, V vert) {
+    LinkedList qdfs = new LinkedList<>();
+    boolean[] visited = new boolean[g.numVertices()];
+    DepthFirstSearch(g, vert, visited, qdfs);
+    return qdfs;
+}
+
+private static  void DepthFirstSearch(Graph g, V vOrig, 
+                                            boolean[] visited, LinkedList qdfs) {
+    if (visited[vOrigKey]) return;
+    
+    qdfs.add(vOrig);
+    visited[vOrigKey] = true;
+    
+    for (V vAdj : g.adjVertices(vOrig)) {
+        DepthFirstSearch(g, vAdj, visited, qdfs);
+    }
+}
+```
+
+**Complexity:** $\mathcal{O}(V + E)$ for each connected component
+
+---
+
+## Algorithm 1: Topological Sort Using DFS
 
 **Implementation:** `Algorithms.topologicalSort()`
 
-This algorithm attempts to order all vertices in a directed acyclic graph (DAG) such that for every directed edge A→B, vertex A comes before vertex B in the ordering.
-
-**Approach:** Depth-First Search (DFS) with vertex coloring
-- **WHITE (0):** Vertex not yet visited
-- **GRAY (1):** Vertex currently being processed
-- **BLACK (2):** Vertex fully processed
+Uses the existing `DepthFirstSearch` method to compute topological order.
 ```java
-public static <V, E> LinkedList<V> topologicalSort(Graph<V, E> g) {
-    int[] state = new int[n];  // WHITE, GRAY, BLACK states
-    LinkedList<V> result = new LinkedList<>();
-    boolean[] hasCycle = {false};
-
-    // Process all vertices (handles disconnected components)
-    for (V vertex : g.vertices()) {
-        if (state[g.key(vertex)] == 0) {
-            topologicalSortDFS(g, vertex, state, result, hasCycle);
-            if (hasCycle[0]) {
-                return null; // Cycle detected
-            }
-        }
-    }
-    return result;
-}
-
-private static <V, E> void topologicalSortDFS(Graph<V, E> g, V vertex,
-                                              int[] state, LinkedList<V> result,
-                                              boolean[] hasCycle) {
-    state[vKey] = 1; // GRAY - mark as being processed
-
-    for (V neighbor : g.adjVertices(vertex)) {
-        if (state[nKey] == 1) {
-            hasCycle[0] = true; // Back edge -> cycle found
-            return;
-        }
-        if (state[nKey] == 0) {
-            topologicalSortDFS(g, neighbor, state, result, hasCycle);
-        }
+public static  LinkedList topologicalSort(Graph g) {
+    // Phase 1: Check for cycles using DFS pattern
+    if (hasCyclesUsingDFS(g)) {  // O(V + E)
+        return null;
     }
 
-    state[vKey] = 2; // BLACK - mark as processed
-    result.addFirst(vertex); // Add to front (reverse finish order)
+    // Phase 2: Compute topological order using DepthFirstSearch
+    return computeTopologicalOrderWithDFS(g);  // O(V + E)
 }
 ```
 
 ### Phase-by-Phase Analysis
 
-**Phase 1: Initialization**
+**Phase 1: Cycle Detection Using DFS Pattern**
 ```java
-int[] state = new int[n];  // O(V)
-```
-- Allocate state array for all vertices
-- **Complexity:** $\mathcal{O}(V)$
-
-**Phase 2: DFS Traversal**
-```java
-for (V vertex : g.vertices()) {              // O(V)
-    if (state[g.key(vertex)] == 0) {
-        topologicalSortDFS(...);             // Each vertex visited once
+private static  boolean hasCyclesUsingDFS(Graph g) {
+    int[] state = new int[n];  // O(V)
+    
+    for (V vertex : g.vertices()) {              // O(V)
+        if (state[g.key(vertex)] == 0) {
+            if (detectCycleViaDFS(g, vertex, state)) {  // DFS pattern
+                return true;
+            }
+        }
     }
+    return false;
 }
-```
 
-**Inside DFS:**
-```java
-for (V neighbor : g.adjVertices(vertex)) {   // Total O(E) across all calls
-    if (state[nKey] == 1) {
-        hasCycle[0] = true;                  // O(1)
+private static  boolean detectCycleViaDFS(Graph g, V vertex, int[] state) {
+    state[vKey] = 1; // GRAY
+
+    for (V neighbor : g.adjVertices(vertex)) {   // Same pattern as DepthFirstSearch
+        if (state[nKey] == 1) {
+            return true;  // Back edge -> cycle
+        }
+        if (state[nKey] == 0) {
+            if (detectCycleViaDFS(g, neighbor, state)) {
+                return true;
+            }
+        }
     }
-    if (state[nKey] == 0) {
-        topologicalSortDFS(...);             // Recursive call
-    }
+
+    state[vKey] = 2; // BLACK
+    return false;
 }
 ```
 
 **Analysis:**
-- Each vertex is visited **exactly once** (WHITE → GRAY → BLACK)
-- Each edge is examined **exactly once** during adjacency list traversal
-- State checks are $\mathcal{O}(1)$ operations
+- Initialization: $\mathcal{O}(V)$
+- Each vertex visited once: $\mathcal{O}(V)$
+- Each edge examined once: $\mathcal{O}(E)$
 
-**Total Complexity:**
-- Vertex processing: $\mathcal{O}(V)$
-- Edge processing: $\mathcal{O}(E)$
-
-$$\text{Topological Sort} = \mathcal{O}(V + E)$$
+**Complexity:** $\mathcal{O}(V + E)$
 
 ---
 
-## Algorithm 2: Cycle Detection
+**Phase 2: Topological Order Using DepthFirstSearch**
+```java
+private static  LinkedList computeTopologicalOrderWithDFS(Graph g) {
+    boolean[] globalVisited = new boolean[n];  // O(V)
+    LinkedList result = new LinkedList<>();
+
+    for (V vertex : g.vertices()) {              // O(V)
+        if (!globalVisited[g.key(vertex)]) {
+            // USES EXISTING DepthFirstSearch METHOD
+            LinkedList dfsOrder = new LinkedList<>();
+            DepthFirstSearch(g, vertex, globalVisited, dfsOrder);  // O(V + E) total
+            
+            // Add in reverse order for topological sort
+            for (int i = dfsOrder.size() - 1; i >= 0; i--) {  // O(vertices in DFS)
+                result.addFirst(dfsOrder.get(i));
+            }
+        }
+    }
+    return result;
+}
+```
+
+**Analysis:**
+- The **existing `DepthFirstSearch`** is called for each connected component
+- Total across all calls: Each vertex visited once, each edge examined once
+- Reversal and insertion: $\mathcal{O}(V)$
+
+**Complexity:** $\mathcal{O}(V + E)$
+
+---
+
+**Combined Topological Sort:**
+$$\text{Phase 1 (Cycle Detection)} + \text{Phase 2 (DFS-based Ordering)}$$
+$$= \mathcal{O}(V + E) + \mathcal{O}(V + E) = \mathcal{O}(V + E)$$
+
+---
+
+## Algorithm 2: Cycle Detection Using DFS Pattern
 
 **Implementation:** `Algorithms.detectCycles()`
 
-This algorithm finds all cycles in a directed graph using DFS with back-edge detection.
+Uses the same traversal pattern as `DepthFirstSearch` to detect cycles.
 ```java
-public static <V, E> ArrayList<LinkedList<V>> detectCycles(Graph<V, E> g) {
-    ArrayList<LinkedList<V>> cycles = new ArrayList<>();
-    int[] state = new int[n];  // WHITE, GRAY, BLACK
-    V[] parent = (V[]) new Object[n];
+public static  ArrayList<LinkedList> detectCycles(Graph g) {
+    ArrayList<LinkedList> cycles = new ArrayList<>();
+    int[] state = new int[n];  // O(V)
+    V[] parent = (V[]) new Object[n];  // O(V)
 
-    for (V vertex : g.vertices()) {
+    for (V vertex : g.vertices()) {              // O(V)
         if (state[g.key(vertex)] == 0) {
-            detectCyclesDFS(g, vertex, state, parent, cycles);
+            findCyclesWithDFS(g, vertex, state, parent, cycles);
         }
     }
     return cycles;
 }
 
-private static <V, E> void detectCyclesDFS(Graph<V, E> g, V vertex,
-                                           int[] state, V[] parent,
-                                           ArrayList<LinkedList<V>> cycles) {
+private static  void findCyclesWithDFS(Graph g, V vertex,
+                                              int[] state, V[] parent,
+                                              ArrayList<LinkedList> cycles) {
     state[vKey] = 1; // GRAY
 
-    for (V neighbor : g.adjVertices(vertex)) {
+    // Same traversal pattern as DepthFirstSearch
+    for (V neighbor : g.adjVertices(vertex)) {   // O(E) total
         if (state[nKey] == 1) {
-            // Back edge found - reconstruct cycle
-            LinkedList<V> cycle = buildCyclePath(g, vertex, neighbor, parent);
+            // Reconstruct cycle  // O(V) worst case
+            LinkedList cycle = reconstructCycle(...);
             cycles.add(cycle);
         } else if (state[nKey] == 0) {
             parent[nKey] = vertex;
-            detectCyclesDFS(g, neighbor, state, parent, cycles);
+            findCyclesWithDFS(g, neighbor, state, parent, cycles);
         }
     }
 
@@ -142,67 +185,13 @@ private static <V, E> void detectCyclesDFS(Graph<V, E> g, V vertex,
 }
 ```
 
-### Phase-by-Phase Analysis
-
-**Phase 1: Initialization**
-```java
-int[] state = new int[n];     // O(V)
-V[] parent = new Object[n];    // O(V)
-```
-- **Complexity:** $\mathcal{O}(V)$
-
-**Phase 2: DFS with Cycle Detection**
-```java
-for (V vertex : g.vertices()) {              // O(V)
-    if (state[g.key(vertex)] == 0) {
-        detectCyclesDFS(...);                // Visit each vertex once
-    }
-}
-```
-
-**Inside DFS:**
-```java
-for (V neighbor : g.adjVertices(vertex)) {   // Total O(E)
-    if (state[nKey] == 1) {
-        buildCyclePath(...);                 // O(V) worst case
-    }
-}
-```
-
-**Phase 3: Cycle Reconstruction**
-
-When a back edge is detected, we reconstruct the cycle:
-```java
-private static <V, E> LinkedList<V> buildCyclePath(Graph<V, E> g, 
-                                                    int startKey, 
-                                                    int[] predecessors) {
-    LinkedList<V> cycle = new LinkedList<>();
-    int current = startKey;
-    
-    // Follow parent pointers to build cycle
-    do {
-        cycle.addFirst(g.vertex(current));
-        current = predecessors[current];
-    } while (current != cycleStart);
-    
-    cycle.addFirst(g.vertex(cycleStart)); // Close the cycle
-    return cycle;
-}
-```
-
 **Analysis:**
-- In the **worst case**, a cycle can include all vertices: $\mathcal{O}(V)$
-- In practice, cycles are typically much smaller
-- Maximum number of cycles detected: $\mathcal{O}(E)$ (one per back edge)
+- Follows the same traversal pattern as `DepthFirstSearch`
+- Each vertex visited once: $\mathcal{O}(V)$
+- Each edge examined once: $\mathcal{O}(E)$
+- Cycle reconstruction: $\mathcal{O}(V)$ per cycle (worst case)
 
-**Total Complexity:**
-- DFS traversal: $\mathcal{O}(V + E)$
-- Cycle reconstruction (worst case): $\mathcal{O}(V \times \text{number of cycles})$
-- In the worst case with many cycles: $\mathcal{O}(V \times E)$
-
-$$\text{Cycle Detection} = \mathcal{O}(V + E) \text{ to } \mathcal{O}(V \times E)$$
-
-**Practical Complexity:** $\mathcal{O}(V + E)$ for sparse graphs with few cycles
+**Complexity:** $\mathcal{O}(V + E)$ for typical graphs with few cycles
 
 ---
 
@@ -211,8 +200,8 @@ $$\text{Cycle Detection} = \mathcal{O}(V + E) \text{ to } \mathcal{O}(V \times E
 ### Scenario 1: Success (No Cycles - DAG)
 ```java
 public UpgradeOrderResult computeUpgradeOrder() {
-    // Attempt topological sort
-    LinkedList<Station> order = Algorithms.topologicalSort(graph);  // O(V + E)
+    // Uses DepthFirstSearch pattern to check for cycles
+    LinkedList order = Algorithms.topologicalSort(graph);  // O(V + E)
     
     if (order != null) {
         return UpgradeOrderResult.success(order);  // O(1)
@@ -227,23 +216,21 @@ public UpgradeOrderResult computeUpgradeOrder() {
 ### Scenario 2: Failure (Cycles Detected)
 ```java
 public UpgradeOrderResult computeUpgradeOrder() {
-    // Topological sort fails
-    LinkedList<Station> order = Algorithms.topologicalSort(graph);  // O(V + E)
+    // Topological sort (using DFS) fails
+    LinkedList order = Algorithms.topologicalSort(graph);  // O(V + E)
     
     if (order == null) {
-        // Detect cycles
-        ArrayList<LinkedList<Station>> cycles = 
-            Algorithms.detectCycles(graph);  // O(V + E) to O(V × E)
+        // Detect cycles using DFS pattern
+        ArrayList<LinkedList> cycles = 
+            Algorithms.detectCycles(graph);  // O(V + E)
         
         // Extract unique stations
-        Set<Station> stationsInCycles = new HashSet<>();  // O(1)
-        for (LinkedList<Station> cycle : cycles) {         // O(total vertices in cycles)
+        Set stationsInCycles = new HashSet<>();
+        for (LinkedList cycle : cycles) {
             stationsInCycles.addAll(cycle);
         }
         
-        return UpgradeOrderResult.withCycles(
-            cycles, new ArrayList<>(stationsInCycles)
-        );
+        return UpgradeOrderResult.withCycles(cycles, new ArrayList<>(stationsInCycles));
     }
 }
 ```
@@ -254,11 +241,11 @@ public UpgradeOrderResult computeUpgradeOrder() {
 
 ## Final Complexity Summary
 
-| Operation | Best Case | Worst Case | Typical Case |
-|:----------|:----------|:-----------|:-------------|
-| **Topological Sort** | $\mathcal{O}(V + E)$ | $\mathcal{O}(V + E)$ | $\mathcal{O}(V + E)$ |
-| **Cycle Detection** | $\mathcal{O}(V + E)$ | $\mathcal{O}(V \times E)$ | $\mathcal{O}(V + E)$ |
-| **Extract Stations** | $\mathcal{O}(V)$ | $\mathcal{O}(V)$ | $\mathcal{O}(V)$ |
+| Operation | Complexity |
+|:----------|:-----------|
+| **Topological Sort** | $\mathcal{O}(V + E)$ |
+| **Cycle Detection** | $\mathcal{O}(V + E)$ |
+| **Extract Stations** | $\mathcal{O}(V)$ |
 
 ### Overall USEI11 Complexity
 
@@ -266,4 +253,4 @@ public UpgradeOrderResult computeUpgradeOrder() {
 $$\mathcal{O}(V + E)$$
 
 **Failure Case (Cycles):**
-$$\mathcal{O}(V + E) \text{ (topological sort)} + \mathcal{O}(V + E) \text{ (cycle detection)} = \mathcal{O}(V + E)$$
+$$\mathcal{O}(V + E)$$
