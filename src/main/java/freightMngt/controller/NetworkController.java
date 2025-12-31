@@ -441,4 +441,15 @@ public class NetworkController {
 
         return capacityGraph;
     }
+
+    /**
+     * Returns a list of all stations in the network.
+     * Useful for UI selection menus.
+     */
+    public List<Station> getStations() {
+        if (graph == null) {
+            return new ArrayList<>();
+        }
+        return new ArrayList<>(graph.vertices());
+    }
 }

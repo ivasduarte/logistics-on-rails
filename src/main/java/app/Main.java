@@ -4,6 +4,7 @@ import freightMngt.controller.NetworkController;
 import freightMngt.controller.RouteController;
 import scheduler.Scheduler;
 import ui.RoutePlannerUI;
+import ui.TrainAssemblyUI;
 import utils.LoadData;
 import freightMngt.domain.Station;
 
@@ -26,12 +27,16 @@ public class Main {
         RouteController routeController = new RouteController();
         RoutePlannerUI routePlannerUI = new RoutePlannerUI();
 
+        // 4. Initialization of USLP09
+        TrainAssemblyUI trainAssemblyUI = new TrainAssemblyUI(networkController);
+
         while (true) {
             System.out.println("\n=== MAIN MENU ===");
             System.out.println("1. ESINF User Stories");
             System.out.println("2. LAPR US03 (Travel Time)");
             System.out.println("3. LAPR US07 (Scheduler)");
             System.out.println("4. LAPR US08 (Route Planning)");
+            System.out.println("5. LAPR US09 (Train Assembly)");
             System.out.println("0. EXIT");
             System.out.print("Select option: ");
 
@@ -49,6 +54,7 @@ public class Main {
                 case 2 -> LaprMain.main();
                 case 3 -> Scheduler.main(args);
                 case 4 -> handleRoutePlanning(routePlannerUI);
+                case 5 -> trainAssemblyUI.run();
                 case 0 -> {
                     System.out.println("Exiting...");
                     return;
