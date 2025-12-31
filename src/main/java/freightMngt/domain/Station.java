@@ -48,7 +48,7 @@ public class Station {
     }
 
     public Station(String nodeID, String stationName, double stationLatitude, double stationLongitude, double x, double y) {
-        this.nodeID = nodeID;
+        this.nodeID = nodeID != null ? nodeID.trim() : null;
         this.stationName = stationName;
         this.stationLatitude = stationLatitude;
         this.stationLongitude = stationLongitude;
