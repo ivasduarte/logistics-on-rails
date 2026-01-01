@@ -9,8 +9,7 @@ import freightMngt.graph.MapGraph;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -30,11 +29,10 @@ class USEI11Test {
     public void testComputeUpgradeOrder_EmptyNetwork() {
         System.out.println("Test Upgrade Order: Empty Network");
 
+        UpgradeOrderResult expected = UpgradeOrderResult.error("Network not loaded");
         UpgradeOrderResult result = controller.computeUpgradeOrder();
 
-        assertFalse(result.isSuccess(), "Empty network should return error");
-        assertEquals("Network not loaded", result.getErrorMessage());
-        assertNull(result.getUpgradeOrder());
+        assertUpgradeOrderResultEquals(expected, result);
     }
 
     /**
@@ -44,7 +42,6 @@ class USEI11Test {
     public void testComputeUpgradeOrder_UndirectedGraph() {
         System.out.println("Test Upgrade Order: Undirected Graph");
 
-        // Create undirected graph
         Graph<Station, ConnectionData> undirectedGraph = new MapGraph<>(false);
         Station s1 = new Station("1", "Station A", 0, 0, 0, 0);
         Station s2 = new Station("2", "Station B", 0, 0, 0, 0);
@@ -53,14 +50,12 @@ class USEI11Test {
         undirectedGraph.addVertex(s2);
         undirectedGraph.addEdge(s1, s2, new ConnectionData(10, 100, 5));
 
-        // Manually set the graph to undirected
-        NetworkController customController = new NetworkController();
-        // Note: You may need to add a setter or use reflection to set the graph
-        // For now, testing with the loadNetwork method which creates directed graphs
+        setGraphInController(controller, undirectedGraph);
 
+        UpgradeOrderResult expected = UpgradeOrderResult.error("Graph must be directed for upgrade planning");
         UpgradeOrderResult result = controller.computeUpgradeOrder();
 
-        assertFalse(result.isSuccess(), "Undirected graph should return error");
+        assertUpgradeOrderResultEquals(expected, result);
     }
 
     /**
@@ -71,38 +66,29 @@ class USEI11Test {
     public void testComputeUpgradeOrder_SimpleDAG() {
         System.out.println("Test Upgrade Order: Simple DAG");
 
-        // Create test stations
         Station stationA = new Station("A", "Station A", 0, 0, 0, 0);
         Station stationB = new Station("B", "Station B", 0, 0, 0, 0);
         Station stationC = new Station("C", "Station C", 0, 0, 0, 0);
 
-        // Build directed graph manually
         Graph<Station, ConnectionData> testGraph = new MapGraph<>(true);
         testGraph.addVertex(stationA);
         testGraph.addVertex(stationB);
         testGraph.addVertex(stationC);
-
         testGraph.addEdge(stationA, stationB, new ConnectionData(10, 100, 5));
         testGraph.addEdge(stationB, stationC, new ConnectionData(15, 150, 7));
 
-        // Set graph in controller (you may need to add a setter method)
         setGraphInController(controller, testGraph);
 
         UpgradeOrderResult result = controller.computeUpgradeOrder();
 
-        assertTrue(result.isSuccess(), "Simple DAG should have valid topological order");
-        assertNotNull(result.getUpgradeOrder());
+        // Build expected result
+        LinkedList<Station> expectedOrder = new LinkedList<>();
+        expectedOrder.add(stationA);
+        expectedOrder.add(stationB);
+        expectedOrder.add(stationC);
+        UpgradeOrderResult expected = UpgradeOrderResult.success(expectedOrder);
 
-        LinkedList<Station> order = result.getUpgradeOrder();
-        assertEquals(3, order.size(), "Order should contain all 3 stations");
-
-        // Verify order: A must come before B, B must come before C
-        int indexA = order.indexOf(stationA);
-        int indexB = order.indexOf(stationB);
-        int indexC = order.indexOf(stationC);
-
-        assertTrue(indexA < indexB, "A should come before B");
-        assertTrue(indexB < indexC, "B should come before C");
+        assertUpgradeOrderResultEquals(expected, result);
     }
 
     /**
@@ -125,7 +111,6 @@ class USEI11Test {
         testGraph.addVertex(stationB);
         testGraph.addVertex(stationC);
         testGraph.addVertex(stationD);
-
         testGraph.addEdge(stationA, stationC, new ConnectionData(10, 100, 5));
         testGraph.addEdge(stationA, stationD, new ConnectionData(20, 200, 10));
         testGraph.addEdge(stationB, stationA, new ConnectionData(15, 150, 7));
@@ -135,16 +120,16 @@ class USEI11Test {
 
         UpgradeOrderResult result = controller.computeUpgradeOrder();
 
-        assertTrue(result.isSuccess(), "Complex DAG should have valid topological order");
-
-        LinkedList<Station> order = result.getUpgradeOrder();
-        assertEquals(4, order.size(), "Order should contain all 4 stations");
+        // Verify success
+        assertTrue(result.isSuccess());
+        assertNotNull(result.getUpgradeOrder());
+        assertEquals(4, result.getUpgradeOrder().size());
 
         // Verify dependencies: B → A → C and B → A → D
-        int indexA = order.indexOf(stationA);
-        int indexB = order.indexOf(stationB);
-        int indexC = order.indexOf(stationC);
-        int indexD = order.indexOf(stationD);
+        int indexA = result.getUpgradeOrder().indexOf(stationA);
+        int indexB = result.getUpgradeOrder().indexOf(stationB);
+        int indexC = result.getUpgradeOrder().indexOf(stationC);
+        int indexD = result.getUpgradeOrder().indexOf(stationD);
 
         assertTrue(indexB < indexA, "B should come before A");
         assertTrue(indexA < indexC, "A should come before C");
@@ -167,8 +152,6 @@ class USEI11Test {
         testGraph.addVertex(stationA);
         testGraph.addVertex(stationB);
         testGraph.addVertex(stationC);
-
-        // Create cycle
         testGraph.addEdge(stationA, stationB, new ConnectionData(10, 100, 5));
         testGraph.addEdge(stationB, stationC, new ConnectionData(15, 150, 7));
         testGraph.addEdge(stationC, stationA, new ConnectionData(20, 200, 10));
@@ -177,15 +160,15 @@ class USEI11Test {
 
         UpgradeOrderResult result = controller.computeUpgradeOrder();
 
-        assertFalse(result.isSuccess(), "Graph with cycle should fail");
-        assertNull(result.getUpgradeOrder(), "No valid order should exist");
-        assertNotNull(result.getCycles(), "Cycles should be detected");
-        assertFalse(result.getCycles().isEmpty(), "At least one cycle should be found");
-        assertNotNull(result.getStationsInCycles(), "Stations in cycles should be identified");
+        // Verify failure
+        assertFalse(result.isSuccess());
+        assertNull(result.getUpgradeOrder());
+        assertNotNull(result.getCycles());
+        assertFalse(result.getCycles().isEmpty());
+        assertNotNull(result.getStationsInCycles());
 
-        // Verify all stations are in the cycle
-        assertEquals(3, result.getStationsInCycles().size(),
-                "All 3 stations should be in cycles");
+        // Verify all stations are in cycles
+        assertEquals(3, result.getStationsInCycles().size());
         assertTrue(result.getStationsInCycles().contains(stationA));
         assertTrue(result.getStationsInCycles().contains(stationB));
         assertTrue(result.getStationsInCycles().contains(stationC));
@@ -210,24 +193,27 @@ class USEI11Test {
         testGraph.addVertex(stationB);
         testGraph.addVertex(stationC);
         testGraph.addVertex(stationD);
-
-        // Cycle 1: A ↔ B
         testGraph.addEdge(stationA, stationB, new ConnectionData(10, 100, 5));
         testGraph.addEdge(stationB, stationA, new ConnectionData(10, 100, 5));
-
-        // Cycle 2: C ↔ D
         testGraph.addEdge(stationC, stationD, new ConnectionData(15, 150, 7));
         testGraph.addEdge(stationD, stationC, new ConnectionData(15, 150, 7));
 
         setGraphInController(controller, testGraph);
 
-        freightMngt.domain.UpgradeOrderResult result = controller.computeUpgradeOrder();
+        UpgradeOrderResult result = controller.computeUpgradeOrder();
 
-        assertFalse(result.isSuccess(), "Graph with multiple cycles should fail");
-        assertNotNull(result.getCycles(), "Cycles should be detected");
+        // Verify failure
+        assertFalse(result.isSuccess());
+        assertNull(result.getUpgradeOrder());
+        assertNotNull(result.getCycles());
         assertTrue(result.getCycles().size() >= 2, "At least 2 cycles should be found");
-        assertEquals(4, result.getStationsInCycles().size(),
-                "All 4 stations should be in cycles");
+
+        // Verify all 4 stations are in cycles
+        assertEquals(4, result.getStationsInCycles().size());
+        assertTrue(result.getStationsInCycles().contains(stationA));
+        assertTrue(result.getStationsInCycles().contains(stationB));
+        assertTrue(result.getStationsInCycles().contains(stationC));
+        assertTrue(result.getStationsInCycles().contains(stationD));
     }
 
     /**
@@ -251,12 +237,8 @@ class USEI11Test {
         testGraph.addVertex(stationC);
         testGraph.addVertex(stationD);
         testGraph.addVertex(stationE);
-
-        // Acyclic part
         testGraph.addEdge(stationA, stationB, new ConnectionData(10, 100, 5));
         testGraph.addEdge(stationB, stationC, new ConnectionData(15, 150, 7));
-
-        // Cyclic part
         testGraph.addEdge(stationD, stationE, new ConnectionData(20, 200, 10));
         testGraph.addEdge(stationE, stationD, new ConnectionData(20, 200, 10));
 
@@ -264,10 +246,14 @@ class USEI11Test {
 
         UpgradeOrderResult result = controller.computeUpgradeOrder();
 
-        assertFalse(result.isSuccess(), "Graph with any cycle should fail");
+        // Verify failure (any cycle means failure)
+        assertFalse(result.isSuccess());
+        assertNull(result.getUpgradeOrder());
+        assertNotNull(result.getCycles());
         assertNotNull(result.getStationsInCycles());
 
         // Only D and E should be in cycles
+        assertEquals(2, result.getStationsInCycles().size());
         assertTrue(result.getStationsInCycles().contains(stationD));
         assertTrue(result.getStationsInCycles().contains(stationE));
         assertFalse(result.getStationsInCycles().contains(stationA));
@@ -289,12 +275,13 @@ class USEI11Test {
 
         setGraphInController(controller, testGraph);
 
-        freightMngt.domain.UpgradeOrderResult result = controller.computeUpgradeOrder();
+        LinkedList<Station> expectedOrder = new LinkedList<>();
+        expectedOrder.add(stationA);
+        UpgradeOrderResult expected = UpgradeOrderResult.success(expectedOrder);
 
-        assertTrue(result.isSuccess(), "Single station should be valid");
-        assertNotNull(result.getUpgradeOrder());
-        assertEquals(1, result.getUpgradeOrder().size());
-        assertEquals(stationA, result.getUpgradeOrder().getFirst());
+        UpgradeOrderResult result = controller.computeUpgradeOrder();
+
+        assertUpgradeOrderResultEquals(expected, result);
     }
 
     /**
@@ -315,7 +302,6 @@ class USEI11Test {
         testGraph.addVertex(stationB);
         testGraph.addVertex(stationC);
         testGraph.addVertex(stationD);
-
         testGraph.addEdge(stationA, stationB, new ConnectionData(10, 100, 5));
         testGraph.addEdge(stationC, stationD, new ConnectionData(15, 150, 7));
 
@@ -323,10 +309,12 @@ class USEI11Test {
 
         UpgradeOrderResult result = controller.computeUpgradeOrder();
 
-        assertTrue(result.isSuccess(), "Disconnected DAG should be valid");
+        // Verify success
+        assertTrue(result.isSuccess());
+        assertNotNull(result.getUpgradeOrder());
         assertEquals(4, result.getUpgradeOrder().size());
 
-        // Verify partial order
+        // Verify partial order (A before B, C before D)
         int indexA = result.getUpgradeOrder().indexOf(stationA);
         int indexB = result.getUpgradeOrder().indexOf(stationB);
         int indexC = result.getUpgradeOrder().indexOf(stationC);
@@ -354,7 +342,9 @@ class USEI11Test {
 
         UpgradeOrderResult result = controller.computeUpgradeOrder();
 
-        assertFalse(result.isSuccess(), "Self-loop should be detected as cycle");
+        // Verify failure
+        assertFalse(result.isSuccess());
+        assertNull(result.getUpgradeOrder());
         assertNotNull(result.getCycles());
         assertNotNull(result.getStationsInCycles());
         assertTrue(result.getStationsInCycles().contains(stationA));
@@ -365,14 +355,60 @@ class USEI11Test {
     // ========================================================================
 
     /**
-     * Helper method to set the graph in the controller.
-     * If NetworkController doesn't have a setter, you may need to add one
-     * or use reflection.
+     * Custom assertion method that compares UpgradeOrderResult objects field by field
      */
+    private void assertUpgradeOrderResultEquals(UpgradeOrderResult expected, UpgradeOrderResult actual) {
+        assertEquals(expected.isSuccess(), actual.isSuccess(), "Success flag mismatch");
+        assertEquals(expected.getErrorMessage(), actual.getErrorMessage(), "Error message mismatch");
+
+        // Compare upgrade order lists
+        if (expected.getUpgradeOrder() == null) {
+            assertNull(actual.getUpgradeOrder(), "Expected null upgrade order");
+        } else {
+            assertNotNull(actual.getUpgradeOrder(), "Expected non-null upgrade order");
+            assertEquals(expected.getUpgradeOrder().size(), actual.getUpgradeOrder().size(),
+                    "Upgrade order size mismatch");
+
+            List<Station> expectedList = new ArrayList<>(expected.getUpgradeOrder());
+            List<Station> actualList = new ArrayList<>(actual.getUpgradeOrder());
+
+            for (int i = 0; i < expectedList.size(); i++) {
+                assertEquals(expectedList.get(i).getNodeID(), actualList.get(i).getNodeID(),
+                        "Station mismatch at position " + i);
+            }
+        }
+
+        // For cycles and stations in cycles, we just verify they exist and contain the right stations
+        // We don't check the exact structure since cycle detection order may vary
+        if (expected.getCycles() != null) {
+            assertNotNull(actual.getCycles(), "Expected non-null cycles");
+            // Don't compare cycle structure, just verify cycles were detected
+            assertFalse(actual.getCycles().isEmpty(), "Expected at least one cycle");
+        }
+
+        if (expected.getStationsInCycles() != null) {
+            assertNotNull(actual.getStationsInCycles(), "Expected non-null stations in cycles");
+            assertEquals(expected.getStationsInCycles().size(), actual.getStationsInCycles().size(),
+                    "Stations in cycles count mismatch");
+
+            // Compare sets by station IDs
+            Set<String> expectedIds = new HashSet<>();
+            for (Station s : expected.getStationsInCycles()) {
+                expectedIds.add(s.getNodeID());
+            }
+
+            Set<String> actualIds = new HashSet<>();
+            for (Station s : actual.getStationsInCycles()) {
+                actualIds.add(s.getNodeID());
+            }
+
+            assertEquals(expectedIds, actualIds, "Stations in cycles mismatch");
+        }
+    }
+
     private void setGraphInController(NetworkController controller,
                                       Graph<Station, ConnectionData> graph) {
         try {
-            // Attempt to use reflection to set the private graph field
             java.lang.reflect.Field field = NetworkController.class.getDeclaredField("graph");
             field.setAccessible(true);
             field.set(controller, graph);
