@@ -1,0 +1,10 @@
+=========================================================
+USBD40: Register a Freight In The Database Success Test
+=========================================================
+Trying to register cargo (Origin 50 -> Destination 11)...
+   [SUCCESS] Cargo created with ID 2052
+   -> Associated Wagon: 3330001
+   -> Associated Wagon: 3330002
+→ Cleaning test data...
+   [CLEAN UP COMPLETE] Test data cleaned.
+=========================================================
