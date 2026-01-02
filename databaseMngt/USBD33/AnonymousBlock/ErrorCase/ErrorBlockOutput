@@ -1,0 +1,9 @@
+=========================================================
+USBD33: Do Not Allow Train Excess Length Error Test
+=========================================================
+→ Cleaning up test data...
+[SUCCESS] Trigger blocked the insertion correctly.
+[ERROR MESSAGE] ORA-20020: USBD33: Train length limit exceeded (750m). Train ID: 5437 | Current Length: 988,66m
+ORA-06512: na "SYSTEM.TRG_CHECKTRAINLENGTH_COMPOUND", linha 53
+ORA-04088: erro durante a execução do trigger 'SYSTEM.TRG_CHECKTRAINLENGTH_COMPOUND'
+=========================================================

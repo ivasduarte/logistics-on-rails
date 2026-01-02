@@ -1,0 +1,7 @@
+=========================================================
+USBD39: Associate a Locomotive to a Train Error Test
+=========================================================
+Attempting to Create a Duplicate Association (5621 - 5421)...
+[SUCCESS] The function blocked the duplicate correctly.
+Error Message: ORA-20013: Locomotive already associated.
+=========================================================
