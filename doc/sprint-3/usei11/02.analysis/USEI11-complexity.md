@@ -195,50 +195,6 @@ private static  void findCyclesWithDFS(Graph g, V vertex,
 
 ---
 
-## USEI11 Complete Flow
-
-### Scenario 1: Success (No Cycles - DAG)
-```java
-public UpgradeOrderResult computeUpgradeOrder() {
-    // Uses DepthFirstSearch pattern to check for cycles
-    LinkedList order = Algorithms.topologicalSort(graph);  // O(V + E)
-    
-    if (order != null) {
-        return UpgradeOrderResult.success(order);  // O(1)
-    }
-}
-```
-
-**Complexity:** $\mathcal{O}(V + E)$
-
----
-
-### Scenario 2: Failure (Cycles Detected)
-```java
-public UpgradeOrderResult computeUpgradeOrder() {
-    // Topological sort (using DFS) fails
-    LinkedList order = Algorithms.topologicalSort(graph);  // O(V + E)
-    
-    if (order == null) {
-        // Detect cycles using DFS pattern
-        ArrayList<LinkedList> cycles = 
-            Algorithms.detectCycles(graph);  // O(V + E)
-        
-        // Extract unique stations
-        Set stationsInCycles = new HashSet<>();
-        for (LinkedList cycle : cycles) {
-            stationsInCycles.addAll(cycle);
-        }
-        
-        return UpgradeOrderResult.withCycles(cycles, new ArrayList<>(stationsInCycles));
-    }
-}
-```
-
-**Complexity:** $\mathcal{O}(V + E) + \mathcal{O}(V + E) = \mathcal{O}(V + E)$
-
----
-
 ## Final Complexity Summary
 
 | Operation | Complexity |

@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 class USEI12Test {
 
     @Test
-    public void testMinimumSpanningTree() {
+    public void testkruskalMST() {
         System.out.println("Test of Minimum Spanning Tree");
 
         // Test 1: Simple triangle with different edge weights
@@ -29,7 +29,7 @@ class USEI12Test {
         expectedTriangle.addEdge("A", "B", 1);
         expectedTriangle.addEdge("B", "C", 2);
 
-        Graph<String, Integer> mstTriangle = Algorithms.minimumSpanningTree(triangleGraph, Integer::compare);
+        Graph<String, Integer> mstTriangle = Algorithms.kruskalMST(triangleGraph, Integer::compare);
         assertEquals(expectedTriangle, mstTriangle);
 
         // Test 2: Linear chain
@@ -51,7 +51,7 @@ class USEI12Test {
         expectedLinear.addEdge("B", "C", 1);
         expectedLinear.addEdge("C", "D", 1);
 
-        Graph<String, Integer> mstLinear = Algorithms.minimumSpanningTree(linearGraph, Integer::compare);
+        Graph<String, Integer> mstLinear = Algorithms.kruskalMST(linearGraph, Integer::compare);
         assertEquals(expectedLinear, mstLinear);
 
         // Test 3: Complete graph K4
@@ -76,7 +76,7 @@ class USEI12Test {
         expectedComplete.addEdge("B", "C", 2);
         expectedComplete.addEdge("C", "D", 3);
 
-        Graph<String, Integer> mstComplete = Algorithms.minimumSpanningTree(completeGraph, Integer::compare);
+        Graph<String, Integer> mstComplete = Algorithms.kruskalMST(completeGraph, Integer::compare);
         assertEquals(expectedComplete, mstComplete);
 
         // Test 4: Star graph
@@ -98,7 +98,7 @@ class USEI12Test {
         expectedStar.addEdge("Hub", "B", 2);
         expectedStar.addEdge("Hub", "C", 3);
 
-        Graph<String, Integer> mstStar = Algorithms.minimumSpanningTree(starGraph, Integer::compare);
+        Graph<String, Integer> mstStar = Algorithms.kruskalMST(starGraph, Integer::compare);
         assertEquals(expectedStar, mstStar);
 
         // Test 5: Disconnected graph
@@ -118,12 +118,12 @@ class USEI12Test {
         expectedDisconnected.addEdge("A", "B", 1);
         expectedDisconnected.addEdge("C", "D", 2);
 
-        Graph<String, Integer> mstDisconnected = Algorithms.minimumSpanningTree(disconnectedGraph, Integer::compare);
+        Graph<String, Integer> mstDisconnected = Algorithms.kruskalMST(disconnectedGraph, Integer::compare);
         assertEquals(expectedDisconnected, mstDisconnected);
     }
 
     @Test
-    public void testMinimumSpanningTree_EqualWeights() {
+    public void testkruskalMST_EqualWeights() {
         System.out.println("Test MST with Equal Weights");
 
         Graph<String, Integer> equalWeightGraph = new MapGraph<>(false);
@@ -146,12 +146,12 @@ class USEI12Test {
         expected.addEdge("A", "C", 1);
         expected.addEdge("B", "D", 1);
 
-        Graph<String, Integer> mst = Algorithms.minimumSpanningTree(equalWeightGraph, Integer::compare);
+        Graph<String, Integer> mst = Algorithms.kruskalMST(equalWeightGraph, Integer::compare);
         assertEquals(expected, mst);
     }
 
     @Test
-    public void testMinimumSpanningTree_SingleVertex() {
+    public void testkruskalMST_SingleVertex() {
         System.out.println("Test MST on Single Vertex");
 
         Graph<String, Integer> singleVertex = new MapGraph<>(false);
@@ -160,33 +160,33 @@ class USEI12Test {
         Graph<String, Integer> expected = new MapGraph<>(false);
         expected.addVertex("A");
 
-        Graph<String, Integer> mst = Algorithms.minimumSpanningTree(singleVertex, Integer::compare);
+        Graph<String, Integer> mst = Algorithms.kruskalMST(singleVertex, Integer::compare);
         assertEquals(expected, mst);
     }
 
     @Test
-    public void testMinimumSpanningTree_EmptyGraph() {
+    public void testkruskalMST_EmptyGraph() {
         System.out.println("Test MST on Empty Graph");
 
         Graph<String, Integer> emptyGraph = new MapGraph<>(false);
         Graph<String, Integer> expected = new MapGraph<>(false);
 
-        Graph<String, Integer> mst = Algorithms.minimumSpanningTree(emptyGraph, Integer::compare);
+        Graph<String, Integer> mst = Algorithms.kruskalMST(emptyGraph, Integer::compare);
         assertEquals(expected, mst);
     }
 
     @Test
-    public void testMinimumSpanningTree_NullGraph() {
+    public void testkruskalMST_NullGraph() {
         System.out.println("Test MST on Null Graph");
 
         Graph<String, Integer> expected = new MapGraph<>(false);
-        Graph<String, Integer> mst = Algorithms.minimumSpanningTree(null, Integer::compare);
+        Graph<String, Integer> mst = Algorithms.kruskalMST(null, Integer::compare);
 
         assertEquals(expected, mst);
     }
 
     @Test
-    public void testMinimumSpanningTree_DoubleWeights() {
+    public void testkruskalMST_DoubleWeights() {
         System.out.println("Test MST with Double Weights");
 
         Graph<String, Double> doubleGraph = new MapGraph<>(false);
@@ -209,12 +209,12 @@ class USEI12Test {
         expected.addEdge("A", "B", 1.5);
         expected.addEdge("C", "D", 2.5);
 
-        Graph<String, Double> mst = Algorithms.minimumSpanningTree(doubleGraph, Double::compare);
+        Graph<String, Double> mst = Algorithms.kruskalMST(doubleGraph, Double::compare);
         assertEquals(expected, mst);
     }
 
     @Test
-    public void testMinimumSpanningTree_MultipleComponents() {
+    public void testkruskalMST_MultipleComponents() {
         System.out.println("Test MST with Multiple Disconnected Components");
 
         Graph<String, Integer> multiComponent = new MapGraph<>(false);
@@ -239,12 +239,12 @@ class USEI12Test {
         expected.addEdge("B", "C", 2);
         expected.addEdge("D", "E", 3);
 
-        Graph<String, Integer> mst = Algorithms.minimumSpanningTree(multiComponent, Integer::compare);
+        Graph<String, Integer> mst = Algorithms.kruskalMST(multiComponent, Integer::compare);
         assertEquals(expected, mst);
     }
 
     @Test
-    public void testMinimumSpanningTree_DirectedGraph() {
+    public void testkruskalMST_DirectedGraph() {
         System.out.println("Test MST on Directed Graph");
 
         Graph<String, Integer> directedGraph = new MapGraph<>(true);
@@ -262,12 +262,12 @@ class USEI12Test {
         expected.addEdge("A", "B", 1);
         expected.addEdge("B", "C", 2);
 
-        Graph<String, Integer> mst = Algorithms.minimumSpanningTree(directedGraph, Integer::compare);
+        Graph<String, Integer> mst = Algorithms.kruskalMST(directedGraph, Integer::compare);
         assertEquals(expected, mst);
     }
 
     @Test
-    public void testMinimumSpanningTree_GreedySelection() {
+    public void testkruskalMST_GreedySelection() {
         System.out.println("Test MST Greedy Edge Selection");
 
         Graph<String, Integer> greedyGraph = new MapGraph<>(false);
@@ -290,12 +290,12 @@ class USEI12Test {
         expected.addEdge("B", "C", 2);
         expected.addEdge("C", "D", 3);
 
-        Graph<String, Integer> mst = Algorithms.minimumSpanningTree(greedyGraph, Integer::compare);
+        Graph<String, Integer> mst = Algorithms.kruskalMST(greedyGraph, Integer::compare);
         assertEquals(expected, mst);
     }
 
     @Test
-    public void testMinimumSpanningTree_Connectivity() {
+    public void testkruskalMST_Connectivity() {
         System.out.println("Test MST Connectivity Property");
 
         Graph<String, Integer> connectedGraph = new MapGraph<>(false);
@@ -321,7 +321,7 @@ class USEI12Test {
         expected.addEdge("B", "D", 3);
         expected.addEdge("D", "E", 5);
 
-        Graph<String, Integer> mst = Algorithms.minimumSpanningTree(connectedGraph, Integer::compare);
+        Graph<String, Integer> mst = Algorithms.kruskalMST(connectedGraph, Integer::compare);
         assertEquals(expected, mst);
     }
 }

@@ -33,9 +33,9 @@ public class Main {
             System.out.println("\n=== MAIN MENU ===");
             System.out.println("1. ESINF User Stories");
             System.out.println("2. LAPR US03 (Travel Time)");
-            System.out.println("3. LAPR US07 (Scheduler)");
-            System.out.println("4. LAPR US08 (Route Planning)");
-            System.out.println("5. LAPR US09 (Train Assembly)");
+            System.out.println("3. LAPR US08 (Route Planning)");
+            System.out.println("4. LAPR US09 (Train Assembly)");
+            System.out.println("5. LAPR US10 (Scheduler)");
             System.out.println("0. EXIT");
             System.out.print("Select option: ");
 
@@ -51,9 +51,9 @@ public class Main {
             switch (option) {
                 case 1 -> MenuESINF.menuESINF();
                 case 2 -> LaprMain.main();
-                case 3 -> Scheduler.main(args);
-                case 4 -> handleRoutePlanning(routePlannerUI);
-                case 5 -> trainAssemblyUI.run();
+                case 3 -> handleRoutePlanning(routePlannerUI);
+                case 4 -> trainAssemblyUI.run();
+                case 5 -> Scheduler.main(args);
                 case 0 -> {
                     System.out.println("Exiting...");
                     return;

@@ -133,14 +133,14 @@ public class Algorithms {
 
     /**
      * Detects if the graph has cycles using DepthFirstSearch.
-     * Uses DFS with three-color marking to detect back edges.
+     * Uses DFS with state marking to detect back edges.
      *
      * @param g Graph instance
      * @return true if cycles exist, false otherwise
      */
     private static <V, E> boolean hasCyclesUsingDFS(Graph<V, E> g) {
         int n = g.numVertices();
-        int[] state = new int[n]; // 0=WHITE, 1=GRAY, 2=BLACK
+        int[] state = new int[n]; // 0= not visited, 1= currently processing, 2= fully processed
 
         for (V vertex : g.vertices()) {
             if (state[g.key(vertex)] == 0) {
@@ -157,7 +157,7 @@ public class Algorithms {
      */
     private static <V, E> boolean detectCycleViaDFS(Graph<V, E> g, V vertex, int[] state) {
         int vKey = g.key(vertex);
-        state[vKey] = 1; // GRAY - currently processing
+        state[vKey] = 1; // currently processing
 
         for (V neighbor : g.adjVertices(vertex)) {
             int nKey = g.key(neighbor);
@@ -173,7 +173,7 @@ public class Algorithms {
             }
         }
 
-        state[vKey] = 2; // BLACK - fully processed
+        state[vKey] = 2; // fully processed
         return false;
     }
 
@@ -198,10 +198,12 @@ public class Algorithms {
         int n = g.numVertices();
         if (n == 0) return cycles;
 
-        int[] state = new int[n]; // 0=WHITE, 1=GRAY, 2=BLACK
+        int[] state = new int[n]; // same meaning as the other state
 
         @SuppressWarnings("unchecked")
-        V[] parent = (V[]) new Object[n];
+
+        //Marks who discovered who (A -> B, A is B's parent)
+        Map<V, V> parent = new HashMap<>();
 
         // Use DFS pattern to detect all cycles
         for (V vertex : g.vertices()) {
@@ -218,10 +220,10 @@ public class Algorithms {
      * Follows the same traversal pattern as DepthFirstSearch.
      */
     private static <V, E> void findCyclesWithDFS(Graph<V, E> g, V vertex,
-                                                 int[] state, V[] parent,
+                                                 int[] state, Map<V, V> parent,
                                                  ArrayList<LinkedList<V>> cycles) {
         int vKey = g.key(vertex);
-        state[vKey] = 1; // GRAY - mark as being processed
+        state[vKey] = 1; // being processed
 
         // Traverse adjacent vertices (same pattern as DepthFirstSearch)
         for (V neighbor : g.adjVertices(vertex)) {
@@ -232,30 +234,35 @@ public class Algorithms {
                 LinkedList<V> cycle = new LinkedList<>();
                 Set<V> visited = new HashSet<>();
 
-                V current = vertex;
-                cycle.addFirst(current);
+                //We assure the cycle begins and ends on the same node, since neighbor marks the end of the cycle
+                V current = neighbor;
+                cycle.addLast(current);
                 visited.add(current);
 
-                while (current != null && !current.equals(neighbor)) {
-                    int currentKey = g.key(current);
-                    current = parent[currentKey];
+                //Using recursion in
+                V temp = vertex;
+                LinkedList<V> path = new LinkedList<>();
 
-                    if (current != null && !visited.contains(current)) {
-                        cycle.addFirst(current);
-                        visited.add(current);
+                //Going up until we find neighboour
+                while (temp != null && !temp.equals(neighbor)) {
+                    if(!visited.contains(temp)){
+                        path.addFirst(temp); //Add to the beggining to maintain direct order
+                        visited.add(temp);
                     }
+                    temp = parent.get(temp); //Get the parent of the current vertex
                 }
 
-                cycle.add(vertex); // Close the cycle
+                cycle.addAll(path);
+                cycle.add(neighbor); // Close the cycle
                 cycles.add(cycle);
 
             } else if (state[nKey] == 0) {
-                parent[nKey] = vertex;
+                parent.put(neighbor, vertex);
                 findCyclesWithDFS(g, neighbor, state, parent, cycles);
             }
         }
 
-        state[vKey] = 2; // BLACK - fully processed
+        state[vKey] = 2; // fully processed
     }
 
     /**
@@ -288,103 +295,70 @@ public class Algorithms {
     }
 
     /**
-     * Computes the Minimum Spanning Tree (MST) using Prim's algorithm.
+     * Computes the Minimum Spanning Tree (MST) using Kruskal's algorithm.
      * Treats the graph as undirected regardless of its actual directedness.
      *
      * @param g    Graph instance
      * @param ce   Comparator between elements of type E
      * @return A new graph representing the MST, or empty graph if input is empty/null
      */
-    public static <V, E> Graph<V, E> minimumSpanningTree(Graph<V, E> g, Comparator<E> ce) {
+    public static <V, E> Graph<V, E> kruskalMST(Graph<V, E> g, Comparator<E> ce) {
         if (g == null || g.numVertices() == 0) {
             return new MapGraph<>(false);
         }
 
         Graph<V, E> mst = new MapGraph<>(false);
+        List<Edge<V, E>> allEdges = new ArrayList<>();
 
-        // Add all vertices to MST
-        for (V vertex : g.vertices()) {
-            mst.addVertex(vertex);
-        }
-
-        if (g.numVertices() == 1) {
-            return mst;
-        }
-
-        // Track visited vertices across ALL components
-        Set<V> globalVisited = new HashSet<>();
-
-        // Process each connected component
-        for (V start : g.vertices()) {
-            // Skip if this vertex was already processed in a previous component
-            if (globalVisited.contains(start)) {
-                continue;
+        //Prepare the graph
+        for (V v : g.vertices()) {
+            mst.addVertex(v);
+            // Take only the outgoing edges, since the graph is undirected
+            for (Edge<V, E> e : g.outgoingEdges(v)) {
+                allEdges.add(e);
             }
+        }
+        // Order all the edges by the weight criteria
+        allEdges.sort((e1, e2) -> ce.compare(e1.getWeight(), e2.getWeight()));
 
-            // Track visited vertices for THIS component
-            Set<V> componentVisited = new HashSet<>();
-            PriorityQueue<Edge<V, E>> pq = new PriorityQueue<>((e1, e2) ->
-                    ce.compare(e1.getWeight(), e2.getWeight()));
+        // Map to associate each vertex to the "root" of their groups
+        Map<V, V> parent = new HashMap<>();
+        for (V v : g.vertices()) {
+            parent.put(v, v); // each vertex starts pointing to itself
+        }
 
-            // Start Prim's algorithm for this component
-            componentVisited.add(start);
-            globalVisited.add(start);
-            addEdgesToQueue(g, start, componentVisited, pq);
+        int edgesInMst = 0;
+        for (Edge<V, E> edge : allEdges) {
+            // If all vertexes are connected, finish
+            if (edgesInMst == g.numVertices() - 1) break;
 
-            // Process edges for this component
-            while (!pq.isEmpty()) {
-                Edge<V, E> edge = pq.poll();
+            V root1 = find(parent, edge.getVOrigin());
+            V root2 = find(parent, edge.getVTarget());
 
-                V vOrig = edge.getVOrigin();
-                V vDest = edge.getVTarget();
-
-                // Determine which vertex is new
-                V newVertex = null;
-                if (!componentVisited.contains(vDest)) {
-                    newVertex = vDest;
-                } else if (!componentVisited.contains(vOrig)) {
-                    newVertex = vOrig;
-                }
-
-                if (newVertex == null) {
-                    continue;
-                }
-
-                // Add edge to MST
-                mst.addEdge(vOrig, vDest, edge.getWeight());
-
-                // Mark new vertex as visited
-                componentVisited.add(newVertex);
-                globalVisited.add(newVertex);
-
-                // Add edges from new vertex
-                addEdgesToQueue(g, newVertex, componentVisited, pq);
+            // If the two roots are different, it means there is no cycle
+            if (!root1.equals(root2)) {
+                mst.addEdge(edge.getVOrigin(), edge.getVTarget(), edge.getWeight());
+                union(parent, root1, root2);
+                edgesInMst++;
             }
         }
 
         return mst;
     }
 
-    /**
-     * Helper method to add all edges from a vertex to the priority queue.
-     * Only adds edges that lead to unvisited vertices.
-     */
-    private static <V, E> void addEdgesToQueue(Graph<V, E> g, V vertex,
-                                               Set<V> visited,
-                                               PriorityQueue<Edge<V, E>> pq) {
-        // Add outgoing edges
-        for (Edge<V, E> edge : g.outgoingEdges(vertex)) {
-            if (!visited.contains(edge.getVTarget())) {
-                pq.offer(edge);
-            }
+    // Finds the route of that group
+    private static <V> V find(Map<V, V> parent, V v) {
+        if (parent.get(v).equals(v)) {
+            return v;
         }
+        // Path compression, which makes later searches easier
+        parent.put(v, find(parent, parent.get(v)));
+        return parent.get(v);
+    }
 
-        // Add incoming edges (to handle undirected nature)
-        for (Edge<V, E> edge : g.incomingEdges(vertex)) {
-            if (!visited.contains(edge.getVOrigin())) {
-                pq.offer(edge);
-            }
-        }
+    // Joins two groups into one
+    private static <V> void union(Map<V, V> parent, V root1, V root2) {
+        parent.put(root1, root2);
     }
 
     /**

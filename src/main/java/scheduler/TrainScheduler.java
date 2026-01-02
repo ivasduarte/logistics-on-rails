@@ -1,15 +1,19 @@
 package scheduler;
 
+import utils.DatabaseConnection;
+import oracle.jdbc.OracleTypes;
+
 import java.sql.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.Date;
 import java.util.stream.Collectors;
 
 /**
  * TrainScheduler - Train scheduling and dispatch system
  * Implements USLP07 - Train dispatch with simple/complex routes
+ * Modified to use database functions (USLP10)
  */
 public class TrainScheduler {
 
@@ -23,33 +27,33 @@ public class TrainScheduler {
 
     public void connectToDatabase() {
         try {
-            String url = "jdbc:oracle:thin:@localhost:1521:xe";
-            String user = "system";
-            String pass = "ipp-isep-g091";
-            Class.forName("oracle.jdbc.OracleDriver");
-            connection = DriverManager.getConnection(url, user, pass);
-        } catch (ClassNotFoundException e) {
-            System.err.println(" Error loading JDBC driver: " + e.getMessage());
+            connection = DatabaseConnection.getConnection();
         } catch (SQLException e) {
-            System.err.println(" Error connecting to the database: " + e.getMessage());
+            throw new RuntimeException(e);
         }
     }
 
     // ==========================================
-    // DATABASE QUERY METHODS
+    // DATABASE QUERY METHODS (Using Functions)
     // ==========================================
 
     /**
      * Returns a list of all trains in the DB for display
+     * Uses: get_all_trains function
      */
     public List<String> getAvailableTrains() {
         List<String> list = new ArrayList<>();
-        String query = "SELECT id, operator, \"date\", pathID FROM Train ORDER BY id";
-        try (Statement stmt = connection.createStatement();
-             ResultSet rs = stmt.executeQuery(query)) {
-            while (rs.next()) {
-                list.add(String.format("[ID: %d] Operator: %s (Date: %s)",
-                        rs.getInt("id"), rs.getString("operator"), rs.getDate("date")));
+        try (CallableStatement stmt = connection.prepareCall("{? = call get_all_trains}")) {
+            stmt.registerOutParameter(1, OracleTypes.CURSOR);
+            stmt.execute();
+
+            try (ResultSet rs = (ResultSet) stmt.getObject(1)) {
+                while (rs.next()) {
+                    list.add(String.format("[ID: %d] Operator: %s (Date: %s)",
+                            rs.getInt("id"),
+                            rs.getString("operator"),
+                            rs.getDate("train_date")));
+                }
             }
         } catch (SQLException e) {
             System.err.println("✗ Error fetching trains: " + e.getMessage());
@@ -59,35 +63,55 @@ public class TrainScheduler {
 
     /**
      * Returns a list of trains that have NOT been scheduled yet
+     * Uses: get_all_trains function
      */
     public List<String> getUnscheduledTrains() {
         List<String> list = new ArrayList<>();
-        Set<Integer> scheduledIds = scheduledTrains.stream()
+        // Set of IDs to exclude from automatic scheduling
+        Set<Integer> excludedIds = Set.of(5421, 5435, 5437);
+
+        Set<Integer> alreadyScheduledIds = scheduledTrains.stream()
                 .map(st -> st.getTrain().getId())
                 .collect(Collectors.toSet());
 
-        String query = "SELECT id, operator, \"date\", pathID FROM Train ORDER BY id";
-        try (Statement stmt = connection.createStatement();
-             ResultSet rs = stmt.executeQuery(query)) {
-            while (rs.next()) {
-                int trainId = rs.getInt("id");
-                if (!scheduledIds.contains(trainId)) {
-                    list.add(String.format("[ID: %d] Operator: %s (Date: %s)",
-                            trainId, rs.getString("operator"), rs.getDate("date")));
+        try (CallableStatement stmt = connection.prepareCall("{? = call get_all_trains}")) {
+            stmt.registerOutParameter(1, OracleTypes.CURSOR);
+            stmt.execute();
+
+            try (ResultSet rs = (ResultSet) stmt.getObject(1)) {
+                while (rs.next()) {
+                    int trainId = rs.getInt("id");
+                    String operator = rs.getString("operator");
+
+
+                    if (!excludedIds.contains(trainId) && !alreadyScheduledIds.contains(trainId)) {
+                        alreadyScheduledIds.add(trainId);
+                    }
+
+
+                    if (!alreadyScheduledIds.contains(trainId)) {
+                        list.add(String.format("[ID: %d] Operator: %s (Date: %s)",
+                                trainId,
+                                operator == null ? "Unknown" : operator
+                                ));
+                    }
                 }
             }
         } catch (SQLException e) {
-            System.err.println(" Error fetching trains: " + e.getMessage());
+            System.err.println("✗ Error fetching trains: " + e.getMessage());
         }
         return list;
     }
 
+    /**
+     * Uses: is_valid_train_id function
+     */
     public boolean isValidTrainId(int id) {
-        try (PreparedStatement stmt = connection.prepareStatement("SELECT 1 FROM Train WHERE id = ?")) {
-            stmt.setInt(1, id);
-            try (ResultSet rs = stmt.executeQuery()) {
-                return rs.next();
-            }
+        try (CallableStatement stmt = connection.prepareCall("{? = call is_valid_train_id(?)}")) {
+            stmt.registerOutParameter(1, Types.NUMERIC);
+            stmt.setInt(2, id);
+            stmt.execute();
+            return stmt.getInt(1) == 1;
         } catch (SQLException e) {
             return false;
         }
@@ -98,46 +122,69 @@ public class TrainScheduler {
                 .anyMatch(st -> st.getTrain().getId() == trainId);
     }
 
+    /**
+     * Uses: get_all_endpoints function
+     */
     public List<Endpoint> getAllEndpoints() {
         List<Endpoint> endpoints = new ArrayList<>();
-        String query = "SELECT endpointID, name FROM Endpoint ORDER BY name";
-        try (Statement stmt = connection.createStatement();
-             ResultSet rs = stmt.executeQuery(query)) {
-            while (rs.next()) {
-                endpoints.add(new Endpoint(rs.getInt("endpointID"), rs.getString("name")));
+        try (CallableStatement stmt = connection.prepareCall("{? = call get_all_endpoints}")) {
+            stmt.registerOutParameter(1, OracleTypes.CURSOR);
+            stmt.execute();
+
+            try (ResultSet rs = (ResultSet) stmt.getObject(1)) {
+                while (rs.next()) {
+                    endpoints.add(new Endpoint(
+                            rs.getInt("endpointID"),
+                            rs.getString("name")));
+                }
             }
         } catch (SQLException e) {
-            System.err.println(" Error fetching endpoints: " + e.getMessage());
+            System.err.println("✗ Error fetching endpoints: " + e.getMessage());
         }
         return endpoints;
     }
 
+    /**
+     * Uses: get_endpoint_by_id function
+     */
     public Endpoint getEndpointById(int id) {
-        try (PreparedStatement stmt = connection.prepareStatement(
-                "SELECT endpointID, name FROM Endpoint WHERE endpointID = ?")) {
-            stmt.setInt(1, id);
-            ResultSet rs = stmt.executeQuery();
-            if (rs.next()) return new Endpoint(rs.getInt("endpointID"), rs.getString("name"));
+        try (CallableStatement stmt = connection.prepareCall("{? = call get_endpoint_by_id(?)}")) {
+            stmt.registerOutParameter(1, OracleTypes.CURSOR);
+            stmt.setInt(2, id);
+            stmt.execute();
+
+            try (ResultSet rs = (ResultSet) stmt.getObject(1)) {
+                if (rs.next()) {
+                    return new Endpoint(
+                            rs.getInt("endpointID"),
+                            rs.getString("name"));
+                }
+            }
         } catch (SQLException e) {
-            System.err.println(" Error fetching endpoint: " + e.getMessage());
+            System.err.println("✗ Error fetching endpoint: " + e.getMessage());
         }
         return null;
     }
 
+    /**
+     * Uses: get_connected_rail_lines function
+     */
     public List<RailLine> getConnectedRailLines(int endpointId) {
         List<RailLine> lines = new ArrayList<>();
-        String query = "SELECT id, name, startID, endID FROM Rail_Line WHERE startID = ? OR endID = ?";
-        try (PreparedStatement stmt = connection.prepareStatement(query)) {
-            stmt.setInt(1, endpointId);
+        try (CallableStatement stmt = connection.prepareCall("{? = call get_connected_rail_lines(?)}")) {
+            stmt.registerOutParameter(1, OracleTypes.CURSOR);
             stmt.setInt(2, endpointId);
-            ResultSet rs = stmt.executeQuery();
-            while (rs.next()) {
-                lines.add(new RailLine(
-                        rs.getInt("id"),
-                        rs.getString("name"),
-                        rs.getInt("startID"),
-                        rs.getInt("endID")
-                ));
+            stmt.execute();
+
+            try (ResultSet rs = (ResultSet) stmt.getObject(1)) {
+                while (rs.next()) {
+                    lines.add(new RailLine(
+                            rs.getInt("id"),
+                            rs.getString("name"),
+                            rs.getInt("startID"),
+                            rs.getInt("endID")
+                    ));
+                }
             }
         } catch (SQLException e) {
             System.err.println("✗ Error fetching rail lines: " + e.getMessage());
@@ -145,25 +192,24 @@ public class TrainScheduler {
         return lines;
     }
 
+    /**
+     * Uses: get_all_rail_lines function
+     */
     public List<RailLineInfo> getAllRailLines() {
         List<RailLineInfo> lines = new ArrayList<>();
-        String query = """
-            SELECT rl.id, rl.name, 
-                   e1.name as startName, e2.name as endName
-            FROM Rail_Line rl
-            JOIN Endpoint e1 ON rl.startID = e1.endpointID
-            JOIN Endpoint e2 ON rl.endID = e2.endpointID
-            ORDER BY rl.name
-        """;
-        try (Statement stmt = connection.createStatement();
-             ResultSet rs = stmt.executeQuery(query)) {
-            while (rs.next()) {
-                lines.add(new RailLineInfo(
-                        rs.getInt("id"),
-                        rs.getString("name"),
-                        rs.getString("startName"),
-                        rs.getString("endName")
-                ));
+        try (CallableStatement stmt = connection.prepareCall("{? = call get_all_rail_lines}")) {
+            stmt.registerOutParameter(1, OracleTypes.CURSOR);
+            stmt.execute();
+
+            try (ResultSet rs = (ResultSet) stmt.getObject(1)) {
+                while (rs.next()) {
+                    lines.add(new RailLineInfo(
+                            rs.getInt("id"),
+                            rs.getString("name"),
+                            rs.getString("startName"),
+                            rs.getString("endName")
+                    ));
+                }
             }
         } catch (SQLException e) {
             System.err.println("✗ Error fetching all rail lines: " + e.getMessage());
@@ -171,28 +217,26 @@ public class TrainScheduler {
         return lines;
     }
 
+    /**
+     * Uses: get_segments_for_rail_line function
+     */
     public List<RouteSegment> getSegmentsForRailLine(int railLineId) {
         List<RouteSegment> segments = new ArrayList<>();
-        String query = """
-            SELECT ls.id, ls.length, ls.max_weight, lt.numberTracks, 
-                   lt.isElectric
-            FROM Line_Segment ls
-            JOIN Line_Type lt ON ls.Line_TypeID = lt.id
-            WHERE ls.Rail_LineId = ?
-            ORDER BY ls.orderPosition
-        """;
+        try (CallableStatement stmt = connection.prepareCall("{? = call get_segments_for_rail_line(?)}")) {
+            stmt.registerOutParameter(1, OracleTypes.CURSOR);
+            stmt.setInt(2, railLineId);
+            stmt.execute();
 
-        try (PreparedStatement stmt = connection.prepareStatement(query)) {
-            stmt.setInt(1, railLineId);
-            ResultSet rs = stmt.executeQuery();
-            while (rs.next()) {
-                segments.add(new RouteSegment(
-                        rs.getInt("id"),
-                        rs.getDouble("length"),
-                        rs.getDouble("max_weight"),
-                        rs.getInt("numberTracks"),
-                        rs.getString("isElectric").equals("Yes")
-                ));
+            try (ResultSet rs = (ResultSet) stmt.getObject(1)) {
+                while (rs.next()) {
+                    segments.add(new RouteSegment(
+                            rs.getInt("id"),
+                            rs.getDouble("length"),
+                            rs.getDouble("max_weight"),
+                            rs.getInt("numberTracks"),
+                            rs.getString("isElectric").equals("Yes")
+                    ));
+                }
             }
         } catch (SQLException e) {
             System.err.println("✗ Error fetching segments: " + e.getMessage());
@@ -238,45 +282,41 @@ public class TrainScheduler {
         return new ArrayList<>(scheduledTrains);
     }
 
+    /**
+     * Uses: get_train_with_locomotives function
+     */
     private Train loadTrain(int trainId) throws SQLException {
-        String query = """
-            SELECT t.id, t.operator, t."date", t.pathID,
-                   l.id as locId, l.name as locName, lm.power, lm.weight as locWeight,
-                   lm.maxSpeed, lm.operationalSpeed
-            FROM Train t
-            LEFT JOIN Locomotive_Train lt ON t.id = lt.Trainid
-            LEFT JOIN Locomotive l ON lt.Locomotiveid = l.id
-            LEFT JOIN Locomotive_Model lm ON l.modelID = lm.id
-            WHERE t.id = ?
-        """;
-
-        PreparedStatement stmt = connection.prepareStatement(query);
-        stmt.setInt(1, trainId);
-        ResultSet rs = stmt.executeQuery();
-
         Train train = null;
         List<Locomotive> locomotives = new ArrayList<>();
 
-        while (rs.next()) {
-            if (train == null) {
-                train = new Train(
-                        rs.getInt("id"),
-                        rs.getString("operator"),
-                        rs.getDate("date").toLocalDate(),
-                        rs.getInt("pathID")
-                );
-            }
+        try (CallableStatement stmt = connection.prepareCall("{? = call get_train_with_locomotives(?)}")) {
+            stmt.registerOutParameter(1, OracleTypes.CURSOR);
+            stmt.setInt(2, trainId);
+            stmt.execute();
 
-            if (rs.getInt("locId") > 0) {
-                Locomotive loc = new Locomotive(
-                        rs.getInt("locId"),
-                        rs.getString("locName"),
-                        rs.getDouble("power"),
-                        rs.getDouble("locWeight"),
-                        rs.getDouble("maxSpeed"),
-                        rs.getDouble("operationalSpeed")
-                );
-                locomotives.add(loc);
+            try (ResultSet rs = (ResultSet) stmt.getObject(1)) {
+                while (rs.next()) {
+                    if (train == null) {
+                        train = new Train(
+                                rs.getInt("id"),
+                                rs.getString("operator"),
+                                rs.getDate("train_date").toLocalDate(),
+                                rs.getInt("pathID")
+                        );
+                    }
+
+                    if (rs.getInt("locId") > 0) {
+                        Locomotive loc = new Locomotive(
+                                rs.getInt("locId"),
+                                rs.getString("locName"),
+                                rs.getDouble("power"),
+                                rs.getDouble("locWeight"),
+                                rs.getDouble("maxSpeed"),
+                                rs.getDouble("operationalSpeed")
+                        );
+                        locomotives.add(loc);
+                    }
+                }
             }
         }
 
@@ -288,77 +328,56 @@ public class TrainScheduler {
         return train;
     }
 
+    /**
+     * Uses: get_wagons_for_train function
+     */
     private void loadWagons(Train train) throws SQLException {
-        String query = """
-            SELECT w.id, wm.weight, wm.payload, wm.maxSpeed,
-                   COALESCE(wb.storedGeneralGoods, 0) + 
-                   COALESCE(wh.storedCoal, 0) + COALESCE(wh.storedGrains, 0) +
-                   COALESCE(wt.storedLiquids, 0) + COALESCE(wt.storedChemicals, 0) +
-                   COALESCE(wf.storedContainers, 0) + COALESCE(wf.storedVehicles, 0) +
-                   COALESCE(wr.storedPerishableGoods, 0) as cargoLoad
-            FROM Freight f
-            LEFT JOIN Wagon_Freight wf2 ON f.id = wf2.Freightid
-            LEFT JOIN Wagon w ON wf2.Wagonid = w.id
-            LEFT JOIN Wagon_Model wm ON w.modelID = wm.id
-            LEFT JOIN Wagon_Boxcar wb ON w.id = wb.id
-            LEFT JOIN Wagon_Hopper_Car wh ON w.id = wh.id
-            LEFT JOIN Wagon_Tank_Car wt ON w.id = wt.id
-            LEFT JOIN Wagon_Flatcar wf ON w.id = wf.id
-            LEFT JOIN Wagon_Refrigerated_Car wr ON w.id = wr.id
-            WHERE f.trainID = ?
-        """;
-
-        PreparedStatement stmt = connection.prepareStatement(query);
-        stmt.setInt(1, train.getId());
-        ResultSet rs = stmt.executeQuery();
-
         List<Wagon> wagons = new ArrayList<>();
-        while (rs.next()) {
-            Wagon wagon = new Wagon(
-                    rs.getInt("id"),
-                    rs.getDouble("weight"),
-                    rs.getDouble("payload"),
-                    rs.getDouble("maxSpeed"),
-                    rs.getDouble("cargoLoad")
-            );
-            wagons.add(wagon);
+
+        try (CallableStatement stmt = connection.prepareCall("{? = call get_wagons_for_train(?)}")) {
+            stmt.registerOutParameter(1, OracleTypes.CURSOR);
+            stmt.setInt(2, train.getId());
+            stmt.execute();
+
+            try (ResultSet rs = (ResultSet) stmt.getObject(1)) {
+                while (rs.next()) {
+                    Wagon wagon = new Wagon(
+                            rs.getInt("id"),
+                            rs.getDouble("weight"),
+                            rs.getDouble("payload"),
+                            rs.getDouble("maxSpeed"),
+                            rs.getDouble("cargoLoad")
+                    );
+                    wagons.add(wagon);
+                }
+            }
         }
 
         train.setWagons(wagons);
     }
 
+    /**
+     * Uses: get_sidings_for_segment function
+     */
     private void loadSidingsForRoute(Route route) throws SQLException {
-        Set<Integer> segmentIds = new HashSet<>();
         for (RouteSegment seg : route.getSegments()) {
-            segmentIds.add(seg.getId());
-        }
+            try (CallableStatement stmt = connection.prepareCall("{? = call get_sidings_for_segment(?)}")) {
+                stmt.registerOutParameter(1, OracleTypes.CURSOR);
+                stmt.setInt(2, seg.getId());
+                stmt.execute();
 
-        if (segmentIds.isEmpty()) return;
-
-        StringBuilder inClause = new StringBuilder();
-        for (int i = 0; i < segmentIds.size(); i++) {
-            if (i > 0) inClause.append(",");
-            inClause.append("?");
-        }
-
-        String query = "SELECT s.id, s.position, s.length, s.segmentID " +
-                "FROM Siding s WHERE s.segmentID IN (" + inClause + ") ORDER BY s.position";
-
-        PreparedStatement stmt = connection.prepareStatement(query);
-        int paramIndex = 1;
-        for (Integer segId : segmentIds) {
-            stmt.setInt(paramIndex++, segId);
-        }
-
-        ResultSet rs = stmt.executeQuery();
-        while (rs.next()) {
-            Siding siding = new Siding(
-                    rs.getInt("id"),
-                    rs.getDouble("position"),
-                    rs.getDouble("length"),
-                    rs.getInt("segmentID")
-            );
-            route.addSiding(siding);
+                try (ResultSet rs = (ResultSet) stmt.getObject(1)) {
+                    while (rs.next()) {
+                        Siding siding = new Siding(
+                                rs.getInt("id"),
+                                rs.getDouble("position"),
+                                rs.getDouble("length"),
+                                rs.getInt("segmentID")
+                        );
+                        route.addSiding(siding);
+                    }
+                }
+            }
         }
     }
 
@@ -506,7 +525,6 @@ public class TrainScheduler {
     }
 
     private boolean timeWindowsOverlap(TimeWindow w1, TimeWindow w2) {
-        // w1 starts before w2 ends AND w2 starts before w1 ends
         return w1.start.isBefore(w2.end) && w2.start.isBefore(w1.end);
     }
 
@@ -565,7 +583,7 @@ public class TrainScheduler {
                 printCrossingOperation(crossing);
             }
         } else {
-            System.out.println("\n No crossing conflicts detected.\n");
+            System.out.println("\n✓ No crossing conflicts detected.\n");
         }
     }
 
@@ -610,7 +628,7 @@ public class TrainScheduler {
                 connection.close();
             }
         } catch (SQLException e) {
-            System.err.println(" Error closing connection: " + e.getMessage());
+            System.err.println("✗ Error closing connection: " + e.getMessage());
         }
     }
 
