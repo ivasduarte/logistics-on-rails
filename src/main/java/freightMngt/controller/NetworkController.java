@@ -180,7 +180,7 @@ public class NetworkController {
         Comparator<ConnectionData> distanceComparator =
                 Comparator.comparingDouble(ConnectionData::getDistance);
 
-        return Algorithms.minimumSpanningTree(this.graph, distanceComparator);
+        return Algorithms.kruskalMST(this.graph, distanceComparator);
     }
 
     /**
@@ -194,25 +194,24 @@ public class NetworkController {
 
         sb.append("graph MinimalBackboneNetwork {\n");
         sb.append("    layout=neato;\n");
-        sb.append("    overlap=false;\n"); // Remove sobreposições
-        sb.append("    sep=\"+25\";\n");   // Dá espaço extra para as etiquetas
-        sb.append("    splines=true;\n"); // Linhas curvas para evitar passar por cima de nós
+        sb.append("    overlap=false;\n");
+        sb.append("    sep=\"+25\";\n");
+        sb.append("    splines=true;\n");
 
-        // Updated node definition: fixedsize=true and empty label makes them uniform circles
-        sb.append("    node [shape=circle, style=filled, fillcolor=\"#66ccff\", fixedsize=true, width=0.2, label=\"\"];\n");
-        sb.append("    edge [color=\"#888888\", penwidth=1.0];\n\n");
+        sb.append("    node [shape=circle, style=filled, fillcolor=\"#66ccff\", fixedsize=false, fontsize=10];\n");
+        sb.append("    edge [color=\"#888888\", penwidth=1.0, fontsize=8];\n\n");
 
         double scaleFactor = 0.08;
 
-        // Add vertices: removing the label string entirely to keep nodes as clean circles
         for (Station s : mst.vertices()) {
             String safeName = s.getStationName().replaceAll("\"", "\\\"");
 
-            sb.append(String.format(Locale.US, "    \"%s\" [pos=\"%.2f,%.2f!\", tooltip=\"%s\"];\n",
+            sb.append(String.format(Locale.US, "    \"%s\" [pos=\"%.2f,%.2f!\", label=\"%s\", tooltip=\"%s\"];\n",
                     s.getNodeID(),
                     s.getX() * scaleFactor,
                     s.getY() * scaleFactor,
-                    safeName)); // tooltip allows you to still see the name when hovering in some viewers
+                    safeName,
+                    safeName));
         }
 
         sb.append("\n");
@@ -228,8 +227,9 @@ public class NetworkController {
             String edgeKey = (id1.compareTo(id2) < 0) ? id1 + "--" + id2 : id2 + "--" + id1;
 
             if (addedEdges.add(edgeKey)) {
-                // No labels or extra attributes here as requested
-                sb.append(String.format(Locale.US, "    \"%s\" -- \"%s\";\n", id1, id2));
+                double distance = e.getWeight().getDistance();
+                sb.append(String.format(Locale.US, "    \"%s\" -- \"%s\" [label=\"%.1f\"];\n",
+                        id1, id2, distance));
             }
         }
 

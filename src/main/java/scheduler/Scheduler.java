@@ -14,7 +14,7 @@ public class Scheduler {
         boolean running = true;
 
         System.out.println("\n╔════════════════════════════════════════════════════════════╗");
-        System.out.println("║        FREIGHT MANAGER SCHEDULER (MANUAL DISPATCH)        ║");
+        System.out.println("║        FREIGHT MANAGER SCHEDULER                           ║");
         System.out.println("╚════════════════════════════════════════════════════════════╝\n");
 
         while (running) {

@@ -1,8 +1,7 @@
 package freightMngt.domain;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Data Transfer Object for USEI11 - Directed Line Upgrade Plan results.
@@ -81,5 +80,38 @@ public class UpgradeOrderResult {
 
     public boolean hasCycles() {
         return cycles != null && !cycles.isEmpty();
+    }
+
+    /**
+     * Helper for tests: Returns a list of station IDs instead of objects.
+     */
+    public List<String> getUpgradeOrderIds() {
+        return upgradeOrder == null ? null :
+                upgradeOrder.stream().map(Station::getNodeID).toList();
+    }
+
+    /**
+     * Helper for tests: Returns a set of unique station IDs involved in cycles.
+     */
+    public Set<String> getStationsInCyclesIds() {
+        return stationsInCycles == null ? null :
+                stationsInCycles.stream().map(Station::getNodeID).collect(Collectors.toSet());
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        UpgradeOrderResult that = (UpgradeOrderResult) o;
+
+        return success == that.success &&
+                Objects.equals(getUpgradeOrderIds(), that.getUpgradeOrderIds()) &&
+                Objects.equals(getStationsInCyclesIds(), that.getStationsInCyclesIds()) &&
+                Objects.equals(errorMessage, that.errorMessage);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(success, getUpgradeOrderIds(), getStationsInCyclesIds(), errorMessage);
     }
 }
