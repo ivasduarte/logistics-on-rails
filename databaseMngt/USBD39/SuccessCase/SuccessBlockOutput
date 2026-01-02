@@ -1,0 +1,9 @@
+=========================================================
+USBD39: Associate a Locomotive to a Train Success Test
+=========================================================
+→ Calling association function...
+   [SUCCESS] Association created in database.
+   [CHECKING] Record found in database.
+→ Cleaning test data...
+   [CLEAN UP COMPLETE] Association removed successfully.
+=========================================================
