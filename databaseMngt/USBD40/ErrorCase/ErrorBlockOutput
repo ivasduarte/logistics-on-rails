@@ -1,0 +1,8 @@
+=========================================================
+USBD40: Register a Freight In The Database Error Test
+=========================================================
+Attempting to register cargo from a location WITHOUT railcars (Origin 1)...
+
+[TEST SUCCESSFUL] The system was blocked due to a lack of train cars.
+[Error Message] ORA-20032: Not enough wagons available at Origin. Requested: 1, Available: 0
+=========================================================
