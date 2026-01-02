@@ -8,7 +8,7 @@ BEGIN
     DBMS_OUTPUT.PUT_LINE('=========================================================');
     DBMS_OUTPUT.PUT_LINE('');
 
-    -- 1. Tentar Associar (Cria o registo)
+    -- 1. Tentar Associar
     DBMS_OUTPUT.PUT_LINE('→ Calling association function...');
     v_resultado := fncAssociateLocomotiveToTrain(v_loco_id, v_train_id);
 
@@ -20,7 +20,7 @@ BEGIN
                 DBMS_OUTPUT.PUT_LINE('   [CHECKING] Record found in database.');
             END LOOP;
 
-        -- 2. Limpar a sujidade (Apagar o registo criado)
+        -- 2. Apagar o registo criado
         DBMS_OUTPUT.PUT_LINE('→ Cleaning test data...');
         DELETE FROM Locomotive_Train
         WHERE Locomotiveid = v_loco_id AND Trainid = v_train_id;
