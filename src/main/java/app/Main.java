@@ -6,7 +6,6 @@ import scheduler.Scheduler;
 import ui.RoutePlannerUI;
 import ui.TrainAssemblyUI;
 import utils.LoadData;
-import freightMngt.domain.Station;
 
 import java.io.IOException;
 import java.util.Scanner;
@@ -28,7 +27,7 @@ public class Main {
         RoutePlannerUI routePlannerUI = new RoutePlannerUI();
 
         // 4. Initialization of USLP09
-        TrainAssemblyUI trainAssemblyUI = new TrainAssemblyUI(networkController);
+        TrainAssemblyUI trainAssemblyUI = new TrainAssemblyUI();
 
         while (true) {
             System.out.println("\n=== MAIN MENU ===");
