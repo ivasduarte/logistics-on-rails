@@ -5,6 +5,17 @@
     <file url="file://$PROJECT_DIR$/databaseMngt/ERD_LiveSQL Create.ddl" value="95acad1a-d3ea-466c-886e-3b307068baf5" />
     <file url="file://$PROJECT_DIR$/databaseMngt/ERD_LiveSQL Delete.ddl" value="95acad1a-d3ea-466c-886e-3b307068baf5" />
     <file url="file://$PROJECT_DIR$/databaseMngt/INSERTS/ERD_LiveSQL Inserts1.sql" value="95acad1a-d3ea-466c-886e-3b307068baf5" />
+    <file url="file://$PROJECT_DIR$/databaseMngt/INSERTS/ERD_LiveSQL Inserts2.sql" value="95acad1a-d3ea-466c-886e-3b307068baf5" />
+    <file url="file://$PROJECT_DIR$/databaseMngt/INSERTS/ERD_LiveSQL Inserts3.sql" value="95acad1a-d3ea-466c-886e-3b307068baf5" />
+    <file url="file://$PROJECT_DIR$/databaseMngt/USBD33/AnonymousBlock/ErrorCase/USBD33_ErrorCase.sql" value="95acad1a-d3ea-466c-886e-3b307068baf5" />
+    <file url="file://$PROJECT_DIR$/databaseMngt/USBD33/AnonymousBlock/SuccessCase/USBD33_SuccessCase.sql" value="95acad1a-d3ea-466c-886e-3b307068baf5" />
+    <file url="file://$PROJECT_DIR$/databaseMngt/USBD33/USBD33.sql" value="95acad1a-d3ea-466c-886e-3b307068baf5" />
+    <file url="file://$PROJECT_DIR$/databaseMngt/USBD39/ErrorCase/USBD39_ErrorCase.sql" value="95acad1a-d3ea-466c-886e-3b307068baf5" />
+    <file url="file://$PROJECT_DIR$/databaseMngt/USBD39/SuccessCase/USBD39_SuccessCase.sql" value="95acad1a-d3ea-466c-886e-3b307068baf5" />
+    <file url="file://$PROJECT_DIR$/databaseMngt/USBD39/USBD39.sql" value="95acad1a-d3ea-466c-886e-3b307068baf5" />
+    <file url="file://$PROJECT_DIR$/databaseMngt/USBD40/ErrorCase/USBD40_ErrorCase.sql" value="95acad1a-d3ea-466c-886e-3b307068baf5" />
+    <file url="file://$PROJECT_DIR$/databaseMngt/USBD40/SuccessCase/USBD40_SuccessCase.sql" value="95acad1a-d3ea-466c-886e-3b307068baf5" />
+    <file url="file://$PROJECT_DIR$/databaseMngt/USBD40/USBD40.sql" value="95acad1a-d3ea-466c-886e-3b307068baf5" />
     <file url="file://$PROJECT_DIR$/databaseMngt/USLP08/uslp08_functions.sql" value="95acad1a-d3ea-466c-886e-3b307068baf5" />
   </component>
 </project>

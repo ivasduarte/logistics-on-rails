@@ -1,4 +1,4 @@
-# USBD33 - Prevent Excessive Train Length
+# USBD39 - Connecting a Locomotive to a Train
 
 ### Index
 

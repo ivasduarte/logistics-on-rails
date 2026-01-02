@@ -6,6 +6,15 @@
     <file url="file://$PROJECT_DIR$/databaseMngt/INSERTS/ERD_LiveSQL Inserts1.sql" dialect="Oracle" />
     <file url="file://$PROJECT_DIR$/databaseMngt/INSERTS/ERD_LiveSQL Inserts2.sql" dialect="Oracle" />
     <file url="file://$PROJECT_DIR$/databaseMngt/INSERTS/ERD_LiveSQL Inserts3.sql" dialect="Oracle" />
+    <file url="file://$PROJECT_DIR$/databaseMngt/USBD33/AnonymousBlock/ErrorCase/USBD33_ErrorCase.sql" dialect="Oracle" />
+    <file url="file://$PROJECT_DIR$/databaseMngt/USBD33/AnonymousBlock/SuccessCase/USBD33_SuccessCase.sql" dialect="Oracle" />
+    <file url="file://$PROJECT_DIR$/databaseMngt/USBD33/USBD33.sql" dialect="Oracle" />
+    <file url="file://$PROJECT_DIR$/databaseMngt/USBD39/ErrorCase/USBD39_ErrorCase.sql" dialect="Oracle" />
+    <file url="file://$PROJECT_DIR$/databaseMngt/USBD39/SuccessCase/USBD39_SuccessCase.sql" dialect="Oracle" />
+    <file url="file://$PROJECT_DIR$/databaseMngt/USBD39/USBD39.sql" dialect="Oracle" />
+    <file url="file://$PROJECT_DIR$/databaseMngt/USBD40/ErrorCase/USBD40_ErrorCase.sql" dialect="Oracle" />
+    <file url="file://$PROJECT_DIR$/databaseMngt/USBD40/SuccessCase/USBD40_SuccessCase.sql" dialect="Oracle" />
+    <file url="file://$PROJECT_DIR$/databaseMngt/USBD40/USBD40.sql" dialect="Oracle" />
     <file url="file://$PROJECT_DIR$/databaseMngt/USLP08/uslp08_functions.sql" dialect="Oracle" />
     <file url="file://$PROJECT_DIR$/databaseMngt/USLP08/uslp08_test_inserts.sql" dialect="Oracle" />
   </component>
