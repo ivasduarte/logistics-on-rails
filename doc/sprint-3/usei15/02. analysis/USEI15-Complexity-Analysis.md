@@ -1,114 +1,114 @@
-# USEI15 - Risk-Aware Shortest Path
+# USEI15 - Complexity Analysis: Bellman-Ford
 
-### Objective
-
-Calculate the shortest path between two stations, using the Bellman-Ford.
-
-The Bellman-Ford algorithm is used for its robustness, but to guarantee a finite result and ignore negative cycles in
-the calculation phase, the Risk-Aware implementation uses the absolute value of the edge cost in the calculation graph.
+### Index
+- [Objective](#objective)
+- [Complexity Analysis](#complexity-analysis)
+- [Summary of Metrics](#summary-of-metrics)
+- [Conclusion](#conclusion)
 
 ---
 
-### Complexity Analysis
+## Objective
 
-The complexity is dominated by the Bellman-Ford Relaxation phase, which depends on the number of vertices ($V$) and
-the number of edges ($E$).
+The Bellman-Ford algorithm is used to find the shortest paths from a single source vertex to all other vertices in a 
+graph that may contain negative weights. Unlike Dijkstra's algorithm, Bellman-Ford is able to detect the presence of 
+negative weight cycles.
 
-Dominated by three-phases: pre-processing, relaxation and reconstruction.
+---
 
-**Phase 1: Pre-Processing**
+## Complexity Analysis
 
-This phase occurs in `NetworkController.shortestPathBellmanFord()` and aims to create an auxiliary graph with
-non-negative weights (Absolute Cost) for the execution of the Bellman-Ford scheme.
+The algorithm's execution is divided into four main phases: 
+1. [Initialization](#1-initialization)
+2. [Edge Relaxation](#2-edge-relaxation-relaxation)
+3. [Negative Cycle Detection]()
+4. [Path Reconstruction]()
+
+
+### 1. Initialization
+
+At this stage, the auxiliary data structures (`dist` and `predecessors`) are prepared.
 
 ```java
-public Double shortestPathBellmanFord(Station vOrig, Station vDest, ...) {
-    // Create a temporary graph with Double weights (ABSOLUTE VALUE of cost)
-    Graph<Station, Double> costGraph = new MapGraph<>(true);
-
-    // Copy all vertices
-    for (Station station : graph.vertices()) {
-        costGraph.addVertex(station);
-    }
-
-    // Copy all edges, using ABSOLUTE VALUE of cost to avoid negative cycles
-    for (Edge<Station, ConnectionData> edge : graph.edges()) {
-        // ...
-        Double cost = Math.abs(edge.getWeight().getCost());
-        costGraph.addEdge(origin, target, cost);
-    }
-    // ... call Algorithms.shortestPathBellmanFord
-}
+// Inicialização de estruturas de dados
+E[] dist = (E[]) new Object[numVerts];
+int[] predecessors = new int[numVerts];
+Arrays.fill(predecessors, -1);
+// ...
+dist[sourceKey] = zero;
 ```
 
-**Analysis:**
+- **Analysis:** The algorithm traverses the number of vertices.$|V|$to initialize the distance and predecessor arrays.
+- **Complexity of this phase:** $O(V)$
 
-- Iterate and copy all vertices ($In$): $\mathcal{O}(V)$
-- Iterating over all edges ( _AND_ Calculation of the absolute value (Abs), and addition to the new
-  graph: $\mathcal{O}(E)$
 
-**Analysis of this phase: $\mathcal{O}(V + E)$**
+### 2. Edge Relaxation (`relaxation`)
 
----
-
-**Phase 2: Bellman-Ford Execution Phase (Relaxation)**
-
-This phase is executed in `Algorithms.bellmanFord()`, which in turn calls `relaxation()`.
+This is the central phase of the algorithm, where distances are progressively optimized.
 
 ```java
-private static <V, E> void relaxation(Graph<V, E> g, E[] dist, ...) {
-    int numVerts = g.numVertices();
-
-    // relax all edges V-1 times
-    for (int i = 1; i < numVerts; i++) {
-        boolean changed = false;
-        // loop for all edges in graph
-        for (Edge<V, E> edge : g.edges()) {
-            // ... relax operation
+// Relaxar todas as arestas V-1 vezes
+for (int i = 1; i < numVerts; i++) {
+boolean changed = false;
+    for (Edge<V, E> edge : g.edges()) {
+        // ... lógica de relaxação ...
+        if (dist[v] == null || ce.compare(newDist, dist[v]) < 0) {
+dist[v] = newDist;
+predecessors[v] = u;
+changed = true;
         }
-        if (!changed) break;
+        }
+        if (!changed) break; // Otimização se não houver alterações
+}
+```
+
+- **Analysis:** The outer loop executes $|V| - 1$ times. Within each iteration, the algorithm traverses all edges. $|E|$of the graph. 
+- **Cost:** The total work is the product produced by the number of iterations and the number of edges.
+- **Complexity of this phase:** $O(V \times E)$
+
+
+### 3. Negative Cycle Detection (`checkNegativeCycles`)
+
+After the $|V| - 1$ in several iterations, the algorithm checks if it is still possible to reduce any distance.
+
+```java
+for (Edge<V, E> edge : g.edges()) {
+    // ... se pudermos melhorar a distância, existe um ciclo negativo ...
+    if (dist[v] == null || ce.compare(newDist, dist[v]) < 0) {
+        return buildCyclePath(g, v, predecessors);
     }
 }
 ```
 
-**Analysis:**
-
-- External Cycle: Repeats the relaxation. $V - 1$sometimes, where $V$. It is the number of stations.
-- Internal Loop: In each iteration, it iterates over all the... $E$ edges. The relaxation operation is $\mathcal{O}(1)$.
-
-$$\text{Relaxation} = \sum_{i=1}^{V-1} \mathcal{O}(E) = \mathcal{O}(V \cdot E)$$
-
-**Analysis of this phase: $\mathcal{O}(V \cdot E)$**
+- **Analysis:** Performs an additional pass through all edges. If a distance can be reduced, a negative cycle has been detected.
+- **Complexity of this phase:** $O(E)$
 
 
----
+### 4. Path Reconstruction (`reconstructPaths`)
 
-**Phase 3: Verification and Reconstruction**
+If no negative cycles are found, the algorithm reconstructs the final paths.
 
-These phases occur `Algorithms.bellmanFord()` after relaxation.
-
-
-| Operation                          | Code / Method                       | Complexity                                                                                                                                                           |  
-|:-----------------------------------|:------------------------------------|:---------------------------------------------------------------------------------------------------------------------------------------------------------------------|  
-| **Cycle Verification**             | `checkNegativeCycles(...)`          | $O(E)$                                                                                                                                                               |  
-| **Reconstruction Path**            | `reconstructPaths(...)`             | $About (V²)$                                                                                                                                                         |  
-| **Extraction of the final result** | `shortestPathBellmanFord(...)`      | $O(1)$                                                                                                                                                               |  
-
-
-**Combined complexity of these paths: $About (V²)$**
-
+- **Analysis:** For each of the $|V|$ vertices, the algorithm may have to backtrack in the array of predecessors to the 
+origin (in the worst case, traversing $|V|$).
+- **Complexity of this phase:** $O(V^2)$
 
 ---
 
-### Final Metrics
+## Summary of Metrics
 
 
-Global temporal complexity is determined by the dominant step:
+| Metric                  | Complexity      | Notes                                                                     |  
+|:------------------------|:----------------|:--------------------------------------------------------------------------|  
+| Total Time (Worst Case) | $O(V \times E)$ | Dominated by relaxation iterations on the edges.                          |  
+| Time (Dense Graph)      | $O(V^3)$        | In a dense graph,$E \approx V^2$ Therefore, the complexity becomes cubic. |  
+| Auxiliary Space         | $O(V)$          | Necessary for storing the distances and predecessors of each vertex.      |
+| Cycle Detection         | -               | It can identify and reconstruct negative weight cycles.                   |
 
-$$\mathcal{O}(\text{Pre-processing}) + \mathcal{O}(\text{Relaxation}) + \mathcal{O}(\text{Reconstruction})$$
+---
 
-$$\mathcal{O}(V + E) + \mathcal{O}(V \cdot E) + \mathcal{O}(V^2)$$
+## Conclusion
 
-Since $\mathcal{O}(V \cdot E)$, if the remaining terms dominate, the final complexity is:
-
-**Temporal Complexity: $\mathcal{O}(V \cdot E)$**
+The Bellman-Ford algorithm implemented in `Algorithms` guarantees the correct solution for shortest paths in graphs 
+with negative weights, with a time complexity of **$O(V \times E)$**. Although it is slower than Dijkstra ($O(E \log V)$,
+its robustness against negative weights and its ability to detect cycles make it essential for complex transport or 
+logistics networks.
