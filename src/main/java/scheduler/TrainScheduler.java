@@ -1,5 +1,6 @@
 package scheduler;
 
+import freightMngt.domain.PendingFreight;
 import utils.DatabaseConnection;
 import oracle.jdbc.OracleTypes;
 
@@ -19,6 +20,12 @@ public class TrainScheduler {
 
     private Connection connection;
     private List<ScheduledTrain> scheduledTrains;
+    private static final double GRAVITY = 9.81; // m/s²
+    private static final double ROLLING_RESISTANCE_COEFFICIENT = 0.001; // typical for steel on steel
+    private static final double AIR_RESISTANCE_COEFFICIENT = 0.6; // drag coefficient
+    private static final double AIR_DENSITY = 1.225; // kg/m³
+    private static final double TRAIN_FRONTAL_AREA = 10.0; // m² (approximate)
+    private static final double SAFETY_MARGIN = 1.15; // 15% safety margin for braking
 
     public TrainScheduler() {
         this.scheduledTrains = new ArrayList<>();
@@ -92,8 +99,9 @@ public class TrainScheduler {
                     if (!alreadyScheduledIds.contains(trainId)) {
                         list.add(String.format("[ID: %d] Operator: %s (Date: %s)",
                                 trainId,
-                                operator == null ? "Unknown" : operator
-                                ));
+                                operator == null ? "Unknown" : operator,
+                                rs.getDate("train_date")
+                        ));
                     }
                 }
             }
@@ -101,6 +109,34 @@ public class TrainScheduler {
             System.err.println("✗ Error fetching trains: " + e.getMessage());
         }
         return list;
+    }
+
+    /**
+     * Uses: get_pending_freights_by_line function
+     */
+    public List<freightMngt.domain.PendingFreight> getPendingFreightsByLine(int railLineId) {
+        List<freightMngt.domain.PendingFreight> freights = new ArrayList<>();
+        try (CallableStatement stmt = connection.prepareCall("{? = call get_pending_freights_by_line(?)}")) {
+            stmt.registerOutParameter(1, OracleTypes.CURSOR);
+            stmt.setInt(2, railLineId);
+            stmt.execute();
+
+            try (ResultSet rs = (ResultSet) stmt.getObject(1)) {
+                while (rs.next()) {
+                    freights.add(new freightMngt.domain.PendingFreight(
+                            rs.getInt("id"),
+                            rs.getInt("origin"),
+                            rs.getInt("destination"),
+                            rs.getInt("trainID"),
+                            rs.getString("origin_name"),
+                            rs.getString("dest_name")
+                    ));
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("✗ Error fetching pending freights: " + e.getMessage());
+        }
+        return freights;
     }
 
     /**
@@ -268,7 +304,7 @@ public class TrainScheduler {
 
             scheduledTrains.add(scheduledTrain);
 
-            System.out.println("✓ Train " + trainId + " scheduled with manual route.");
+            System.out.println("│   ✓ Train " + trainId + " scheduled with success.");
             return scheduledTrain;
 
         } catch (Exception e) {
@@ -414,12 +450,24 @@ public class TrainScheduler {
         }
     }
 
+    /**
+     * Enhanced passage time calculation with realistic physics:
+     * - Acceleration phase
+     * - Constant speed phase
+     * - Deceleration/braking phase
+     * - Friction forces (rolling resistance + air resistance)
+     */
     void calculatePassageTimes(ScheduledTrain scheduledTrain) {
         Route route = scheduledTrain.getRoute();
+        Train train = scheduledTrain.getTrain();
         LocalDateTime currentTime = scheduledTrain.getDepartureTime();
         double cumulativeDistance = 0;
         List<PassageTime> passageTimes = new ArrayList<>();
 
+        double totalMass = train.getTotalWeight(); // kg
+        double totalPower = train.getTotalPower() * 1000; // Convert kW to W
+
+        // Add departure time
         passageTimes.add(new PassageTime(
                 route.getStartName(),
                 currentTime,
@@ -427,14 +475,30 @@ public class TrainScheduler {
                 "DEPARTURE"
         ));
 
+        double currentSpeed = 0; // m/s - train starts from rest
+
         for (int i = 0; i < route.getSegments().size(); i++) {
             RouteSegment segment = route.getSegments().get(i);
-            double segmentLength = segment.getLength();
-            double speed = segment.getPermittedSpeed();
+            double segmentLength = segment.getLength(); // meters
+            double maxSpeed = segment.getPermittedSpeed() / 3.6; // Convert km/h to m/s
 
-            double timeHours = (segmentLength / 1000.0) / speed;
+            // Determine if this is the last segment (need to brake)
+            boolean isLastSegment = (i == route.getSegments().size() - 1);
 
-            currentTime = currentTime.plusMinutes((long) (timeHours * 60));
+            // Calculate time to traverse this segment with realistic physics
+            double segmentTime = calculateSegmentTime(
+                    totalMass,
+                    totalPower,
+                    currentSpeed,
+                    maxSpeed,
+                    segmentLength,
+                    isLastSegment
+            );
+
+            // Update current speed for next segment
+            currentSpeed = isLastSegment ? 0 : maxSpeed;
+
+            currentTime = currentTime.plusSeconds((long) segmentTime);
             cumulativeDistance += segmentLength;
 
             passageTimes.add(new PassageTime(
@@ -445,6 +509,7 @@ public class TrainScheduler {
             ));
         }
 
+        // Add arrival time
         passageTimes.add(new PassageTime(
                 route.getEndName(),
                 currentTime,
@@ -453,6 +518,133 @@ public class TrainScheduler {
         ));
 
         scheduledTrain.setPassageTimes(passageTimes);
+    }
+
+    /**
+     * Calculate time to traverse a segment considering:
+     * 1. Acceleration from initial speed to max speed
+     * 2. Constant speed cruise
+     * 3. Deceleration to final speed (if last segment)
+     * 4. Friction forces throughout
+     */
+    private double calculateSegmentTime(double mass, double power, double initialSpeed,
+                                        double maxSpeed, double segmentLength, boolean needsBraking) {
+        double totalTime = 0;
+        double distanceCovered = 0;
+        double currentSpeed = initialSpeed;
+
+        // Phase 1: Acceleration
+        if (currentSpeed < maxSpeed) {
+            AccelerationResult accelResult = calculateAccelerationPhase(
+                    mass, power, currentSpeed, maxSpeed, segmentLength
+            );
+            totalTime += accelResult.time;
+            distanceCovered += accelResult.distance;
+            currentSpeed = accelResult.finalSpeed;
+        }
+
+        // Calculate braking distance if needed
+        double brakingDistance = 0;
+        double brakingTime = 0;
+        if (needsBraking && currentSpeed > 0) {
+            BrakingResult braking = calculateBrakingPhase(mass, currentSpeed);
+            brakingDistance = braking.distance * SAFETY_MARGIN;
+            brakingTime = braking.time * SAFETY_MARGIN;
+        }
+
+        // Phase 2: Constant speed cruise
+        double remainingDistance = segmentLength - distanceCovered - brakingDistance;
+        if (remainingDistance > 0 && currentSpeed > 0) {
+            double cruiseTime = remainingDistance / currentSpeed;
+            totalTime += cruiseTime;
+            distanceCovered += remainingDistance;
+        }
+
+        // Phase 3: Braking
+        if (needsBraking) {
+            totalTime += brakingTime;
+        }
+
+        return totalTime;
+    }
+
+    /**
+     * Calculate acceleration phase considering:
+     * - Tractive force from locomotives
+     * - Rolling resistance
+     * - Air resistance
+     */
+    private AccelerationResult calculateAccelerationPhase(double mass, double power,
+                                                          double v0, double vMax, double maxDistance) {
+        double time = 0;
+        double distance = 0;
+        double velocity = v0;
+        double dt = 0.1; // Time step in seconds
+
+        while (velocity < vMax && distance < maxDistance) {
+            // Calculate forces
+            double tractiveForce = (velocity > 0.1) ? power / velocity : power / 0.1;
+            double rollingResistance = ROLLING_RESISTANCE_COEFFICIENT * mass * GRAVITY;
+            double airResistance = 0.5 * AIR_RESISTANCE_COEFFICIENT * AIR_DENSITY *
+                    TRAIN_FRONTAL_AREA * velocity * velocity;
+
+            // Net force and acceleration
+            double netForce = tractiveForce - rollingResistance - airResistance;
+            double acceleration = netForce / mass;
+
+            // Limit acceleration to realistic values (max ~0.5 m/s² for trains)
+            acceleration = Math.min(acceleration, 0.5);
+
+            if (acceleration <= 0) break;
+
+            // Update velocity and position
+            double newVelocity = velocity + acceleration * dt;
+            if (newVelocity > vMax) newVelocity = vMax;
+
+            distance += (velocity + newVelocity) / 2 * dt; // Average velocity * time
+            velocity = newVelocity;
+            time += dt;
+
+            if (distance >= maxDistance) break;
+        }
+
+        return new AccelerationResult(time, distance, velocity);
+    }
+    /**
+     * Calculate braking phase considering:
+     * - Maximum braking force (typically 20% of weight for trains)
+     * - Rolling resistance (helps braking)
+     * - Air resistance (helps braking)
+     */
+    private BrakingResult calculateBrakingPhase(double mass, double initialSpeed) {
+        double time = 0;
+        double distance = 0;
+        double velocity = initialSpeed;
+        double dt = 0.1; // Time step in seconds
+
+        // Maximum braking deceleration for trains: ~0.5 to 0.8 m/s²
+        double maxBrakingForce = 0.2 * mass * GRAVITY;
+
+        while (velocity > 0.1) {
+            // Calculate resistance forces (they help with braking)
+            double rollingResistance = ROLLING_RESISTANCE_COEFFICIENT * mass * GRAVITY;
+            double airResistance = 0.5 * AIR_RESISTANCE_COEFFICIENT * AIR_DENSITY *
+                    TRAIN_FRONTAL_AREA * velocity * velocity;
+
+            // Total braking force
+            double totalBrakingForce = maxBrakingForce + rollingResistance + airResistance;
+            double deceleration = totalBrakingForce / mass;
+
+            // Update velocity and position
+            double newVelocity = velocity - deceleration * dt;
+            if (newVelocity < 0) newVelocity = 0;
+
+            distance += (velocity + newVelocity) / 2 * dt;
+            velocity = newVelocity;
+            time += dt;
+        }
+
+        return new BrakingResult(time, distance);
     }
 
 
@@ -903,6 +1095,34 @@ public class TrainScheduler {
         TimeWindow(LocalDateTime start, LocalDateTime end) {
             this.start = start;
             this.end = end;
+        }
+    }
+
+    /**
+     * Helper class for acceleration phase results
+     */
+    private static class AccelerationResult {
+        double time;
+        double distance;
+        double finalSpeed;
+
+        AccelerationResult(double time, double distance, double finalSpeed) {
+            this.time = time;
+            this.distance = distance;
+            this.finalSpeed = finalSpeed;
+        }
+    }
+
+    /**
+     * Helper class for braking phase results
+     */
+    private static class BrakingResult {
+        double time;
+        double distance;
+
+        BrakingResult(double time, double distance) {
+            this.time = time;
+            this.distance = distance;
         }
     }
 }

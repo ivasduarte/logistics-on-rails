@@ -176,3 +176,29 @@ ORDER BY s.position;
 RETURN v_cursor;
 END get_sidings_for_segment;
 /
+
+-- Function 11: Get pending freights for a rail line
+CREATE OR REPLACE FUNCTION get_pending_freights_by_line(p_rail_line_id IN NUMBER)
+    RETURN SYS_REFCURSOR
+    IS
+    v_cursor SYS_REFCURSOR;
+BEGIN
+    OPEN v_cursor FOR
+        SELECT f.id, f.origin, f.destination, f.trainID,
+               e1.name as origin_name,
+               e2.name as dest_name
+        FROM Freight f
+                 JOIN Endpoint e1 ON f.origin = e1.endpointID
+                 JOIN Endpoint e2 ON f.destination = e2.endpointID
+        WHERE f.trainID IS NOT NULL
+          AND EXISTS (
+            SELECT 1
+            FROM Rail_Line rl
+            WHERE rl.id = p_rail_line_id
+              AND (rl.startID = f.origin OR rl.endID = f.destination
+                OR rl.startID = f.destination OR rl.endID = f.origin)
+        )
+        ORDER BY f.id;
+    RETURN v_cursor;
+END get_pending_freights_by_line;
+/
