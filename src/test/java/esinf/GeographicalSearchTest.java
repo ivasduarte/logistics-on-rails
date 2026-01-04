@@ -4,11 +4,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import spatialQuerying.controller.GeographicalSearch;
 import freightMngt.domain.Station;
-import spatialQuerying.structures.kd.KDTree2D;
-import spatialQuerying.structures.kd.Point2D;
-import spatialQuerying.structures.nodes.KDNode;
+import spatialQuerying.structures.kd.Tree2D;
 
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,7 +14,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class GeographicalSearchTest {
 
     private GeographicalSearch geoSearch;
-    private KDTree2D kdTree;
+    private Tree2D kdTree;
     private List<Station> testStations;
 
     @BeforeEach
@@ -56,7 +53,7 @@ public class GeographicalSearchTest {
         testStations.add(smallES);
 
         // Build KD-Tree manually for testing
-        kdTree = new KDTree2D();
+        kdTree = new Tree2D();
         buildTestTree();
 
         geoSearch = new GeographicalSearch(kdTree);
@@ -262,7 +259,7 @@ public class GeographicalSearchTest {
     @Test
     void testSearchByArea_EmptyTree() {
         // Test with an empty KD-tree
-        KDTree2D emptyTree = new KDTree2D();
+        Tree2D emptyTree = new Tree2D();
         GeographicalSearch emptySearch = new GeographicalSearch(emptyTree);
 
         List<Station> results = emptySearch.searchByArea(40.0, 40.0, -8.0, -8.0, null, null, null);

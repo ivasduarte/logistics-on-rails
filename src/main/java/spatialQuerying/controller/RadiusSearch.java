@@ -1,7 +1,7 @@
 package spatialQuerying.controller;
 
 import freightMngt.domain.Station;
-import spatialQuerying.structures.kd.KDTree2D;
+import spatialQuerying.structures.kd.Tree2D;
 import spatialQuerying.structures.kd.Point2D;
 import spatialQuerying.structures.nodes.KDNode;
 
@@ -10,9 +10,9 @@ import java.util.*;
 public class RadiusSearch {
     private static final double EARTH_RADIUS_KM = 6371.0;
 
-    private final KDTree2D kdTree;
+    private final Tree2D kdTree;
 
-    public RadiusSearch(KDTree2D kdTree) {
+    public RadiusSearch(Tree2D kdTree) {
         this.kdTree = kdTree;
     }
 

@@ -3,7 +3,7 @@ package esinf;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import freightMngt.domain.Station;
-import spatialQuerying.structures.kd.KDTree2D;
+import spatialQuerying.structures.kd.Tree2D;
 import spatialQuerying.structures.kd.Point2D;
 import spatialQuerying.structures.nodes.KDNode;
 
@@ -13,13 +13,13 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class KDTree2DTest {
+class Tree2DTest {
 
-    private KDTree2D tree;
+    private Tree2D tree;
 
     @BeforeEach
     void setUp() {
-        tree = new KDTree2D();
+        tree = new Tree2D();
     }
 
     private Station createStation(String name, double lat, double lon) {

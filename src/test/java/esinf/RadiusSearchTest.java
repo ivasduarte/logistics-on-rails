@@ -4,7 +4,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import spatialQuerying.controller.RadiusSearch;
 import freightMngt.domain.Station;
-import spatialQuerying.structures.kd.KDTree2D;
+import spatialQuerying.structures.kd.Tree2D;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,7 +14,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class RadiusSearchTest {
 
-    private KDTree2D kdTree;
+    private Tree2D kdTree;
     private RadiusSearch radiusSearch;
     private List<Station> testStations;
 
@@ -40,7 +40,7 @@ public class RadiusSearchTest {
         testStations.add(createStation("Espinho", 41.0078, -8.6410, "PT", false));
 
         // Build KD-Tree using buildBalancedTree
-        kdTree = new KDTree2D();
+        kdTree = new Tree2D();
         kdTree.buildBalancedTree(testStations, null, null);
 
         radiusSearch = new RadiusSearch(kdTree);
@@ -135,7 +135,7 @@ public class RadiusSearchTest {
         sameLocationStations.add(createStation("Zebra-Station", 41.1495, -8.5849, "PT", false));
         sameLocationStations.add(createStation("Alpha-Station", 41.1495, -8.5849, "PT", false));
 
-        KDTree2D newTree = new KDTree2D();
+        Tree2D newTree = new Tree2D();
         newTree.buildBalancedTree(sameLocationStations, null, null);
 
         RadiusSearch newSearch = new RadiusSearch(newTree);
@@ -309,7 +309,7 @@ public class RadiusSearchTest {
         scenarioStations.add(new Station("Vigo-Guixar", "ES", "Europe/Madrid", "Europe", 42.2396, -8.7247, true, true, false));
         scenarioStations.add(new Station("Lisboa-Oriente", "PT", "Europe/Lisbon", "Europe", 38.7678, -9.0990, true, true, false));
 
-        KDTree2D scenarioTree = new KDTree2D();
+        Tree2D scenarioTree = new Tree2D();
         scenarioTree.buildBalancedTree(scenarioStations, null, null);
         RadiusSearch scenarioSearch = new RadiusSearch(scenarioTree);
 

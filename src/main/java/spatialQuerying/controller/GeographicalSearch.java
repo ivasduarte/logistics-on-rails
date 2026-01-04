@@ -1,7 +1,7 @@
 package spatialQuerying.controller;
 
 import freightMngt.domain.Station;
-import spatialQuerying.structures.kd.KDTree2D;
+import spatialQuerying.structures.kd.Tree2D;
 import spatialQuerying.structures.nodes.KDNode;
 
 import java.util.ArrayList;
@@ -14,14 +14,14 @@ public class GeographicalSearch {
     private static final int LON_MIN = -180;
     private static final int LON_MAX = 180;
 
-    private final KDTree2D kdTree;
+    private final Tree2D kdTree;
 
     /**
      * Constructs a new instance of GeographicalSearch using the specified KD-Tree.
      *
      * @param kdTree the KD-Tree data structure. Must not be null.
      */
-    public GeographicalSearch(KDTree2D kdTree) {
+    public GeographicalSearch(Tree2D kdTree) {
         this.kdTree = kdTree;
     }
 

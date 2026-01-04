@@ -6,7 +6,7 @@
 package spatialQuerying.controller;
 
 import freightMngt.domain.Station;
-import spatialQuerying.structures.kd.KDTree2D;
+import spatialQuerying.structures.kd.Tree2D;
 import spatialQuerying.structures.kd.Point2D;
 import spatialQuerying.structures.nodes.KDNode;
 
@@ -14,15 +14,15 @@ import java.util.*;
 import java.util.function.Predicate;
 
 public class ProximitySearchController {
-    private KDTree2D kdTree;
+    private Tree2D kdTree;
     private static final double EARTH_RADIUS_KM = 6371.0;
 
     /**
      * Constructs a ProximitySearchController associated with a specific KD-Tree.
      *
-     * @param kdTree The KDTree2D instance containing the station data.
+     * @param kdTree The Tree2D instance containing the station data.
      */
-    public ProximitySearchController(KDTree2D kdTree) {
+    public ProximitySearchController(Tree2D kdTree) {
         this.kdTree = kdTree;
     }
 

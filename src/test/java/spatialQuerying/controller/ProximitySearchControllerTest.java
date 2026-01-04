@@ -3,7 +3,7 @@ package spatialQuerying.controller;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import freightMngt.domain.Station;
-import spatialQuerying.structures.kd.KDTree2D;
+import spatialQuerying.structures.kd.Tree2D;
 import spatialQuerying.structures.kd.Point2D;
 import spatialQuerying.structures.nodes.KDNode;
 
@@ -14,11 +14,11 @@ import static org.junit.jupiter.api.Assertions.*;
 class ProximitySearchControllerTest {
 
     private ProximitySearchController controller;
-    private KDTree2D kdTree;
+    private Tree2D kdTree;
 
     @BeforeEach
     void setUp() {
-        kdTree = new KDTree2D();
+        kdTree = new Tree2D();
         controller = new ProximitySearchController(kdTree);
     }
 
@@ -56,13 +56,13 @@ class ProximitySearchControllerTest {
         setKDTreeRoot(kdTree, root);
     }
 
-    private void setKDTreeRoot(KDTree2D tree, KDNode root) {
+    private void setKDTreeRoot(Tree2D tree, KDNode root) {
         try {
-            java.lang.reflect.Field rootField = KDTree2D.class.getDeclaredField("root");
+            java.lang.reflect.Field rootField = Tree2D.class.getDeclaredField("root");
             rootField.setAccessible(true);
             rootField.set(tree, root);
 
-            java.lang.reflect.Field heightField = KDTree2D.class.getDeclaredField("height");
+            java.lang.reflect.Field heightField = Tree2D.class.getDeclaredField("height");
             heightField.setAccessible(true);
             heightField.set(tree, calculateHeight(root));
         } catch (Exception e) {

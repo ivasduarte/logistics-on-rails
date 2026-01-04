@@ -7,7 +7,7 @@ import freightMngt.domain.Station;
 import spatialQuerying.structures.bst.LatitudeTree;
 import spatialQuerying.structures.bst.LongitudeTree;
 import spatialQuerying.structures.bst.TimeZoneTree;
-import spatialQuerying.structures.kd.KDTree2D;
+import spatialQuerying.structures.kd.Tree2D;
 import spatialQuerying.structures.kd.Point2D;
 import spatialQuerying.structures.nodes.KDNode;
 
@@ -51,7 +51,7 @@ public class USEI07_CompleteTest {
             tzTree.insert(s);
         }
 
-        KDTree2D kdTree = new KDTree2D();
+        Tree2D kdTree = new Tree2D();
         kdTree.buildBalancedTree(stations, latTree, lonTree);
 
         Assertions.assertEquals(5, kdTree.getSize(), "AC: Tree size should be equal to the number of unique points (5).");

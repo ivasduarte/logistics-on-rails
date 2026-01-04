@@ -8,7 +8,7 @@ import spatialQuerying.controller.StationController;
 import spatialQuerying.structures.bst.LatitudeTree;
 import spatialQuerying.structures.bst.LongitudeTree;
 import spatialQuerying.structures.bst.TimeZoneTree;
-import spatialQuerying.structures.kd.KDTree2D;
+import spatialQuerying.structures.kd.Tree2D;
 
 import java.io.IOException;
 import java.util.*;
@@ -19,7 +19,7 @@ public class SpatialQueryingUI implements Runnable {
     private static LatitudeTree latTree = null;
     private static LongitudeTree lonTree = null;
     private static TimeZoneTree timeZoneTree = null;
-    private static KDTree2D kdTree = null;
+    private static Tree2D kdTree = null;
     private static GeographicalSearch geographicalSearch = null;
 
     @Override
@@ -200,7 +200,7 @@ public class SpatialQueryingUI implements Runnable {
 
             System.out.println("Building 2D-Tree from " + stationList.size() + " stations...");
 
-            kdTree = new KDTree2D();
+            kdTree = new Tree2D();
             kdTree.buildBalancedTree(stationList, latTree, lonTree);
 
             System.out.println("\n=== 2D-TREE SUCCESSFULLY BUILT ===");

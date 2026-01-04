@@ -25,14 +25,10 @@ public class KDNode {
     public KDNode(Point2D coordinates, List<Station> stationList) {
         this.coordinates = coordinates;
         this.stationList = new ArrayList<>(stationList);
-
-        // Guarantee alphabetical order
-        this.stationList.sort(Comparator.comparing(Station::getStationName));
     }
 
     public void addStation(Station station) {
         stationList.add(station);
-        stationList.sort(Comparator.comparing(Station::getStationName));
     }
 
     public Point2D getCoordinates() {
