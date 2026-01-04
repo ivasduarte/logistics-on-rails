@@ -114,13 +114,12 @@ for (V v : g.vertices()) {                     // O(V) iterations
 ```java
 allEdges.sort((e1, e2) -> ce.compare(e1.getWeight(), e2.getWeight()));
 ```
-- Sort all edges by weight using comparison-based sorting
-- Sorting E edges: $\mathcal{O}(E \log E)$
+- Sort all edges by weight using comparison-based sorting (Timsort in the case of Java)
+- The sorting algorithm divides the problem recursively: $\log_2 E$ levels of recursion
+- At each level, all $E$ elements are processed for merging
+- Sorting E edges: $E \times \log E = \mathcal{O}(E \log E)$
 
 **Complexity:** $\mathcal{O}(E \log E)$
-
-Since $E = \mathcal{O}(V^2)$ at most, we have $\log E = \mathcal{O}(\log V)$:
-$$\mathcal{O}(E \log E) = \mathcal{O}(E \log V)$$
 
 ---
 
@@ -142,37 +141,37 @@ for (V v : g.vertices()) {                     // O(V)
 ```java
 int edgesInMst = 0;
 for (Edge<V, E> edge : allEdges) {             // O(E) iterations
-    if (edgesInMst == g.numVertices() - 1) break;  // O(1)
+        if (edgesInMst == g.numVertices() - 1) break;  // O(1)
 
-    V root1 = find(parent, edge.getVOrigin());     // O(log V) worst case
-    V root2 = find(parent, edge.getVTarget());     // O(log V) worst case
+V root1 = find(parent, edge.getVOrigin());     // O(log V) worst case
+V root2 = find(parent, edge.getVTarget());     // O(log V) worst case
 
     if (!root1.equals(root2)) {                    // O(1)
         mst.addEdge(edge.getVOrigin(), edge.getVTarget(), 
                     edge.getWeight());             // O(1)
-        union(parent, root1, root2);               // O(1)
-        edgesInMst++;                              // O(1)
-    }
-}
+union(parent, root1, root2);               // O(1)
+edgesInMst++;                              // O(1)
+        }
+        }
 ```
 
 **Analysis:**
 
 1. **Loop Iterations:**
-   - Iterates through all sorted edges
-   - Early termination after V-1 edges are added to MST
-   - **Worst case iterations:** $\mathcal{O}(E)$
+    - Iterates through all sorted edges
+    - Early termination after V-1 edges are added to MST
+    - **Worst case iterations:** $\mathcal{O}(E)$
 
 2. **Find Operations:**
-   - `find()` with path compression
-   - **Per operation:** $\mathcal{O}(\log V)$ worst case
+    - `find()` with path compression
+    - **Per operation:** $\mathcal{O}(\log V)$ worst case
 
 3. **Union Operations:**
-   - Simple parent reassignment
-   - **Per operation:** $\mathcal{O}(1)$
+    - Simple parent reassignment
+    - **Per operation:** $\mathcal{O}(1)$
 
 4. **Edge Addition to MST:**
-   - `mst.addEdge()`: $\mathcal{O}(1)$
+    - `mst.addEdge()`: $\mathcal{O}(1)$
 
 **Per Iteration Complexity:** $\mathcal{O}(\log V)$
 
@@ -180,7 +179,7 @@ for (Edge<V, E> edge : allEdges) {             // O(E) iterations
 
 ---
 
-**Total Complexity:** $\mathcal{O}(E \log V)$
+**Total Complexity:** $\mathcal{O}(E \log E)$
 
 ---
 
@@ -271,35 +270,58 @@ public Map<String, Double> calculateMSTStatistics(Graph<Station, ConnectionData>
 
 **Implementation:** `NetworkController.exportMinimalBackboneToGraphviz()`
 ```java
-public void exportMinimalBackboneToGraphviz(Graph<Station, ConnectionData> mst, 
-                                            String filename) {
+    public void exportMinimalBackboneToGraphviz(Graph<Station, ConnectionData> mst, String filename) {
     StringBuilder sb = new StringBuilder();
 
-    // Add header
-    sb.append("graph MinimalBackboneNetwork {\n");     // O(1)
-    sb.append("    layout=neato;\n");                  // O(1)
-    // ... other header lines
+    sb.append("graph MinimalBackboneNetwork {\n");
+    sb.append("    layout=neato;\n");
+    sb.append("    overlap=false;\n");
+    sb.append("    sep=\"+25\";\n");
+    sb.append("    splines=true;\n");
 
-    // Add all vertices with XY coordinates
-    for (Station station : mst.vertices()) {           // O(V)
-        String safeName = station.getStationName()
-                         .replaceAll("\"", "\\\"");     // O(name length)
-        sb.append(String.format(...));                 // O(1)
+    sb.append("    node [shape=circle, style=filled, fillcolor=\"#66ccff\", fixedsize=false, fontsize=10];\n");
+    sb.append("    edge [color=\"#888888\", penwidth=1.0, fontsize=8];\n\n");
+
+    double scaleFactor = 0.08;
+
+    for (Station s : mst.vertices()) {
+        String safeName = s.getStationName().replaceAll("\"", "\\\"");
+
+        sb.append(String.format(Locale.US, "    \"%s\" [pos=\"%.2f,%.2f!\", label=\"%s\", tooltip=\"%s\"];\n",
+                s.getNodeID(),
+                s.getX() * scaleFactor,
+                s.getY() * scaleFactor,
+                safeName,
+                safeName));
     }
 
-    // Add all edges
-    Set<String> addedEdges = new HashSet<>();          // O(1)
-    for (Edge<Station, ConnectionData> edge : mst.edges()) {  // O(V-1)
-        // Create canonical edge key                   // O(1)
-        // Check if already added                      // O(1)
-        // Append edge to StringBuilder                // O(1)
+    sb.append("\n");
+
+    // Add MST edges: removing labels and length hints for a minimal look
+    Set<String> addedEdges = new HashSet<>();
+    for (Edge<Station, ConnectionData> e : mst.edges()) {
+        Station vOrig = e.getVOrigin();
+        Station vDest = e.getVTarget();
+
+        String id1 = vOrig.getNodeID();
+        String id2 = vDest.getNodeID();
+        String edgeKey = (id1.compareTo(id2) < 0) ? id1 + "--" + id2 : id2 + "--" + id1;
+
+        if (addedEdges.add(edgeKey)) {
+            double distance = e.getWeight().getDistance();
+            sb.append(String.format(Locale.US, "    \"%s\" -- \"%s\" [label=\"%.1f\"];\n",
+                    id1, id2, distance));
+        }
     }
 
     sb.append("}\n");
 
-    // Write to file
-    try (FileWriter fw = new FileWriter(filename)) {   // O(output size)
-        fw.write(sb.toString());                       // O(V + E) = O(V)
+    try (FileWriter fw = new FileWriter(filename)) {
+        fw.write(sb.toString());
+        System.out.println("Minimal Backbone Network (Clean Version) exported to " + filename);
+    } catch (IOException e) {
+        System.err.println("Error exporting MST: " + e.getMessage());
+        e.printStackTrace();
     }
 }
 ```
@@ -308,7 +330,7 @@ public void exportMinimalBackboneToGraphviz(Graph<Station, ConnectionData> mst,
 - Iterate through all vertices: $\mathcal{O}(V)$
 - Iterate through all edges: $\mathcal{O}(V - 1) = \mathcal{O}(V)$
 - String operations: $\mathcal{O}(1)$ per operation
-- File write: $\mathcal{O}(\text{output size}) = \mathcal{O}(V + E) = \mathcal{O}(V)$ for MST
+- File write: $\mathcal{O}(V + (V + 1)) = \mathcal{O}(V)$ 
 
 **Complexity:** $\mathcal{O}(V)$
 
@@ -325,4 +347,4 @@ public void exportMinimalBackboneToGraphviz(Graph<Station, ConnectionData> mst,
 ### Overall USEI12 Complexity
 
 **Time Complexity:**
-$$\mathcal{O}(E \log V) + \mathcal{O}(V) + \mathcal{O}(V) = \mathcal{O}(E \log V)$$
+$$\mathcal{O}(E \log E) + \mathcal{O}(V) + \mathcal{O}(V) = \mathcal{O}(E \log V)$$

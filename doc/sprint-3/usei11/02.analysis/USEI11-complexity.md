@@ -44,6 +44,8 @@ private static  void DepthFirstSearch(Graph g, V vOrig,
 
 **Complexity:** $\mathcal{O}(V + E)$ for each connected component
 
+
+
 ---
 
 ## Algorithm 1: Topological Sort Using DFS
@@ -81,7 +83,7 @@ private static  boolean hasCyclesUsingDFS(Graph g) {
 }
 
 private static  boolean detectCycleViaDFS(Graph g, V vertex, int[] state) {
-    state[vKey] = 1; // GRAY
+    state[vKey] = 1;
 
     for (V neighbor : g.adjVertices(vertex)) {   // Same pattern as DepthFirstSearch
         if (state[nKey] == 1) {
@@ -94,7 +96,7 @@ private static  boolean detectCycleViaDFS(Graph g, V vertex, int[] state) {
         }
     }
 
-    state[vKey] = 2; // BLACK
+    state[vKey] = 2; 
     return false;
 }
 ```
@@ -116,7 +118,7 @@ private static  LinkedList computeTopologicalOrderWithDFS(Graph g) {
 
     for (V vertex : g.vertices()) {              // O(V)
         if (!globalVisited[g.key(vertex)]) {
-            // USES EXISTING DepthFirstSearch METHOD
+            // Use existing DepthFirstSearch to get reachable vertices
             LinkedList dfsOrder = new LinkedList<>();
             DepthFirstSearch(g, vertex, globalVisited, dfsOrder);  // O(V + E) total
             
@@ -151,23 +153,38 @@ $$= \mathcal{O}(V + E) + \mathcal{O}(V + E) = \mathcal{O}(V + E)$$
 
 Uses the same traversal pattern as `DepthFirstSearch` to detect cycles.
 ```java
-public static  ArrayList<LinkedList> detectCycles(Graph g) {
-    ArrayList<LinkedList> cycles = new ArrayList<>();
-    int[] state = new int[n];  // O(V)
-    V[] parent = (V[]) new Object[n];  // O(V)
+    public static <V, E> ArrayList<LinkedList<V>> detectCycles(Graph<V, E> g) {
+    if (g == null) { // O(1)
+        throw new IllegalArgumentException("Graph is null.");
+    }
 
-    for (V vertex : g.vertices()) {              // O(V)
-        if (state[g.key(vertex)] == 0) {
-            findCyclesWithDFS(g, vertex, state, parent, cycles);
+    if (!g.isDirected()) { // O(1)
+        throw new IllegalArgumentException("Cycle detection for directed graphs only.");
+    }
+
+    ArrayList<LinkedList<V>> cycles = new ArrayList<>(); // O(1)
+    int n = g.numVertices(); // O(1)
+    if (n == 0) return cycles;
+
+    int[] state = new int[n]; // O(V) 
+
+    // Marks who discovered who (A -> B, A is B's parent)
+    Map<V, V> parent = new HashMap<>(); // O(1)
+
+    // Main DFS Loop
+    for (V vertex : g.vertices()) { // O(V) 
+        if (state[g.key(vertex)] == 0) { 
+            findCyclesWithDFS(g, vertex, state, parent, cycles); // O(V + E)
         }
     }
-    return cycles;
+
+    return cycles; 
 }
 
 private static  void findCyclesWithDFS(Graph g, V vertex,
                                               int[] state, V[] parent,
                                               ArrayList<LinkedList> cycles) {
-    state[vKey] = 1; // GRAY
+    state[vKey] = 1; 
 
     // Same traversal pattern as DepthFirstSearch
     for (V neighbor : g.adjVertices(vertex)) {   // O(E) total
@@ -181,7 +198,7 @@ private static  void findCyclesWithDFS(Graph g, V vertex,
         }
     }
 
-    state[vKey] = 2; // BLACK
+    state[vKey] = 2; 
 }
 ```
 
@@ -201,7 +218,7 @@ private static  void findCyclesWithDFS(Graph g, V vertex,
 |:----------|:-----------|
 | **Topological Sort** | $\mathcal{O}(V + E)$ |
 | **Cycle Detection** | $\mathcal{O}(V + E)$ |
-| **Extract Stations** | $\mathcal{O}(V)$ |
+
 
 ### Overall USEI11 Complexity
 
