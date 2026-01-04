@@ -202,7 +202,7 @@ public class Algorithms {
 
         @SuppressWarnings("unchecked")
 
-        //Marks who discovered who (A -> B, A is B's parent)
+        //Marks who discovered who
         Map<V, V> parent = new HashMap<>();
 
         // Use DFS pattern to detect all cycles
@@ -239,14 +239,13 @@ public class Algorithms {
                 cycle.addLast(current);
                 visited.add(current);
 
-                //Using recursion in
                 V temp = vertex;
                 LinkedList<V> path = new LinkedList<>();
 
-                //Going up until we find neighboour
+                //Going up until we find neighbor
                 while (temp != null && !temp.equals(neighbor)) {
                     if(!visited.contains(temp)){
-                        path.addFirst(temp); //Add to the beggining to maintain direct order
+                        path.addFirst(temp); //Add to the beginning to maintain direct order
                         visited.add(temp);
                     }
                     temp = parent.get(temp); //Get the parent of the current vertex
@@ -256,7 +255,7 @@ public class Algorithms {
                 cycle.add(neighbor); // Close the cycle
                 cycles.add(cycle);
 
-            } else if (state[nKey] == 0) {
+            } else if (state[nKey] == 0){
                 parent.put(neighbor, vertex);
                 findCyclesWithDFS(g, neighbor, state, parent, cycles);
             }
@@ -313,7 +312,7 @@ public class Algorithms {
         //Prepare the graph
         for (V v : g.vertices()) {
             mst.addVertex(v);
-            // Take only the outgoing edges, since the graph is undirected
+            // Storing all edges
             for (Edge<V, E> e : g.outgoingEdges(v)) {
                 allEdges.add(e);
             }

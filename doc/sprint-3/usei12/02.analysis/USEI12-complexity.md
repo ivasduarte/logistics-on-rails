@@ -164,7 +164,8 @@ edgesInMst++;                              // O(1)
 
 2. **Find Operations:**
     - `find()` with path compression
-    - **Per operation:** $\mathcal{O}(\log V)$ worst case
+    - **Per operation:** $\mathcal{O}(\log V)$ (conservative analysis)
+    - With Path Compression, the complexity is better than $\mathcal{O}(\log V)$, but we use this value as a conservative limit for analysis.
 
 3. **Union Operations:**
     - Simple parent reassignment
@@ -330,7 +331,7 @@ public Map<String, Double> calculateMSTStatistics(Graph<Station, ConnectionData>
 - Iterate through all vertices: $\mathcal{O}(V)$
 - Iterate through all edges: $\mathcal{O}(V - 1) = \mathcal{O}(V)$
 - String operations: $\mathcal{O}(1)$ per operation
-- File write: $\mathcal{O}(V + (V + 1)) = \mathcal{O}(V)$ 
+- File write: $\mathcal{O}(V + (V - 1)) = \mathcal{O}(V)$ 
 
 **Complexity:** $\mathcal{O}(V)$
 
@@ -338,13 +339,13 @@ public Map<String, Double> calculateMSTStatistics(Graph<Station, ConnectionData>
 
 ## Final Complexity Summary
 
-| Operation | Complexity |
-|:----------|:-----------|
-| **MST Computation** | $\mathcal{O}(E \log V)$ |
-| **Statistics Calculation** | $\mathcal{O}(V)$ |
-| **DOT Export** | $\mathcal{O}(V)$ |
+| Operation | Complexity              |
+|:----------|:------------------------|
+| **MST Computation** | $\mathcal{O}(E \log E)$ |
+| **Statistics Calculation** | $\mathcal{O}(V)$        |
+| **DOT Export** | $\mathcal{O}(V)$        |
 
 ### Overall USEI12 Complexity
 
 **Time Complexity:**
-$$\mathcal{O}(E \log E) + \mathcal{O}(V) + \mathcal{O}(V) = \mathcal{O}(E \log V)$$
+$$\mathcal{O}(E \log E) + \mathcal{O}(V) + \mathcal{O}(V) = \mathcal{O}(E \log E)$$
