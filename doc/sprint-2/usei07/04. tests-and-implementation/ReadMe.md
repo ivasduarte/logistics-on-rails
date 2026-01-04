@@ -353,7 +353,7 @@ public class KDNode {
 
 ```java
 /**
- * KDTree2D.java
+ * Tree2D.java
  */
 package spatialQuerying.trees.kd;
 
