@@ -1,117 +1,116 @@
-# USEI07 — Build a Balanced 2D-Tree on Latitude and Longitude
+# USEI07 — Complexity Analysis: Build a Balanced 2D-Tree
+
+## Index
+- [Objective](#objective)
+- [Complexity Analysis](#complexity-analysis)
+- [Summary of Metrics](#summary-of-metrics)
+- [Conclusion](#conclusion)
+
+---
 
 ## Objective
 
-Build a balanced tree to support efficient spatial queries over 64 thousand stations.
+Construct a balanced 2D tree to support efficient spatial queries on approximately 64,000 stations.
+To ensure optimal balance, the **Bulk Loading** algorithm is used, processing the data before construction and always
+dividing it by the median.
 
-To optimize construction, we use a **Bulk Loading** algorithm.
-
-Instead of inserting node by node (which could unbalance), we preprocess the data and build the tree recursively
-always dividing by the median.
+---
 
 ## Complexity Analysis
 
-Dominated by three phases: grouping, pre-sorting, and recursive construction.
+The construction process is dominated by three main phases:
 
-**1. Coordinates Grouping** (unify stations that share the same latitude e longitude)
+1. [Grouping](#1-grouping-by-coordinates)
+2. [Pre-Ordering](#2-optimized-pre-sorting)
+3. [Recursive Construction](#3-recursive-tree-construction)
+
+### 1. Grouping By Coordinates
+
+Since multiple stations can share the exact same location (same latitude and longitude), we group them together first
+so that each node in the tree represents a unique geographic point.
 
 ```java
-    public Map<Point2D, List<Station>> groupByCoordinates(List<Station> stationList) {
-        Map<Point2D, List<Station>> groupedStations = new LinkedHashMap<>();
-    
-        for (Station station : stationList) {
-                // POINT CREATION
-                groupedStations.computeIfAbsent(point, k -> new ArrayList<>()).add(station);
-        }
-            // ORDER SMALL BUCKETS ALPHABETICALLY
-            return groupedStations;
+public Map<Point2D, List<Station>> groupByCoordinates(List<Station> stationList) {
+    Map<Point2D, List<Station>> groupedStations = new LinkedHashMap<>();
+    for (Station station : stationList) {
+        Point2D point = new Point2D(station.getStationLatitude(), station.getStationLongitude());
+        groupedStations.computeIfAbsent(point, k -> new ArrayList<>()).add(station);
     }
-```
-
-**Analysis:** Traverses the list of all ≈64 thousand stations
-
-- Insertion in a `LinkedHashMap` has average complexity of **O(1)**
-- Internal sorting of buckets is negligible, as the maximum bucket size is 7, which is **O(1)**
-
-**This phase's complexity: O(m)**
-
----
-
-**2. Optimized Pre-Sorting** (obtain lists of points sorted by latitude and longitude without using a traditional
-O(n log n) sorting algorithm)
-
-```java
-    private List<Point2D> sortPoints(...) {
-        // USES THE TREES CREATED IN USEI06
-        List<Station> stations = latTree.inOrderTraversal();
-        
-        // LINEAR ITERATION TO FILTER UNIQUE POINTS
-        return sortedPoints;
-    }
-```
-
-**Analysis:**
-
-- An in-order traversal of an existing AVL tree visits each node once: **O(m)**
-- Filtering for `uniquePoints` is linear
-- If we used `Collections.sort`, the cost would be **O(n log n)**. By using existing trees, we reduce
-  this step to linear.
-
-**This phase's complexity: O(m)**
-
-
-**3. Recursive Tree Construction** (build the tree by dividing the space in half at each level)
-
-```java
-    public KDNode buildBalancedTree(...){
-    // a) FIND MEDIAN
-    int medianIndex = uniquePoints / 2;
-    
-    // b) DIVIDE LISTS IN LEFT AND RIGHT (LINEAR ITERATION)
-    
-    // c) RECURSIVE CALLS
-    newNode.setLeft(buildBalancedTree(...));
-    newNode.setRight(buildBalancedTree(...));
-    return newNode;
+    return groupedStations;
 }
 ```
 
-**Analysis:** "Divide and Conquer." Let n ≈ 64 thousand.
+- **Analysis:** Goes through the list of all $n$ stations (≈64,000) only once.
+- **Cost:** Inserting into a system LinkedHashMap has an average complexity of $O(1)$.
+- **Complexity of this phase:** $O(n)$
 
-- At each recursion level, we traverse the entire `latList` and `lonList` to create left and right sublists.
-  This partitioning costs **O(n) per level**.
-- Since we always divide by the median, the tree height is balanced: **log₂(n)**
-- The total work is the sum of work at each tree level.
 
-T(n) = 2T(n/2) + O(n)
+### 2. Optimized Pre-Sorting
 
-Where:
+To avoid sorting lists at each level of recursion (which would increase complexity), the lists are pre-sorted only 
+once before construction begins.
 
-    - 2T(n/2) : two recursive calls with half the data
-    - O(n) : linear cost of partitioning the sorted lists
+```java
+private List<Point2D> sortPoints(...) {
+    // Utiliza as árvores AVL criadas no USEI06 para obter ordenação linear
+    List<Station> stations = latTree.inOrderTraversal();
+    // ... filtragem para pontos únicos ...
+    return sortedPoints;
+}
+```
 
-(=) T(n) = O(n log n)
+- **Analysis:** Instead of a `Collections.sort` traditional ($O(n \log n)$), the code takes advantage of the structure 
+of AVL trees (`latTree` and `lonTree`).
+- **Cost:** The in-order throughput of an AVL is$O(n)$, where $n$ is the number of unique points.
+- **Complexity of this phase:** $O(n)$
 
-**This phase's complexity: O(n log n)**
+### 3. Recursive Tree Construction
+
+The tree is constructed by dividing the space alternately by latitude (X-axis) and longitude (Y-axis).
+
+```java
+private KDNode buildBalancedRecursive(...,List<Point2D> latList, List<Point2D> lonList, boolean divideByLatitude) {
+    // Encontrar mediana (O(1) pois a lista já está ordenada)
+    int medianIndex = list.size() / 2;
+
+    // Particionar as listas em Esquerda e Direita (O(n))
+    distributePoints(latList, lonList, medianPoint, ...);
+
+    // Chamadas recursivas
+    newNode.setLeft(buildBalancedRecursive(...));
+    newNode.setRight(buildBalancedRecursive(...));
+}
+```
+
+- **Analysis:** It uses the "Divide and Conquer" model. At each level of the tree, the method `distributePoints` traverses 
+the current lists to maintain the ordering in the subtrees. This partitioning costs $O(n)$ by level. Since we always 
+divide by the median, the height of the tree is strictly $\log_2(n)$.
+
+- **Recurrence Equation:** $T(n) = 2T(n/2) + O(n)$
+
+- **Complexity of this phase:** $O(n log n)$
+
+### 4. Organization and Final Metrics
+
+After construction, the code executes `organizeTree()` to alphabetically sort the stations within each node `calculateMetrics()`.
+
+- **Analysis:** Both traverse all nodes of the tree once.
+- **Complexity of this phase:** $O(n)$
 
 ---
 
-### Final Metrics
+## Summary of Metrics
 
-**Final Analysis:** The complexity is the sum of the phases
 
-**O(m) + O(m) + O(n log n)**
+| Metric      | Complexity / Value | Notes                                                                     |
+|-------------|--------------------|---------------------------------------------------------------------------|
+| Total Time  | $O(n log n)$       | Dominated by recursive construction and partitioning.m                    |
+| Space       | $O(m)$             | Where $m$ is the total number of stations stored in the nodes' "buckets". |
+| Tree Height | ≈ 15 - 16          | $\log_2(61832) \approx 15.9$ (ideal balance).                             | 
 
-Since m ≈ n (the number of duplicates is small), we simplify to **O(n log n)**.
+---
 
-> **Time: O(n log n)**
+## Conclusion
 
-Optimized for balanced construction
-
-> **Space: O(n)**
-
-For tree nodes + O(m) to store stations in buckets
-
-> **Tree Height: 15**
-
-(log₂ (61832) ≈ 15.9)
+The use of AVL pre-ordering and the systematic selection of the median ensure that the 2D tree is built efficiently 
+and remains perfectly balanced, optimizing future spatial searches (nearest neighbour search or area queries).
