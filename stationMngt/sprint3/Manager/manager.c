@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include <termios.h>
 #include <errno.h>
+#include <time.h>
 
 #include "asm.h"
 #include "structs.h"
@@ -1037,9 +1038,37 @@ void send_data_to_board(void *data) {
 }
 
 void record_log(User *user, int instruction) {
-    (void) user;
-    (void) instruction;
-    // TODO: Logging (USAC12)
+    if (user == NULL || instruction <= 0) return;
+
+    // Mapear o número da instrução para uma descrição legível
+    char *action_desc;
+    switch (instruction) {
+        case 1: action_desc = "CONSULTAR_DADOS_SENSORES (USAC13)"; break;
+        case 2: action_desc = "CONTROLAR_SINAIS_LUMINOSOS (USAC14)"; break;
+        case 3: action_desc = "ENVIAR_MENSAGEM_BOARD (USAC15)"; break;
+        case 4: action_desc = "GERIR_VIAS_FERREAS (USAC16)"; break;
+        default: action_desc = "ACAO_NAO_IDENTIFICADA"; break;
+    }
+
+    // Obter o tempo atual do sistema
+    time_t now = time(NULL);
+    struct tm *t = localtime(&now);
+    char timestamp[20];
+    // Formato: AAAA-MM-DD HH:MM:SS
+    strftime(timestamp, sizeof(timestamp), "%Y-%m-%d %H:%M:%S", t);
+
+    // Escrever no ficheiro .txt (Modo append para adicionar ao fim)
+    FILE *f = fopen("log_atividades.txt", "a");
+    if (f == NULL) {
+        printf("[ERRO] Falha ao abrir ficheiro log_atividades.txt para escrita.\n");
+        return;
+    }
+
+    // Estrutura: [Data/Hora] User: nome (username) - Ação: Descrição
+    fprintf(f, "[%s] User: %s (%s) - Ação: %s\n",
+            timestamp, user->name, user->username, action_desc);
+
+    fclose(f);
 }
 
 int main() {
